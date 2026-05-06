@@ -27,7 +27,7 @@ SynapSys is a self-hosted platform that lets you trigger shell scripts and Makef
 └─────────┘      └─────────┘
 ```
 
-The API acts as the central hub. Agents ([synapsys-agent](https://github.com/YOUR_USERNAME/synapsys-agent)) run on each target Linux server and connect back to the API via a secure, mutually authenticated WebSocket connection.
+The API acts as the central hub. Agents ([synapsys-agent](https://github.com/Le-Gall-Valentin/synapsys-agent)) run on each target Linux server and connect back to the API via a secure, mutually authenticated WebSocket connection.
 
 ---
 
@@ -103,7 +103,7 @@ mvn spring-boot:run
 A production-ready Docker image is available:
 
 ```bash
-docker pull ghcr.io/YOUR_USERNAME/synapsys-api:latest
+docker pull ghcr.io/Le-Gall-Valentin/synapsys-api:latest
 ```
 
 See [docs/deployment.md](docs/deployment.md) for full deployment instructions including HTTPS, reverse proxy setup, and database migrations.
@@ -113,7 +113,7 @@ See [docs/deployment.md](docs/deployment.md) for full deployment instructions in
 ## Agent Setup
 
 To connect a server to the API, deploy the SynapSys agent:
-👉 [synapsys-agent](https://github.com/YOUR_USERNAME/synapsys-agent)
+👉 [synapsys-agent](https://github.com/Le-Gall-Valentin/synapsys-agent)
 
 ---
 
