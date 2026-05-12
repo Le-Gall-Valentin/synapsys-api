@@ -55,6 +55,7 @@ public class AuthenticationService
     }
 
     @Override
+    @Transactional(noRollbackFor = AuthException.class)
     public AuthTokens refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new AuthException.TokenExpired();
