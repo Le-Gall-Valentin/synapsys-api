@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${SYNAPSYS_DB_URL:jdbc:postgresql://localhost:5432/synapsys}
+    username: ${SYNAPSYS_DB_USER:synapsys}
+    password: ${SYNAPSYS_DB_PASSWORD:synapsys}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+synapsys:
+  jwt:
+    secret: ${SYNAPSYS_JWT_SECRET:dev-secret-must-be-at-least-32-chars-long}
+    expiry-minutes: ${SYNAPSYS_JWT_EXPIRY_MINUTES:15}
+  refresh-token:
+    expiry-days: ${SYNAPSYS_REFRESH_TOKEN_EXPIRY_DAYS:30}
+  cookie:
+    secure: ${SYNAPSYS_COOKIE_SECURE:false}
