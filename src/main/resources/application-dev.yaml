@@ -10,6 +10,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
 synapsys:
   jwt:
     secret: ${SYNAPSYS_JWT_SECRET:dev-secret-must-be-at-least-32-chars-long}
@@ -18,3 +24,8 @@ synapsys:
     expiry-days: ${SYNAPSYS_REFRESH_TOKEN_EXPIRY_DAYS:30}
   cookie:
     secure: ${SYNAPSYS_COOKIE_SECURE:false}
+  seed:
+    enabled: ${SYNAPSYS_SEED_ENABLED:true}
+    username: ${SYNAPSYS_SEED_USERNAME:admin}
+    email: ${SYNAPSYS_SEED_EMAIL:admin@synapsys.dev}
+    password: ${SYNAPSYS_SEED_PASSWORD:changeme}

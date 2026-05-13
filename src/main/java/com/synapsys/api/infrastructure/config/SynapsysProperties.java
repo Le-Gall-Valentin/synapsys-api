@@ -7,7 +7,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record SynapsysProperties(
     JwtProperties jwt,
     RefreshTokenProperties refreshToken,
-    CookieProperties cookie
+    CookieProperties cookie,
+    SeedProperties seed
 ) {
     public record JwtProperties(
         String secret,
@@ -20,5 +21,12 @@ public record SynapsysProperties(
 
     public record CookieProperties(
         @DefaultValue("true") boolean secure
+    ) {}
+
+    public record SeedProperties(
+        @DefaultValue("false") boolean enabled,
+        @DefaultValue("admin") String username,
+        @DefaultValue("admin@synapsys.dev") String email,
+        @DefaultValue("changeme") String password
     ) {}
 }

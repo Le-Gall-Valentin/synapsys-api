@@ -23,7 +23,8 @@ class JwtServiceTest {
         var properties = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, 15),
             new SynapsysProperties.RefreshTokenProperties(30),
-            new SynapsysProperties.CookieProperties(false)
+            new SynapsysProperties.CookieProperties(false),
+            null
         );
         jwtService = new JwtService(properties);
     }
