@@ -1,0 +1,18 @@
+{
+  "brand": "SynapSys",
+  "hero": {
+    "headline_1": "Your servers,",
+    "headline_2": "at your fingertips.",
+    "description": "Launch, monitor and log your operations on remote servers from a single, secure interface."
+  },
+  "quote": "Like a synapse transmits nerve impulses, SynapSys transmits your commands between your workspace and your machines, instantly.",
+  "form": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to access your workspace."
+  },
+  "help": {
+    "no_account": "Don't have an account?",
+    "contact_admin": "Contact your administrator to create one."
+  },
+  "footer": "© 2026 SynapSys"
+}
