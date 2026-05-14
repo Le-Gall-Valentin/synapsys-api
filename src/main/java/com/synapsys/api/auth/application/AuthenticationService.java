@@ -3,6 +3,7 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.domain.port.out.*;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
@@ -12,6 +13,7 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
 
+@Service
 @Transactional
 public class AuthenticationService
     implements LoginUseCase, RefreshTokenUseCase, LogoutUseCase, GetCurrentUserUseCase {
