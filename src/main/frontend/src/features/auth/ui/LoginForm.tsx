@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../model/useAuth'
+import { Button, Input } from '@/shared/ui'
 
 export function LoginForm() {
   const { login } = useAuth()
@@ -35,55 +36,43 @@ export function LoginForm() {
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="username" className="text-xs font-medium text-fg-1">
-          {t('field.username')}
-        </label>
-        <input
-          id="username"
-          name="username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder={t('field.username_placeholder')}
-          required
-          autoComplete="username"
-          autoFocus
-          className="w-full rounded-lg border border-border bg-bg-1 px-3.5 py-3 text-sm text-fg-0 outline-none placeholder:text-fg-3 transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_rgba(94,234,212,0.12)]"
-        />
-      </div>
+      <Input
+        label={t('field.username')}
+        name="username"
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder={t('field.username_placeholder')}
+        required
+        autoComplete="username"
+        autoFocus
+      />
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="password" className="text-xs font-medium text-fg-1">
-          {t('field.password')}
-        </label>
-        <div className="relative">
-          <input
-            id="password"
-            name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t('field.password_placeholder')}
-            required
-            autoComplete="current-password"
-            className="w-full rounded-lg border border-border bg-bg-1 py-3 pl-3.5 pr-11 text-sm text-fg-0 outline-none placeholder:text-fg-3 transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_rgba(94,234,212,0.12)]"
-          />
+      <Input
+        label={t('field.password')}
+        name="password"
+        type={showPassword ? 'text' : 'password'}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder={t('field.password_placeholder')}
+        required
+        autoComplete="current-password"
+        suffix={
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-2 text-fg-3 transition-colors hover:bg-bg-2 hover:text-fg-0"
+            className="rounded-md p-2 text-fg-3 transition-colors hover:bg-bg-2 hover:text-fg-0"
             aria-label={showPassword ? t('field.hide_password') : t('field.show_password')}
           >
             {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
-        </div>
-      </div>
+        }
+      />
 
-      <button
+      <Button
         type="submit"
-        disabled={isLoading}
-        className="mt-2 flex items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold transition-transform active:translate-y-px disabled:cursor-wait disabled:opacity-70"
+        isLoading={isLoading}
+        className="mt-2 w-full border-transparent py-3 font-semibold active:translate-y-px disabled:cursor-wait"
         style={{
           background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)',
           color: '#07211c',
@@ -91,21 +80,9 @@ export function LoginForm() {
             '0 1px 0 rgba(255,255,255,0.2) inset, 0 6px 16px rgba(94,234,212,0.15)',
         }}
       >
-        {isLoading ? (
-          <span
-            className="size-4 animate-spin rounded-full border-2"
-            style={{
-              borderColor: 'rgba(7,33,28,0.25)',
-              borderTopColor: '#07211c',
-            }}
-          />
-        ) : (
-          <>
-            {t('action.submit')}
-            <ChevronRight className="size-3.5" />
-          </>
-        )}
-      </button>
+        {t('action.submit')}
+        <ChevronRight className="size-3.5" />
+      </Button>
     </form>
   )
 }
