@@ -27,6 +27,6 @@ public record SynapsysProperties(
         @DefaultValue("false") boolean enabled,
         @DefaultValue("admin") String username,
         @DefaultValue("admin@synapsys.dev") String email,
-        @DefaultValue("changeme") String password
+        String password
     ) {}
 }

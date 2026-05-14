@@ -15,6 +15,7 @@ public class AuthExceptionHandler {
             case AuthException.UserNotActive      __ -> 403;
             case AuthException.TokenExpired       __ -> 401;
             case AuthException.TokenRevoked       __ -> 401;
+            case AuthException.UserNotFound       __ -> 404;
         };
         return ResponseEntity.status(status).build();
     }

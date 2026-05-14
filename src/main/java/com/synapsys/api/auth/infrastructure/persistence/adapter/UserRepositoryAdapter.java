@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
@@ -35,12 +35,12 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public User save(String username, String email, String passwordHash, Role role) {
+    public User save(CreateUserCommand command) {
         UserEntity entity = new UserEntity();
-        entity.setUsername(username);
-        entity.setEmail(email);
-        entity.setPasswordHash(passwordHash);
-        entity.setRole(role);
+        entity.setUsername(command.username());
+        entity.setEmail(command.email());
+        entity.setPasswordHash(command.passwordHash());
+        entity.setRole(command.role());
         return toDomain(jpa.save(entity));
     }
 

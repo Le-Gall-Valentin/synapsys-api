@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
+import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
@@ -32,12 +33,17 @@ public class DataSeeder {
         if (seed == null || !seed.enabled() || userRepository.existsAny()) {
             return;
         }
-        userRepository.save(
+        if (seed.password() == null || seed.password().isBlank()) {
+            throw new IllegalStateException(
+                "SYNAPSYS_SEED_PASSWORD must be set when seeding is enabled"
+            );
+        }
+        userRepository.save(new CreateUserCommand(
             seed.username(),
             seed.email(),
             passwordHasher.hash(seed.password()),
             Role.ADMIN
-        );
+        ));
         log.info("Default admin user '{}' created", seed.username());
     }
 }

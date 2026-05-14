@@ -7,7 +7,6 @@ import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.infrastructure.security.CookieService;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.UserInfoResponse;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -26,27 +25,25 @@ public class AuthController {
     private final LogoutUseCase logoutUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final CookieService cookieService;
-    private final SynapsysProperties properties;
 
     public AuthController(LoginUseCase loginUseCase,
                           RefreshTokenUseCase refreshTokenUseCase,
                           LogoutUseCase logoutUseCase,
                           GetCurrentUserUseCase getCurrentUserUseCase,
-                          CookieService cookieService,
-                          SynapsysProperties properties) {
+                          CookieService cookieService) {
         this.loginUseCase = loginUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;
         this.logoutUseCase = logoutUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.cookieService = cookieService;
-        this.properties = properties;
     }
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request,
                                       HttpServletResponse response) {
         AuthTokens tokens = loginUseCase.login(new LoginCommand(request.username(), request.password()));
-        addAuthCookies(response, tokens);
+        response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
+        response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));
         return ResponseEntity.noContent().build();
     }
 
@@ -54,7 +51,7 @@ public class AuthController {
     public ResponseEntity<UserInfoResponse> me(Authentication authentication) {
         UUID userId = (UUID) authentication.getPrincipal();
         User user = getCurrentUserUseCase.getCurrentUser(userId);
-        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
+        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role().name()));
     }
 
     @PostMapping("/refresh")
@@ -64,7 +61,8 @@ public class AuthController {
             .extractFromRequest(request, CookieService.REFRESH_COOKIE)
             .orElse(null);
         AuthTokens tokens = refreshTokenUseCase.refresh(rawRefreshToken);
-        addAuthCookies(response, tokens);
+        response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
+        response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));
         return ResponseEntity.noContent().build();
     }
 
@@ -77,12 +75,5 @@ public class AuthController {
         logoutUseCase.logout(rawRefreshToken);
         cookieService.buildClearCookies().forEach(response::addCookie);
         return ResponseEntity.noContent().build();
-    }
-
-    private void addAuthCookies(HttpServletResponse response, AuthTokens tokens) {
-        int accessMaxAge = properties.jwt().expiryMinutes() * 60;
-        int refreshMaxAge = properties.refreshToken().expiryDays() * 86_400;
-        response.addCookie(cookieService.buildAccessCookie(tokens.accessToken(), accessMaxAge));
-        response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken(), refreshMaxAge));
     }
 }

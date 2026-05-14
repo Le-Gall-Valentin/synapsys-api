@@ -16,17 +16,21 @@ public class CookieService {
     public static final String REFRESH_COOKIE = "refresh_token";
 
     private final boolean secure;
+    private final int accessMaxAgeSeconds;
+    private final int refreshMaxAgeSeconds;
 
     public CookieService(SynapsysProperties properties) {
         this.secure = properties.cookie().secure();
+        this.accessMaxAgeSeconds = properties.jwt().expiryMinutes() * 60;
+        this.refreshMaxAgeSeconds = properties.refreshToken().expiryDays() * 86_400;
     }
 
-    public Cookie buildAccessCookie(String token, int maxAgeSeconds) {
-        return build(ACCESS_COOKIE, token, "/api", maxAgeSeconds);
+    public Cookie buildAccessCookie(String token) {
+        return build(ACCESS_COOKIE, token, "/api", accessMaxAgeSeconds);
     }
 
-    public Cookie buildRefreshCookie(String token, int maxAgeSeconds) {
-        return build(REFRESH_COOKIE, token, "/api/auth", maxAgeSeconds);
+    public Cookie buildRefreshCookie(String token) {
+        return build(REFRESH_COOKIE, token, "/api/auth", refreshMaxAgeSeconds);
     }
 
     public List<Cookie> buildClearCookies() {

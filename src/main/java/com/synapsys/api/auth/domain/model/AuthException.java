@@ -4,7 +4,8 @@ public abstract sealed class AuthException extends RuntimeException
     permits AuthException.InvalidCredentials,
             AuthException.UserNotActive,
             AuthException.TokenExpired,
-            AuthException.TokenRevoked {
+            AuthException.TokenRevoked,
+            AuthException.UserNotFound {
 
     private AuthException(String message) {
         super(message);
@@ -24,5 +25,9 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class TokenRevoked extends AuthException {
         public TokenRevoked() { super("Token has been revoked"); }
+    }
+
+    public static final class UserNotFound extends AuthException {
+        public UserNotFound() { super("User not found"); }
     }
 }
