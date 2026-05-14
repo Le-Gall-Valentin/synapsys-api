@@ -1,8 +1,5 @@
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LoginForm, useAuth } from '@/features/auth'
-import { ROUTES } from '@/shared/config/routes'
+import { LoginForm } from '@/features/auth'
 
 const nodes = [
   { cx: 60, cy: 60, delay: '0s' },
@@ -21,15 +18,7 @@ const particles = [
 ] as const
 
 export function LoginPage() {
-  const { isAuthenticated } = useAuth()
-  const navigate = useNavigate()
   const { t } = useTranslation('login')
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(ROUTES.PROFILE, { replace: true })
-    }
-  }, [isAuthenticated, navigate])
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
