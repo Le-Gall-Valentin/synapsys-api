@@ -7,6 +7,7 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
+import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,11 +23,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -185,12 +181,6 @@ class AuthControllerIT {
     }
 
     private String sha256(String raw) {
-        try {
-            return HexFormat.of().formatHex(
-                MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8))
-            );
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+        return TestHashUtils.sha256(raw);
     }
 }

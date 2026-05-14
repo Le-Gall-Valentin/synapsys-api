@@ -7,6 +7,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +20,8 @@ import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final CookieService cookieService;
@@ -41,8 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     List.of(new SimpleGrantedAuthority("ROLE_" + claims.role().name()))
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (Exception ignored) {
-                // Invalid token — request proceeds unauthenticated
+            } catch (IllegalArgumentException e) {
+                log.debug("Invalid JWT token: {}", e.getMessage());
+            } catch (Exception e) {
+                log.warn("Unexpected error during JWT validation", e);
             }
         });
 
