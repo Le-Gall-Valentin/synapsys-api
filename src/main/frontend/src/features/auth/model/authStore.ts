@@ -1,14 +1,6 @@
 import { create } from 'zustand'
 import type { IAuthApi } from '../api/IAuthApi'
-import {
-  clearSessionHint,
-  hasSessionHint,
-  registerLogoutCallback,
-  setAuthState,
-  setSessionHint,
-  triggerNavigate,
-} from '@/shared/lib/authCallbacks'
-import { ROUTES } from '@/shared/config/routes'
+import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
 import type { UserDTO } from '@/entities/user'
 import type { LoginCredentials } from './types'
 
@@ -25,53 +17,38 @@ interface AuthActions {
 }
 
 export function createAuthStore(api: IAuthApi) {
-  return create<AuthState & AuthActions>((set) => {
-    registerLogoutCallback(() => {
-      clearSessionHint()
-      setAuthState(false)
-      set({ user: null, isAuthenticated: false, isInitializing: false })
-      triggerNavigate(ROUTES.LOGIN)
-    })
+  return create<AuthState & AuthActions>((set) => ({
+    user: null,
+    isAuthenticated: false,
+    isInitializing: true,
 
-    return {
-      user: null,
-      isAuthenticated: false,
-      isInitializing: true,
+    async login(credentials: LoginCredentials): Promise<void> {
+      const user = await api.login(credentials)
+      setSessionHint()
+      set({ user, isAuthenticated: true })
+    },
 
-      async login(credentials: LoginCredentials): Promise<void> {
-        const user = await api.login(credentials)
-        setSessionHint()
-        setAuthState(true)
-        set({ user, isAuthenticated: true })
-      },
+    async logout(): Promise<void> {
+      try {
+        await api.logout()
+      } finally {
+        clearSessionHint()
+        set({ user: null, isAuthenticated: false })
+      }
+    },
 
-      async logout(): Promise<void> {
-        try {
-          await api.logout()
-        } finally {
-          clearSessionHint()
-          setAuthState(false)
-          set({ user: null, isAuthenticated: false })
-          triggerNavigate(ROUTES.LOGIN)
-        }
-      },
-
-      async initialize(): Promise<void> {
-        if (!hasSessionHint()) {
-          setAuthState(false)
-          set({ user: null, isAuthenticated: false, isInitializing: false })
-          return
-        }
-        try {
-          const user = await api.getMe()
-          setAuthState(true)
-          set({ user, isAuthenticated: true, isInitializing: false })
-        } catch {
-          clearSessionHint()
-          setAuthState(false)
-          set({ user: null, isAuthenticated: false, isInitializing: false })
-        }
-      },
-    }
-  })
+    async initialize(): Promise<void> {
+      if (!hasSessionHint()) {
+        set({ user: null, isAuthenticated: false, isInitializing: false })
+        return
+      }
+      try {
+        const user = await api.getMe()
+        set({ user, isAuthenticated: true, isInitializing: false })
+      } catch {
+        clearSessionHint()
+        set({ user: null, isAuthenticated: false, isInitializing: false })
+      }
+    },
+  }))
 }

@@ -4,23 +4,19 @@ import {
   Navigate,
   Route,
   Routes,
-  useNavigate,
 } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 import { LoginPage } from '@/pages/login'
 import { ProfilePage } from '@/pages/profile'
 import { Spinner } from '@/shared/ui'
 import { ROUTES } from '@/shared/config/routes'
-import { registerNavigateCallback } from '@/shared/lib/authCallbacks'
 
 function AuthInitializer({ children }: { children: ReactNode }) {
   const { initialize, isInitializing } = useAuth()
-  const navigate = useNavigate()
 
   useEffect(() => {
-    registerNavigateCallback((to) => navigate(to, { replace: true }))
     void initialize()
-  }, [initialize, navigate])
+  }, [initialize])
 
   if (isInitializing) return <Spinner />
   return <>{children}</>
