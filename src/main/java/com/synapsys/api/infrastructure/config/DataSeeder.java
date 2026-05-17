@@ -40,7 +40,7 @@ public class DataSeeder {
                 seed.username(),
                 seed.email(),
                 seed.password(),
-                Role.ADMIN
+                Role.SUPER_ADMIN
             ));
             log.info("Default admin user '{}' created", seed.username());
         } catch (AuthException.UsernameAlreadyExists e) {
