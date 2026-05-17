@@ -3,8 +3,7 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.domain.port.out.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.synapsys.api.shared.annotation.DomainService;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -13,8 +12,7 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
 
-@Service
-@Transactional
+@DomainService
 public class AuthenticationService
     implements LoginUseCase, RefreshTokenUseCase, LogoutUseCase, GetCurrentUserUseCase, RegisterUseCase {
 
@@ -55,7 +53,6 @@ public class AuthenticationService
     }
 
     @Override
-    @Transactional(noRollbackFor = AuthException.class)
     public AuthTokens refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new AuthException.TokenExpired();
