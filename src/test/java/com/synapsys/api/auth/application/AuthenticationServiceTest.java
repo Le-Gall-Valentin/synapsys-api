@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -186,6 +187,22 @@ class AuthenticationServiceTest {
     void logout_nullToken_isIdempotent() {
         assertThatNoException().isThrownBy(() -> service.logout(null));
         verifyNoInteractions(refreshTokenRepository);
+    }
+
+    @Test
+    void register_hashesPasswordAndSavesUser() {
+        User created = new User(UUID.randomUUID(), "newuser", "new@test.com",
+            "hashed", Role.USER, true, Instant.now());
+        when(passwordHasher.hash("plaintext")).thenReturn("hashed");
+        when(userRepository.save(any(CreateUserCommand.class))).thenReturn(created);
+
+        User result = service.register(new RegisterCommand("newuser", "new@test.com", "plaintext", Role.USER));
+
+        assertThat(result.username()).isEqualTo("newuser");
+        verify(passwordHasher).hash("plaintext");
+        verify(userRepository).save(argThat(cmd ->
+            cmd.username().equals("newuser") && cmd.passwordHash().equals("hashed")
+        ));
     }
 
     private String sha256(String raw) {

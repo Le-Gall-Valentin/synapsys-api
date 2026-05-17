@@ -16,7 +16,7 @@ import java.util.UUID;
 @Service
 @Transactional
 public class AuthenticationService
-    implements LoginUseCase, RefreshTokenUseCase, LogoutUseCase, GetCurrentUserUseCase {
+    implements LoginUseCase, RefreshTokenUseCase, LogoutUseCase, GetCurrentUserUseCase, RegisterUseCase {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -93,6 +93,17 @@ public class AuthenticationService
     public User getCurrentUser(UUID userId) {
         return userRepository.findById(userId)
             .orElseThrow(AuthException.UserNotFound::new);
+    }
+
+    @Override
+    public User register(RegisterCommand command) {
+        String passwordHash = passwordHasher.hash(command.password());
+        return userRepository.save(new CreateUserCommand(
+            command.username(),
+            command.email(),
+            passwordHash,
+            command.role()
+        ));
     }
 
     private AuthTokens createSession(User user) {
