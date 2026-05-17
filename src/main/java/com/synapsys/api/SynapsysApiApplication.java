@@ -1,6 +1,6 @@
 package com.synapsys.api;
 
-import com.synapsys.api.shared.annotation.DomainService;
+import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -14,7 +14,7 @@ import org.springframework.context.annotation.FilterType;
     basePackages = "com.synapsys.api",
     includeFilters = @ComponentScan.Filter(
         type = FilterType.ANNOTATION,
-        classes = DomainService.class
+        classes = ApplicationService.class
     )
 )
 public class SynapsysApiApplication {
