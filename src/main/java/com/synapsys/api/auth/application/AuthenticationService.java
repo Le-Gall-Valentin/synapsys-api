@@ -5,11 +5,7 @@ import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.domain.port.out.*;
 import com.synapsys.api.shared.annotation.DomainService;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.UUID;
 
 @DomainService
@@ -20,6 +16,7 @@ public class AuthenticationService
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordHasherPort passwordHasher;
     private final AccessTokenPort accessTokenPort;
+    private final TokenHashPort tokenHashPort;
     private final AuthConfig authConfig;
 
     public AuthenticationService(
@@ -27,12 +24,14 @@ public class AuthenticationService
         RefreshTokenRepository refreshTokenRepository,
         PasswordHasherPort passwordHasher,
         AccessTokenPort accessTokenPort,
+        TokenHashPort tokenHashPort,
         AuthConfig authConfig
     ) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordHasher = passwordHasher;
         this.accessTokenPort = accessTokenPort;
+        this.tokenHashPort = tokenHashPort;
         this.authConfig = authConfig;
     }
 
@@ -57,7 +56,7 @@ public class AuthenticationService
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new AuthException.TokenExpired();
         }
-        String hash = sha256(rawRefreshToken);
+        String hash = tokenHashPort.hash(rawRefreshToken);
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
             .orElseThrow(AuthException.TokenExpired::new);
 
@@ -70,6 +69,7 @@ public class AuthenticationService
             throw new AuthException.TokenExpired();
         }
 
+        refreshTokenRepository.markUsed(token.id());
         refreshTokenRepository.revoke(token.id());
 
         User user = userRepository.findById(token.userId())
@@ -81,7 +81,7 @@ public class AuthenticationService
     @Override
     public void logout(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) return;
-        String hash = sha256(rawRefreshToken);
+        String hash = tokenHashPort.hash(rawRefreshToken);
         refreshTokenRepository.findByTokenHash(hash)
             .ifPresent(token -> refreshTokenRepository.revoke(token.id()));
     }
@@ -94,6 +94,9 @@ public class AuthenticationService
 
     @Override
     public User register(RegisterCommand command) {
+        if (userRepository.findByUsername(command.username()).isPresent()) {
+            throw new AuthException.UsernameAlreadyExists();
+        }
         String passwordHash = passwordHasher.hash(command.password());
         return userRepository.save(new CreateUserCommand(
             command.username(),
@@ -110,7 +113,7 @@ public class AuthenticationService
         RefreshToken refreshToken = new RefreshToken(
             null,
             user.id(),
-            sha256(rawRefreshToken),
+            tokenHashPort.hash(rawRefreshToken),
             now.plusSeconds(authConfig.refreshTokenExpiryDays() * 86400L),
             false,
             now,
@@ -119,14 +122,5 @@ public class AuthenticationService
         refreshTokenRepository.save(refreshToken);
 
         return new AuthTokens(accessTokenPort.generate(user), rawRefreshToken);
-    }
-
-    private String sha256(String raw) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(raw.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
     }
 }

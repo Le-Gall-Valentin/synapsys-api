@@ -37,6 +37,12 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
 
     @Override
     @Transactional
+    public void markUsed(UUID tokenId) {
+        jpa.markUsedById(tokenId);
+    }
+
+    @Override
+    @Transactional
     public void revoke(UUID tokenId) {
         jpa.revokeById(tokenId);
     }

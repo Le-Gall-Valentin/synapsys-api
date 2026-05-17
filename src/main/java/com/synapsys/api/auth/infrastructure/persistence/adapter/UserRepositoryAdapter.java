@@ -1,10 +1,12 @@
 package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
+import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -30,18 +32,17 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public boolean existsAny() {
-        return jpa.count() > 0;
-    }
-
-    @Override
     public User save(CreateUserCommand command) {
-        UserEntity entity = new UserEntity();
-        entity.setUsername(command.username());
-        entity.setEmail(command.email());
-        entity.setPasswordHash(command.passwordHash());
-        entity.setRole(command.role());
-        return toDomain(jpa.save(entity));
+        try {
+            UserEntity entity = new UserEntity();
+            entity.setUsername(command.username());
+            entity.setEmail(command.email());
+            entity.setPasswordHash(command.passwordHash());
+            entity.setRole(command.role());
+            return toDomain(jpa.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            throw new AuthException.UsernameAlreadyExists();
+        }
     }
 
     private User toDomain(UserEntity e) {

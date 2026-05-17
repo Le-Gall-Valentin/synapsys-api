@@ -9,6 +9,5 @@ import java.util.UUID;
 public interface UserRepository {
     Optional<User> findByUsername(String username);
     Optional<User> findById(UUID id);
-    boolean existsAny();
     User save(CreateUserCommand command);
 }
