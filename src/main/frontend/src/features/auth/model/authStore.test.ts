@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from './authStore'
 import type { IAuthApi } from '../api/IAuthApi'
-import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
+import { clearSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
 
 vi.mock('@/shared/lib/sessionHint', () => ({
   setSessionHint: vi.fn(),
@@ -11,7 +11,6 @@ vi.mock('@/shared/lib/sessionHint', () => ({
 
 const mockedSetSessionHint = vi.mocked(setSessionHint)
 const mockedClearSessionHint = vi.mocked(clearSessionHint)
-const mockedHasSessionHint = vi.mocked(hasSessionHint)
 
 function createApiMock(): IAuthApi {
   return {
@@ -25,7 +24,6 @@ describe('authStore', () => {
   beforeEach(() => {
     mockedSetSessionHint.mockReset()
     mockedClearSessionHint.mockReset()
-    mockedHasSessionHint.mockReset()
   })
 
   it('login sets authenticated state and session hint', async () => {
@@ -63,21 +61,20 @@ describe('authStore', () => {
     expect(store.getState().user).toBeNull()
   })
 
-  it('initialize without hint skips getMe and finishes init', async () => {
+  it('initialize always calls getMe regardless of hint', async () => {
     const api = createApiMock()
-    mockedHasSessionHint.mockReturnValue(false)
+    vi.mocked(api.getMe).mockResolvedValue({ id: '1', username: 'admin', role: 'ADMIN' })
     const store = createAuthStore(api)
 
     await store.getState().initialize()
 
-    expect(api.getMe).not.toHaveBeenCalled()
-    expect(store.getState().isInitializing).toBe(false)
-    expect(store.getState().isAuthenticated).toBe(false)
+    expect(api.getMe).toHaveBeenCalledTimes(1)
+    expect(store.getState().isAuthenticated).toBe(true)
+    expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
   })
 
-  it('initialize with hint hydrates user', async () => {
+  it('initialize hydrates user on success', async () => {
     const api = createApiMock()
-    mockedHasSessionHint.mockReturnValue(true)
     vi.mocked(api.getMe).mockResolvedValue({
       id: '1',
       username: 'admin',
@@ -87,15 +84,13 @@ describe('authStore', () => {
 
     await store.getState().initialize()
 
-    expect(api.getMe).toHaveBeenCalledTimes(1)
     expect(store.getState().isInitializing).toBe(false)
     expect(store.getState().isAuthenticated).toBe(true)
     expect(store.getState().user?.role).toBe('ADMIN')
   })
 
-  it('initialize with invalid hint clears state and session hint', async () => {
+  it('initialize clears state and hint when getMe fails', async () => {
     const api = createApiMock()
-    mockedHasSessionHint.mockReturnValue(true)
     vi.mocked(api.getMe).mockRejectedValue(new Error('401'))
     const store = createAuthStore(api)
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { IAuthApi } from '../api/IAuthApi'
-import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
+import { clearSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
 import type { UserDTO } from '@/entities/user'
 import type { LoginCredentials } from './types'
 
@@ -38,12 +38,9 @@ export function createAuthStore(api: IAuthApi) {
     },
 
     async initialize(): Promise<void> {
-      if (!hasSessionHint()) {
-        set({ user: null, isAuthenticated: false, isInitializing: false })
-        return
-      }
       try {
         const user = await api.getMe()
+        setSessionHint()
         set({ user, isAuthenticated: true, isInitializing: false })
       } catch {
         clearSessionHint()
