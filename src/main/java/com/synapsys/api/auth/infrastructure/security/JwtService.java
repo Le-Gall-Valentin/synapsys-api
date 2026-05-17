@@ -23,9 +23,17 @@ public class JwtService implements AccessTokenPort {
     private final int expiryMinutes;
 
     public JwtService(SynapsysProperties properties) {
-        this.key = Keys.hmacShaKeyFor(
-            properties.jwt().secret().getBytes(StandardCharsets.UTF_8)
-        );
+        String secret = properties.jwt().secret();
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("synapsys.jwt.secret must be configured");
+        }
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                "synapsys.jwt.secret must be at least 32 characters long (got " + keyBytes.length + ")"
+            );
+        }
+        this.key = Keys.hmacShaKeyFor(keyBytes);
         this.expiryMinutes = properties.jwt().expiryMinutes();
     }
 

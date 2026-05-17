@@ -6,7 +6,8 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.TokenExpired,
             AuthException.TokenRevoked,
             AuthException.UserNotFound,
-            AuthException.UsernameAlreadyExists {
+            AuthException.UsernameAlreadyExists,
+            AuthException.EmailAlreadyExists {
 
     private AuthException(String message) {
         super(message);
@@ -34,5 +35,9 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class UsernameAlreadyExists extends AuthException {
         public UsernameAlreadyExists() { super("Username already taken"); }
+    }
+
+    public static final class EmailAlreadyExists extends AuthException {
+        public EmailAlreadyExists() { super("Email already taken"); }
     }
 }

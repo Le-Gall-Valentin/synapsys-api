@@ -41,6 +41,10 @@ public class UserRepositoryAdapter implements UserRepository {
             entity.setRole(command.role());
             return toDomain(jpa.saveAndFlush(entity));
         } catch (DataIntegrityViolationException e) {
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("users_email_key") || (msg.contains("email") && !msg.contains("username"))) {
+                throw new AuthException.EmailAlreadyExists();
+            }
             throw new AuthException.UsernameAlreadyExists();
         }
     }
