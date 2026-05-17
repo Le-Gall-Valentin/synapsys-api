@@ -9,15 +9,15 @@ import org.springframework.web.server.ResponseStatusException;
 @Controller
 public class SpaFallbackController {
 
-    @GetMapping(value = {
-        "/{path:[^\\.]*}",
-        "/{path:[^\\.]*}/**"
-    })
+    @GetMapping(value = {"/{path:[^.]*}", "/**/{path:[^.]*}"})
     public String spa(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        if (uri.equals("/api") || uri.startsWith("/api/")) {
+        String path = request.getRequestURI()
+                .substring(request.getContextPath().length());
+
+        if (path.equals("/api") || path.startsWith("/api/")) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+
         return "forward:/index.html";
     }
 }
