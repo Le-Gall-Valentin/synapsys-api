@@ -1,13 +1,16 @@
 import { LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
+import { ROUTES } from '@/shared/config/routes'
 import { Button } from '@/shared/ui'
 
 export function ProfilePage() {
-  const { user, logout } = useAuth()
+  const user = useAuth((s) => s.user)
+  const logout = useAuth((s) => s.logout)
   const { t } = useTranslation('profile')
 
-  if (!user) return null
+  if (!user) return <Navigate to={ROUTES.LOGIN} replace />
 
   const initials = user.username.slice(0, 2).toUpperCase()
 

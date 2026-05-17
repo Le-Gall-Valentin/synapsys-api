@@ -5,7 +5,7 @@ import { useAuth } from '../model/useAuth'
 import { Button, Input } from '@/shared/ui'
 
 export function LoginForm() {
-  const { login } = useAuth()
+  const login = useAuth((s) => s.login)
   const { t } = useTranslation('auth')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -30,7 +30,10 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
       {hasError && (
-        <div className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red">
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red"
+        >
           <AlertTriangle className="size-3.5 shrink-0" />
           {t('error.credentials')}
         </div>

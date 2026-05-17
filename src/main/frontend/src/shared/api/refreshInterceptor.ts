@@ -15,7 +15,10 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
   function flushQueue(error: unknown): void {
     failedQueue.forEach(({ resolve, reject, config }) => {
       if (error) reject(error)
-      else resolve(client(config))
+      else {
+        config._retry = true
+        resolve(client(config))
+      }
     })
     failedQueue = []
   }
@@ -23,14 +26,22 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+      if (!error.config) {
+        return Promise.reject(error)
+      }
+
+      const original = error.config as InternalAxiosRequestConfig
 
       if (error.response?.status !== 401 || original._retry) {
         return Promise.reject(error)
       }
 
-      // Any URL under /auth/ should not trigger a refresh retry
-      if (original.url?.startsWith('/auth/')) {
+      const requestPath = original.url?.split('?')[0]
+      if (
+        requestPath === '/auth/login' ||
+        requestPath === '/auth/refresh' ||
+        requestPath === '/auth/logout'
+      ) {
         return Promise.reject(error)
       }
 

@@ -4,6 +4,6 @@ import { useAuth } from '@/features/auth'
 import { ROUTES } from '@/shared/config/routes'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth()
+  const isAuthenticated = useAuth((s) => s.isAuthenticated)
   return isAuthenticated ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />
 }

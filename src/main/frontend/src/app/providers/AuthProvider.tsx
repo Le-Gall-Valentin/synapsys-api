@@ -4,12 +4,12 @@ import { registerLogoutCallback } from '@/shared/lib/authCallbacks'
 import { Spinner } from '@/shared/ui'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { initialize, isInitializing, logout } = useAuth()
+  const isInitializing = useAuth((s) => s.isInitializing)
 
   useEffect(() => {
-    registerLogoutCallback(() => void logout())
-    void initialize()
-  }, [initialize, logout])
+    registerLogoutCallback(() => void useAuth.getState().logout())
+    void useAuth.getState().initialize()
+  }, [])
 
   if (isInitializing) return <Spinner />
   return <>{children}</>
