@@ -1,4 +1,1 @@
-export interface ApiError {
-  message: string
-  status: number
-}
+// Reserved for shared API types

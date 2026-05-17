@@ -1,3 +1,5 @@
 export { useAuth } from './model/useAuth'
 export { LoginForm } from './ui/LoginForm'
 export { authTranslations } from './locales'
+export type { IAuthApi } from './api/IAuthApi'
+export type { LoginCredentials } from './model/types'

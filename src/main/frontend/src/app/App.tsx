@@ -1,12 +1,14 @@
-import { AuthProvider, QueryProvider } from './providers'
+import { AuthProvider, ErrorBoundary, QueryProvider } from './providers'
 import { AppRouter } from './router'
 
 export function App() {
   return (
-    <QueryProvider>
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>
-    </QueryProvider>
+    <ErrorBoundary>
+      <QueryProvider>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+      </QueryProvider>
+    </ErrorBoundary>
   )
 }

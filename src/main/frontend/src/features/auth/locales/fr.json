@@ -11,6 +11,7 @@
     "submit": "Se connecter"
   },
   "error": {
-    "credentials": "Identifiant ou mot de passe incorrect."
+    "credentials": "Identifiant ou mot de passe incorrect.",
+    "network": "Service indisponible. Veuillez réessayer."
   }
 }

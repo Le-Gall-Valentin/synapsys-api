@@ -1,8 +1,11 @@
+import { isAxiosError } from 'axios'
 import { useState, type FormEvent } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../model/useAuth'
 import { Button, Input } from '@/shared/ui'
+
+type ErrorKind = 'credentials' | 'network' | null
 
 export function LoginForm() {
   const login = useAuth((s) => s.login)
@@ -10,18 +13,23 @@ export function LoginForm() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [hasError, setHasError] = useState(false)
+  const [errorKind, setErrorKind] = useState<ErrorKind>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
-    setHasError(false)
+    setErrorKind(null)
     setIsLoading(true)
     try {
       await login({ username, password })
-    } catch {
-      setHasError(true)
-      setPassword('')
+    } catch (error) {
+      const is401 = isAxiosError(error) && error.response?.status === 401
+      if (is401) {
+        setErrorKind('credentials')
+        setPassword('')
+      } else {
+        setErrorKind('network')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -29,13 +37,13 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      {hasError && (
+      {errorKind && (
         <div
           role="alert"
           className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red"
         >
           <AlertTriangle className="size-3.5 shrink-0" />
-          {t('error.credentials')}
+          {t(`error.${errorKind}`)}
         </div>
       )}
 

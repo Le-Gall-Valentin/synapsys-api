@@ -1,0 +1,149 @@
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { attachRefreshInterceptor } from './refreshInterceptor'
+import { triggerLogout } from '@/shared/lib'
+
+vi.mock('@/shared/lib', () => ({
+  triggerLogout: vi.fn(),
+  registerLogoutCallback: vi.fn(),
+  setSessionHint: vi.fn(),
+  clearSessionHint: vi.fn(),
+  hasSessionHint: vi.fn(),
+}))
+
+const mockedTriggerLogout = vi.mocked(triggerLogout)
+
+function make401(url: string, retry = false): AxiosError {
+  const config = {
+    url,
+    headers: axios.defaults.headers as never,
+    _retry: retry,
+  } as InternalAxiosRequestConfig & { _retry: boolean }
+  const error = new AxiosError('Unauthorized', '401', config, null, {
+    status: 401,
+    data: null,
+    headers: {} as never,
+    config,
+    statusText: 'Unauthorized',
+  })
+  return error
+}
+
+describe('refreshInterceptor', () => {
+  beforeEach(() => {
+    mockedTriggerLogout.mockReset()
+  })
+
+  it('lets non-401 errors pass through untouched', async () => {
+    const instance = axios.create()
+    attachRefreshInterceptor(instance)
+    const config = {
+      url: '/api/data',
+      headers: {} as never,
+    } as InternalAxiosRequestConfig
+    const error = new AxiosError('Server Error', '500', config, null, {
+      status: 500,
+      data: null,
+      headers: {} as never,
+      config,
+      statusText: 'Internal Server Error',
+    })
+
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    await expect(handler.rejected(error)).rejects.toBeDefined()
+    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+  })
+
+  it('lets 401 on /auth/login pass through without refreshing', async () => {
+    const instance = axios.create()
+    let refreshCalled = false
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') refreshCalled = true
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    attachRefreshInterceptor(instance)
+
+    const error = make401('/auth/login')
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    await expect(handler.rejected(error)).rejects.toBeDefined()
+    expect(refreshCalled).toBe(false)
+    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+  })
+
+  it('lets 401 on /auth/refresh pass through without another refresh', async () => {
+    const instance = axios.create()
+    let refreshCallCount = 0
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') refreshCallCount++
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    attachRefreshInterceptor(instance)
+
+    const error = make401('/auth/refresh')
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    await expect(handler.rejected(error)).rejects.toBeDefined()
+    expect(refreshCallCount).toBe(0)
+  })
+
+  it('does not retry requests that already have _retry=true', async () => {
+    const instance = axios.create()
+    let refreshCalled = false
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') refreshCalled = true
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    attachRefreshInterceptor(instance)
+
+    const error = make401('/api/protected', true)
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    await expect(handler.rejected(error)).rejects.toBeDefined()
+    expect(refreshCalled).toBe(false)
+    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+  })
+
+  it('triggers logout when refresh fails on 401', async () => {
+    const instance = axios.create()
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') {
+        const refreshConfig = { url: '/auth/refresh', headers: {} as never } as InternalAxiosRequestConfig
+        throw new AxiosError('Unauthorized', '401', refreshConfig, null, {
+          status: 401,
+          data: null,
+          headers: {} as never,
+          config: refreshConfig,
+          statusText: 'Unauthorized',
+        })
+      }
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    attachRefreshInterceptor(instance)
+
+    const error = make401('/api/protected')
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    await expect(handler.rejected(error)).rejects.toBeDefined()
+    expect(mockedTriggerLogout).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries original request after successful refresh', async () => {
+    const instance = axios.create()
+    const retried: string[] = []
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') {
+        return { data: {}, status: 204, statusText: 'No Content', headers: {}, config }
+      }
+      if (config.url === '/api/data') {
+        retried.push(config.url)
+        return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config }
+      }
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    attachRefreshInterceptor(instance)
+
+    const error = make401('/api/data')
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    const result = await handler.rejected(error)
+    expect((result as { data: { ok: boolean } }).data.ok).toBe(true)
+    expect(retried).toContain('/api/data')
+    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+  })
+})
