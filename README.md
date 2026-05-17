@@ -81,6 +81,7 @@ Key variables:
 | `SYNAPSYS_CA_KEYSTORE_PATH` | Path to the internal CA keystore |
 | `SYNAPSYS_CA_KEYSTORE_PASSWORD` | CA keystore password |
 | `SYNAPSYS_ENROLLMENT_TOKEN_TTL_MINUTES` | Enrollment token validity |
+| `SYNAPSYS_SEED_PASSWORD` | Initial admin password — required when `SYNAPSYS_SEED_ENABLED=true` |
 
 ### 3. Run with Docker Compose (recommended)
 
