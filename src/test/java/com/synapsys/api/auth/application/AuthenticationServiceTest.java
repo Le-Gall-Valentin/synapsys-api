@@ -4,6 +4,7 @@ import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.out.AccessTokenPort;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
+import com.synapsys.api.auth.domain.port.out.TokenHashPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ class AuthenticationServiceTest {
     @Mock RefreshTokenRepository refreshTokenRepository;
     @Mock PasswordHasherPort passwordHasher;
     @Mock AccessTokenPort accessTokenPort;
+    @Mock TokenHashPort tokenHashPort;
 
     private AuthenticationService service;
 
@@ -41,9 +43,11 @@ class AuthenticationServiceTest {
     void setUp() {
         service = new AuthenticationService(
             userRepository, refreshTokenRepository,
-            passwordHasher, accessTokenPort,
+            passwordHasher, accessTokenPort, tokenHashPort,
             new AuthConfig(30)
         );
+        lenient().when(tokenHashPort.hash(any(String.class)))
+            .thenAnswer(invocation -> sha256(invocation.getArgument(0, String.class)));
     }
 
     @Test
@@ -101,6 +105,7 @@ class AuthenticationServiceTest {
         AuthTokens result = service.refresh(raw);
 
         assertThat(result.accessToken()).isEqualTo("new_jwt");
+        verify(refreshTokenRepository).markUsed(stored.id());
         verify(refreshTokenRepository).revoke(stored.id());
         verify(refreshTokenRepository).save(any());
     }
@@ -203,6 +208,16 @@ class AuthenticationServiceTest {
         verify(userRepository).save(argThat(cmd ->
             cmd.username().equals("newuser") && cmd.passwordHash().equals("hashed")
         ));
+    }
+
+    @Test
+    void register_existingUsername_throwsUsernameAlreadyExists() {
+        when(userRepository.findByUsername("newuser")).thenReturn(Optional.of(activeUser));
+
+        assertThatThrownBy(() -> service.register(
+            new RegisterCommand("newuser", "new@test.com", "plaintext", Role.USER)
+        )).isInstanceOf(AuthException.UsernameAlreadyExists.class);
+        verify(userRepository, never()).save(any(CreateUserCommand.class));
     }
 
     private String sha256(String raw) {
