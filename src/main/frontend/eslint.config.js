@@ -26,6 +26,9 @@ export default tseslint.config(
   {
     plugins: { boundaries },
     settings: {
+      'import/resolver': {
+        typescript: { alwaysTryTypes: true },
+      },
       'boundaries/elements': [
         { type: 'shared',   pattern: ['src/shared/**'] },
         { type: 'entities', pattern: ['src/entities/**'] },
@@ -40,7 +43,7 @@ export default tseslint.config(
         default: 'disallow',
         rules: [
           { from: 'shared',   allow: ['shared'] },
-          { from: 'entities', allow: ['shared', 'entities'] },
+          { from: 'entities', allow: ['shared'] },
           {
             from: 'features',
             allow: [
