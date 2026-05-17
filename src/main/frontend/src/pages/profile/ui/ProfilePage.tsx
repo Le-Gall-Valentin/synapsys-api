@@ -1,18 +1,31 @@
+import { useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
-import { ROUTES } from '@/shared/config/routes'
+import { ROUTES } from '@/shared/config'
 import { Button } from '@/shared/ui'
 
 export function ProfilePage() {
   const user = useAuth((s) => s.user)
   const logout = useAuth((s) => s.logout)
   const { t } = useTranslation('profile')
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   if (!user) return <Navigate to={ROUTES.LOGIN} replace />
 
   const initials = user.username.slice(0, 2).toUpperCase()
+
+  async function handleLogout(): Promise<void> {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+    } catch {
+      // state is cleared by logout() finally block regardless of API error
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
@@ -36,7 +49,7 @@ export function ProfilePage() {
         </div>
 
         {/* Déconnexion */}
-        <Button onClick={() => void logout()} className="w-full">
+        <Button onClick={() => void handleLogout()} isLoading={isLoggingOut} className="w-full">
           <LogOut className="size-4" />
           {t('action.logout')}
         </Button>
