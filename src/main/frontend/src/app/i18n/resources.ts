@@ -1,7 +1,7 @@
 import { commonTranslations } from '@/shared/config/locales'
-import { authTranslations } from '@/features/auth/locales'
-import { loginTranslations } from '@/pages/login/locales'
-import { profileTranslations } from '@/pages/profile/locales'
+import { authTranslations } from '@/features/auth'
+import { loginTranslations } from '@/pages/login'
+import { profileTranslations } from '@/pages/profile'
 
 export const i18nResources = {
   en: {
