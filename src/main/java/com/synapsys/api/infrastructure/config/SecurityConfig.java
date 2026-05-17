@@ -4,6 +4,7 @@ import com.synapsys.api.auth.infrastructure.web.LoginRateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -30,7 +32,6 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/v3/api-docs/**"
                 ).permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
@@ -40,7 +41,16 @@ public class SecurityConfig {
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                .authenticationEntryPoint((req, res, e) -> {
+                    res.setContentType("application/problem+json");
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    res.getWriter().write("{\"status\":401,\"title\":\"Unauthorized\",\"detail\":\"Authentication required\"}");
+                })
+                .accessDeniedHandler((req, res, e) -> {
+                    res.setContentType("application/problem+json");
+                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    res.getWriter().write("{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"Insufficient permissions\"}");
+                })
             )
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)

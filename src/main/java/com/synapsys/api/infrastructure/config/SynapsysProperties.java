@@ -24,7 +24,6 @@ public record SynapsysProperties(
     ) {}
 
     public record SeedProperties(
-        @DefaultValue("false") boolean enabled,
         @DefaultValue("admin") String username,
         @DefaultValue("admin@synapsys.dev") String email,
         String password

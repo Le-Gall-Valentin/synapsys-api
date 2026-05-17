@@ -7,7 +7,8 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.TokenRevoked,
             AuthException.UserNotFound,
             AuthException.UsernameAlreadyExists,
-            AuthException.EmailAlreadyExists {
+            AuthException.EmailAlreadyExists,
+            AuthException.InsufficientPermissions {
 
     private AuthException(String message) {
         super(message);
@@ -39,5 +40,11 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class EmailAlreadyExists extends AuthException {
         public EmailAlreadyExists() { super("Email already taken"); }
+    }
+
+    public static final class InsufficientPermissions extends AuthException {
+        public InsufficientPermissions(Role callerRole, Role targetRole) {
+            super("Role '" + callerRole + "' cannot create accounts with role '" + targetRole + "'");
+        }
     }
 }

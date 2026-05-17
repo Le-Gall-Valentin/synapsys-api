@@ -22,13 +22,14 @@ public class AuthExceptionHandler {
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ProblemDetail> handle(AuthException e, HttpServletRequest request) {
         int status = switch (e) {
-            case AuthException.InvalidCredentials    __ -> 401;
-            case AuthException.UserNotActive         __ -> 403;
-            case AuthException.TokenExpired          __ -> 401;
-            case AuthException.TokenRevoked          __ -> 401;
-            case AuthException.UserNotFound          __ -> 404;
-            case AuthException.UsernameAlreadyExists __ -> 409;
-            case AuthException.EmailAlreadyExists    __ -> 409;
+            case AuthException.InvalidCredentials      __ -> 401;
+            case AuthException.UserNotActive           __ -> 403;
+            case AuthException.TokenExpired            __ -> 401;
+            case AuthException.TokenRevoked            __ -> 401;
+            case AuthException.UserNotFound            __ -> 404;
+            case AuthException.UsernameAlreadyExists   __ -> 409;
+            case AuthException.EmailAlreadyExists      __ -> 409;
+            case AuthException.InsufficientPermissions __ -> 403;
         };
         log.debug("Auth exception [{}] on {}: {}", status, request.getRequestURI(), e.getMessage());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), e.getMessage());

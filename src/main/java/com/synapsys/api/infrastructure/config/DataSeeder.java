@@ -27,12 +27,9 @@ public class DataSeeder {
     @EventListener(ApplicationReadyEvent.class)
     public void seed() {
         SynapsysProperties.SeedProperties seed = properties.seed();
-        if (seed == null || !seed.enabled()) {
-            return;
-        }
-        if (seed.password() == null || seed.password().isBlank()) {
+        if (seed == null || seed.password() == null || seed.password().isBlank()) {
             throw new IllegalStateException(
-                "SYNAPSYS_SEED_PASSWORD must be set when seeding is enabled"
+                "SYNAPSYS_SEED_PASSWORD must be set — the initial SUPER_ADMIN cannot be created without it"
             );
         }
         try {
