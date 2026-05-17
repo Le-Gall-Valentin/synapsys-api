@@ -5,7 +5,6 @@ import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,24 +30,21 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public Optional<RefreshToken> findByTokenHash(String sha256Hash) {
-        return jpa.findByTokenHash(sha256Hash).map(this::toDomain);
+    public Optional<RefreshToken> findByTokenHash(String tokenHash) {
+        return jpa.findByTokenHash(tokenHash).map(this::toDomain);
     }
 
     @Override
-    @Transactional
     public void markUsed(UUID tokenId) {
         jpa.markUsedById(tokenId);
     }
 
     @Override
-    @Transactional
     public void revoke(UUID tokenId) {
         jpa.revokeById(tokenId);
     }
 
     @Override
-    @Transactional
     public void revokeAllForUser(UUID userId) {
         jpa.revokeAllByUserId(userId);
     }

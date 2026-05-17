@@ -5,3 +5,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/002-create-refresh-tokens.yaml
       relativeToChangelogFile: false
+  - include:
+      file: db/changelog/changes/003-add-refresh-token-expiry-index.yaml
+      relativeToChangelogFile: false

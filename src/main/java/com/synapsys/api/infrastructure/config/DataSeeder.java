@@ -44,7 +44,7 @@ public class DataSeeder {
             ));
             log.info("Default admin user '{}' created", seed.username());
         } catch (AuthException.UsernameAlreadyExists e) {
-            log.debug("Seed user '{}' already exists, skipping", seed.username());
+            log.info("Seed user '{}' already exists, skipping", seed.username());
         }
     }
 }

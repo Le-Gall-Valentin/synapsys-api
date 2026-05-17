@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface RefreshTokenRepository {
     RefreshToken save(RefreshToken token);
-    Optional<RefreshToken> findByTokenHash(String sha256Hash);
+    Optional<RefreshToken> findByTokenHash(String tokenHash);
     void markUsed(UUID tokenId);
     void revoke(UUID tokenId);
     void revokeAllForUser(UUID userId);
