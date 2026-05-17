@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class SpaFallbackController {
 
     @GetMapping(value = {
-        "/{path:(?!api)[^\\.]*}",
-        "/**/{path:(?!api)[^\\.]*}"
+        "/{path:(?!api(?:/|$))[^\\.]*}",
+        "/{path:(?!api(?:/|$))[^\\.]*}/**"
     })
     public String spa() {
         return "forward:/index.html";
