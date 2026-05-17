@@ -147,6 +147,20 @@ class AuthenticationServiceTest {
     }
 
     @Test
+    void refresh_deletedUser_throwsUserNotFound() {
+        String raw = "valid-raw-token";
+        RefreshToken stored = new RefreshToken(
+            UUID.randomUUID(), activeUser.id(), sha256(raw),
+            Instant.now().plusSeconds(3600), false, Instant.now(), null
+        );
+        when(refreshTokenRepository.findByTokenHash(sha256(raw))).thenReturn(Optional.of(stored));
+        when(userRepository.findById(activeUser.id())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.refresh(raw))
+            .isInstanceOf(AuthException.UserNotFound.class);
+    }
+
+    @Test
     void logout_validToken_revokesIt() {
         String raw = "valid-token";
         RefreshToken stored = new RefreshToken(
