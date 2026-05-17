@@ -76,7 +76,7 @@ public class AuthenticationService
         refreshTokenRepository.revoke(token.id());
 
         User user = userRepository.findById(token.userId())
-            .orElseThrow(AuthException.InvalidCredentials::new);
+            .orElseThrow(AuthException.UserNotFound::new);
 
         return createSession(user);
     }
