@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { useAuth } from '@/features/auth'
-import { registerLogoutCallback } from '@/shared/lib/authCallbacks'
+import { registerLogoutCallback } from '@/shared/lib'
 import { Spinner } from '@/shared/ui'
 
 export function AuthProvider({ children }: { children: ReactNode }) {

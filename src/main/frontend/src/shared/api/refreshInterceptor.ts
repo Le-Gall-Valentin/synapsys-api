@@ -1,5 +1,5 @@
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { triggerLogout } from '@/shared/lib/authCallbacks'
+import { triggerLogout } from '@/shared/lib'
 
 interface QueueEntry {
   resolve: (value: unknown) => void

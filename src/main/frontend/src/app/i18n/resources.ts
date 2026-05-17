@@ -1,4 +1,4 @@
-import { commonTranslations } from '@/shared/config/locales'
+import { commonTranslations } from '@/shared/config'
 import { authTranslations } from '@/features/auth'
 import { loginTranslations } from '@/pages/login'
 import { profileTranslations } from '@/pages/profile'

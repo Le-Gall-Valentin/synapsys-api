@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { IAuthApi } from '../api/IAuthApi'
-import { clearSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
+import { clearSessionHint, setSessionHint } from '@/shared/lib'
 import type { UserDTO } from '@/entities/user'
 import type { LoginCredentials } from './types'
 
