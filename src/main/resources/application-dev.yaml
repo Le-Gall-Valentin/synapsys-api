@@ -28,4 +28,4 @@ synapsys:
     enabled: ${SYNAPSYS_SEED_ENABLED:true}
     username: ${SYNAPSYS_SEED_USERNAME:admin}
     email: ${SYNAPSYS_SEED_EMAIL:admin@synapsys.dev}
-    password: ${SYNAPSYS_SEED_PASSWORD:changeme}
+    password: ${SYNAPSYS_SEED_PASSWORD:}
