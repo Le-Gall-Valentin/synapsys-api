@@ -7,20 +7,19 @@ interface QueueEntry {
   config: InternalAxiosRequestConfig
 }
 
-let isRefreshing = false
-let failedQueue: QueueEntry[] = []
-
-const AUTH_URLS = ['/auth/refresh', '/auth/login', '/auth/logout']
-
-function flushQueue(error: unknown, client: AxiosInstance): void {
-  failedQueue.forEach(({ resolve, reject, config }) => {
-    if (error) reject(error)
-    else resolve(client(config))
-  })
-  failedQueue = []
-}
-
 export function attachRefreshInterceptor(client: AxiosInstance): void {
+  // State local to this instance — no pollution between calls
+  let isRefreshing = false
+  let failedQueue: QueueEntry[] = []
+
+  function flushQueue(error: unknown): void {
+    failedQueue.forEach(({ resolve, reject, config }) => {
+      if (error) reject(error)
+      else resolve(client(config))
+    })
+    failedQueue = []
+  }
+
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
@@ -30,7 +29,8 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
         return Promise.reject(error)
       }
 
-      if (AUTH_URLS.some((url) => original.url === url)) {
+      // Any URL under /auth/ should not trigger a refresh retry
+      if (original.url?.startsWith('/auth/')) {
         return Promise.reject(error)
       }
 
@@ -45,10 +45,10 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
 
       try {
         await client.post('/auth/refresh')
-        flushQueue(null, client)
+        flushQueue(null)
         return client(original)
       } catch (refreshError) {
-        flushQueue(refreshError, client)
+        flushQueue(refreshError)
         triggerLogout()
         return Promise.reject(refreshError)
       } finally {
