@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @ApplicationService
 public class RefreshTokenHandler implements RefreshTokenUseCase {
@@ -18,17 +17,20 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final AccessTokenPort accessTokenPort;
+    private final RefreshTokenPort refreshTokenPort;
     private final TokenHashPort tokenHashPort;
     private final AuthConfig authConfig;
 
     public RefreshTokenHandler(RefreshTokenRepository refreshTokenRepository,
                                UserRepository userRepository,
                                AccessTokenPort accessTokenPort,
+                               RefreshTokenPort refreshTokenPort,
                                TokenHashPort tokenHashPort,
                                AuthConfig authConfig) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
         this.accessTokenPort = accessTokenPort;
+        this.refreshTokenPort = refreshTokenPort;
         this.tokenHashPort = tokenHashPort;
         this.authConfig = authConfig;
     }
@@ -38,6 +40,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new AuthException.TokenExpired();
         }
+
         String hash = tokenHashPort.hash(rawRefreshToken);
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
             .orElseThrow(AuthException.TokenExpired::new);
@@ -58,19 +61,15 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
         User user = userRepository.findById(token.userId())
             .orElseThrow(AuthException.UserNotFound::new);
 
-        log.info("Token rotated for user: {}", user.id());
-        return createSession(user);
-    }
+        if (!user.isActive()) {
+            log.warn("Refresh token presented for inactive account: {}", user.id());
+            throw new AuthException.UserNotActive();
+        }
 
-    private AuthTokens createSession(User user) {
-        String rawRefreshToken = UUID.randomUUID().toString();
-        Instant now = Instant.now();
-        RefreshToken refreshToken = new RefreshToken(
-            null, user.id(), tokenHashPort.hash(rawRefreshToken),
-            now.plusSeconds(authConfig.refreshTokenExpiryDays() * 86400L),
-            false, now, null
+        log.info("Token rotated for user: {}", user.id());
+        return new AuthTokens(
+            accessTokenPort.generate(user),
+            refreshTokenPort.generate(user, authConfig.refreshTokenExpiryDays())
         );
-        refreshTokenRepository.save(refreshToken);
-        return new AuthTokens(accessTokenPort.generate(user), rawRefreshToken);
     }
 }

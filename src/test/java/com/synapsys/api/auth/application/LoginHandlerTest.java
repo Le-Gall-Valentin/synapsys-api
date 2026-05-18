@@ -14,17 +14,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LoginHandlerTest {
 
     @Mock UserRepository userRepository;
-    @Mock RefreshTokenRepository refreshTokenRepository;
     @Mock PasswordHasherPort passwordHasher;
     @Mock AccessTokenPort accessTokenPort;
-    @Mock TokenHashPort tokenHashPort;
+    @Mock RefreshTokenPort refreshTokenPort;
 
     private LoginHandler handler;
 
@@ -35,26 +34,25 @@ class LoginHandlerTest {
 
     @BeforeEach
     void setUp() {
+        // Constructor calls passwordHasher.hash() to precompute the dummy hash — stub it first
+        lenient().when(passwordHasher.hash(anyString())).thenReturn("$2a$12$stubbed-dummy-hash-for-tests");
         handler = new LoginHandler(
-            userRepository, refreshTokenRepository,
-            passwordHasher, accessTokenPort, tokenHashPort,
-            new AuthConfig(30)
+            userRepository, passwordHasher, accessTokenPort, refreshTokenPort, new AuthConfig(30)
         );
-        lenient().when(tokenHashPort.hash(any(String.class)))
-            .thenAnswer(i -> TestHashUtils.sha256(i.getArgument(0, String.class)));
     }
 
     @Test
-    void login_success_returnsTokensAndSavesRefreshToken() {
+    void login_success_returnsTokens() {
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(activeUser));
         when(passwordHasher.matches("password", "hashed_pw")).thenReturn(true);
         when(accessTokenPort.generate(activeUser)).thenReturn("jwt_access");
+        when(refreshTokenPort.generate(eq(activeUser), anyInt())).thenReturn("raw_refresh");
 
         AuthTokens result = handler.login(new LoginCommand("user1", "password"));
 
         assertThat(result.accessToken()).isEqualTo("jwt_access");
-        assertThat(result.refreshToken()).isNotBlank();
-        verify(refreshTokenRepository).save(any());
+        assertThat(result.refreshToken()).isEqualTo("raw_refresh");
+        verify(refreshTokenPort).generate(activeUser, 30);
     }
 
     @Test
@@ -63,7 +61,18 @@ class LoginHandlerTest {
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "password")))
             .isInstanceOf(AuthException.InvalidCredentials.class);
-        verifyNoInteractions(refreshTokenRepository);
+        verifyNoInteractions(refreshTokenPort);
+    }
+
+    @Test
+    void login_unknownUser_performsDummyHashComparison() {
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("unknown", "password")))
+            .isInstanceOf(AuthException.InvalidCredentials.class);
+
+        // Dummy comparison must be performed to prevent timing-based username enumeration
+        verify(passwordHasher).matches(eq("password"), anyString());
     }
 
     @Test

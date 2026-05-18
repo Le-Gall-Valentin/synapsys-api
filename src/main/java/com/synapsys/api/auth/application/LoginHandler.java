@@ -7,42 +7,43 @@ import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.util.UUID;
-
 @ApplicationService
 public class LoginHandler implements LoginUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(LoginHandler.class);
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordHasherPort passwordHasher;
     private final AccessTokenPort accessTokenPort;
-    private final TokenHashPort tokenHashPort;
+    private final RefreshTokenPort refreshTokenPort;
     private final AuthConfig authConfig;
+    private final String dummyHash;
 
     public LoginHandler(UserRepository userRepository,
-                        RefreshTokenRepository refreshTokenRepository,
                         PasswordHasherPort passwordHasher,
                         AccessTokenPort accessTokenPort,
-                        TokenHashPort tokenHashPort,
+                        RefreshTokenPort refreshTokenPort,
                         AuthConfig authConfig) {
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.passwordHasher = passwordHasher;
         this.accessTokenPort = accessTokenPort;
-        this.tokenHashPort = tokenHashPort;
+        this.refreshTokenPort = refreshTokenPort;
         this.authConfig = authConfig;
+        // Precomputed hash for constant-time dummy comparison — prevents timing-based username enumeration
+        this.dummyHash = passwordHasher.hash("synapsys-timing-sentinel");
     }
 
     @Override
     public AuthTokens login(LoginCommand command) {
-        User user = userRepository.findByUsername(command.username())
-            .orElseThrow(() -> {
-                log.warn("Login attempt for unknown username: {}", command.username());
-                return new AuthException.InvalidCredentials();
-            });
+        var userOpt = userRepository.findByUsername(command.username());
+
+        if (userOpt.isEmpty()) {
+            passwordHasher.matches(command.password(), dummyHash);
+            log.warn("Login attempt for unknown username");
+            throw new AuthException.InvalidCredentials();
+        }
+
+        User user = userOpt.get();
 
         if (!user.isActive()) {
             log.warn("Login attempt on inactive account: {}", command.username());
@@ -55,18 +56,9 @@ public class LoginHandler implements LoginUseCase {
         }
 
         log.info("Successful login for user: {}", user.id());
-        return createSession(user);
-    }
-
-    AuthTokens createSession(User user) {
-        String rawRefreshToken = UUID.randomUUID().toString();
-        Instant now = Instant.now();
-        RefreshToken refreshToken = new RefreshToken(
-            null, user.id(), tokenHashPort.hash(rawRefreshToken),
-            now.plusSeconds(authConfig.refreshTokenExpiryDays() * 86400L),
-            false, now, null
+        return new AuthTokens(
+            accessTokenPort.generate(user),
+            refreshTokenPort.generate(user, authConfig.refreshTokenExpiryDays())
         );
-        refreshTokenRepository.save(refreshToken);
-        return new AuthTokens(accessTokenPort.generate(user), rawRefreshToken);
     }
 }
