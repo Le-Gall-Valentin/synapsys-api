@@ -16,6 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
     "synapsys.refresh-token.expiry-days=30",
     "synapsys.cookie.secure=false",
     "synapsys.seed.password=smoke-test-seed-password",
+    "synapsys.cors.allowed-origins=",
     "spring.jpa.hibernate.ddl-auto=none"
 })
 class SynapsysApiApplicationTests {

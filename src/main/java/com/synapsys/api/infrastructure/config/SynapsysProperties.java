@@ -3,12 +3,15 @@ package com.synapsys.api.infrastructure.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
+import java.util.List;
+
 @ConfigurationProperties(prefix = "synapsys")
 public record SynapsysProperties(
     JwtProperties jwt,
     RefreshTokenProperties refreshToken,
     CookieProperties cookie,
-    SeedProperties seed
+    SeedProperties seed,
+    CorsProperties cors
 ) {
     public record JwtProperties(
         String secret,
@@ -27,5 +30,9 @@ public record SynapsysProperties(
         @DefaultValue("admin") String username,
         @DefaultValue("admin@synapsys.dev") String email,
         String password
+    ) {}
+
+    public record CorsProperties(
+        @DefaultValue("") List<String> allowedOrigins
     ) {}
 }

@@ -19,7 +19,11 @@ public class GetCurrentUserHandler implements GetCurrentUserUseCase {
 
     @Override
     public User getCurrentUser(UUID userId) {
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
             .orElseThrow(AuthException.UserNotFound::new);
+        if (!user.isActive()) {
+            throw new AuthException.UserNotActive();
+        }
+        return user;
     }
 }

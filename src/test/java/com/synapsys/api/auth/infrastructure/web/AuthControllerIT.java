@@ -39,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "synapsys.refresh-token.expiry-days=30",
     "synapsys.cookie.secure=false",
     "synapsys.seed.password=integration-test-seed-password",
+    "synapsys.cors.allowed-origins=",
     "spring.jpa.hibernate.ddl-auto=none"
 })
 @Testcontainers
@@ -71,6 +72,14 @@ class AuthControllerIT {
         user.setRole(Role.USER);
         user.setActive(true);
         userJpaRepository.save(user);
+
+        UserEntity admin = new UserEntity();
+        admin.setUsername("superadmin");
+        admin.setEmail("superadmin@test.com");
+        admin.setPasswordHash(encoder.encode("adminpass"));
+        admin.setRole(Role.SUPER_ADMIN);
+        admin.setActive(true);
+        userJpaRepository.save(admin);
     }
 
     @Test
@@ -174,11 +183,73 @@ class AuthControllerIT {
             .isEqualTo(true);
     }
 
+    @Test
+    void register_asSuperAdmin_createsUser() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/auth/register")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"securepass\",\"role\":\"USER\"}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.username").value("newuser"))
+            .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void register_asUser_returns403() throws Exception {
+        Cookie access = loginAndGetCookie("access_token");
+
+        mockMvc.perform(post("/api/auth/register")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"securepass\",\"role\":\"USER\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void register_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"securepass\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void register_duplicateUsername_returns409() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/auth/register")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"testuser\",\"email\":\"other@test.com\",\"password\":\"securepass\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void register_superAdminCannotCreateSuperAdmin_returns403() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/auth/register")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"newsa\",\"email\":\"newsa@test.com\",\"password\":\"securepass\",\"role\":\"SUPER_ADMIN\"}"))
+            .andExpect(status().isForbidden());
+    }
+
     private MvcResult login() throws Exception {
         return mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "password"))))
             .andReturn();
+    }
+
+    private Cookie loginAs(String username, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest(username, password))))
+            .andReturn();
+        return result.getResponse().getCookie("access_token");
     }
 
     private Cookie loginAndGetCookie(String name) throws Exception {

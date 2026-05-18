@@ -45,4 +45,14 @@ class GetCurrentUserHandlerTest {
         assertThatThrownBy(() -> handler.getCurrentUser(id))
             .isInstanceOf(AuthException.UserNotFound.class);
     }
+
+    @Test
+    void getCurrentUser_inactiveUser_throwsUserNotActive() {
+        UUID id = UUID.randomUUID();
+        User inactive = new User(id, "user1", "u@test.com", "hash", Role.USER, false, Instant.now());
+        when(userRepository.findById(id)).thenReturn(Optional.of(inactive));
+
+        assertThatThrownBy(() -> handler.getCurrentUser(id))
+            .isInstanceOf(AuthException.UserNotActive.class);
+    }
 }

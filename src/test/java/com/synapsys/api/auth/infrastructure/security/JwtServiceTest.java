@@ -24,7 +24,8 @@ class JwtServiceTest {
             new SynapsysProperties.JwtProperties(SECRET, 15),
             new SynapsysProperties.RefreshTokenProperties(30),
             new SynapsysProperties.CookieProperties(false),
-            null
+            null,
+            new SynapsysProperties.CorsProperties(java.util.List.of())
         );
         jwtService = new JwtService(properties);
     }
