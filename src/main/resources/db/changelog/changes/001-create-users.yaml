@@ -23,13 +23,11 @@ databaseChangeLog:
                   type: VARCHAR(50)
                   constraints:
                     nullable: false
-                    uniqueConstraintName: uq_users_username
               - column:
                   name: email
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
-                    uniqueConstraintName: uq_users_email
               - column:
                   name: password_hash
                   type: VARCHAR(255)
@@ -52,6 +50,14 @@ databaseChangeLog:
                   defaultValueComputed: now()
                   constraints:
                     nullable: false
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: username
+            constraintName: uq_users_username
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: email
+            constraintName: uq_users_email
       rollback:
         - dropTable:
             tableName: users

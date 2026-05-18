@@ -28,7 +28,6 @@ databaseChangeLog:
                   type: VARCHAR(64)
                   constraints:
                     nullable: false
-                    uniqueConstraintName: uq_refresh_tokens_token_hash
               - column:
                   name: expires_at
                   type: TIMESTAMPTZ
@@ -49,6 +48,10 @@ databaseChangeLog:
               - column:
                   name: last_used_at
                   type: TIMESTAMPTZ
+        - addUniqueConstraint:
+            tableName: refresh_tokens
+            columnNames: token_hash
+            constraintName: uq_refresh_tokens_token_hash
         - addForeignKeyConstraint:
             baseTableName: refresh_tokens
             baseColumnNames: user_id
