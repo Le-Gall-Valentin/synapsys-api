@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import boundaries from 'eslint-plugin-boundaries'
+import importPlugin from 'eslint-plugin-import'
 
 export default tseslint.config(
   { ignores: ['dist'] },
@@ -24,7 +25,7 @@ export default tseslint.config(
     },
   },
   {
-    plugins: { boundaries },
+    plugins: { boundaries, import: importPlugin },
     settings: {
       'import/resolver': {
         typescript: { alwaysTryTypes: true },
@@ -64,6 +65,7 @@ export default tseslint.config(
           { from: 'app', allow: ['shared', 'entities', 'features', 'pages', 'app'] },
         ],
       }],
+      'boundaries/no-private': 'error',
     },
   },
 )

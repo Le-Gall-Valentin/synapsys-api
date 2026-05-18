@@ -1,1 +1,1 @@
-// No public types to export yet
+export type {}

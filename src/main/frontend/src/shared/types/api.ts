@@ -1,1 +1,1 @@
-// Reserved for shared API types
+export type {}

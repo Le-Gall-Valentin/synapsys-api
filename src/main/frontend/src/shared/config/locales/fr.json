@@ -1,3 +1,7 @@
 {
-  "loading": "Chargement..."
+  "loading": "Chargement...",
+  "error": {
+    "unexpected": "Une erreur inattendue est survenue.",
+    "retry": "Réessayer"
+  }
 }
