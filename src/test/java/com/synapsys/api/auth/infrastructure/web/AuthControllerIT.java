@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "synapsys.jwt.expiry-minutes=15",
     "synapsys.refresh-token.expiry-days=30",
     "synapsys.cookie.secure=false",
+    "synapsys.seed.password=integration-test-seed-password",
     "spring.jpa.hibernate.ddl-auto=none"
 })
 @Testcontainers

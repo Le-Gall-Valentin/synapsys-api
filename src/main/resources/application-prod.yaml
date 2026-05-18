@@ -25,7 +25,6 @@ synapsys:
   cookie:
     secure: ${SYNAPSYS_COOKIE_SECURE}
   seed:
-    enabled: ${SYNAPSYS_SEED_ENABLED:false}
     username: ${SYNAPSYS_SEED_USERNAME:admin}
     email: ${SYNAPSYS_SEED_EMAIL:admin@synapsys.dev}
     password: ${SYNAPSYS_SEED_PASSWORD:}
