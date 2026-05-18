@@ -1,8 +1,7 @@
 package com.synapsys.api.auth.infrastructure.web;
 
-import com.synapsys.api.auth.domain.model.AdminCreateUserCommand;
-import com.synapsys.api.auth.domain.model.AuthTokens;
 import com.synapsys.api.auth.domain.model.LoginCommand;
+import com.synapsys.api.auth.domain.model.RegisterCommand;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.in.*;
@@ -27,20 +26,20 @@ public class AuthController {
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final LogoutUseCase logoutUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
-    private final AdminCreateUserUseCase adminCreateUserUseCase;
+    private final RegisterUseCase registerUseCase;
     private final CookieService cookieService;
 
     public AuthController(LoginUseCase loginUseCase,
                           RefreshTokenUseCase refreshTokenUseCase,
                           LogoutUseCase logoutUseCase,
                           GetCurrentUserUseCase getCurrentUserUseCase,
-                          AdminCreateUserUseCase adminCreateUserUseCase,
+                          RegisterUseCase registerUseCase,
                           CookieService cookieService) {
         this.loginUseCase = loginUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;
         this.logoutUseCase = logoutUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
-        this.adminCreateUserUseCase = adminCreateUserUseCase;
+        this.registerUseCase = registerUseCase;
         this.cookieService = cookieService;
     }
 
@@ -49,18 +48,18 @@ public class AuthController {
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
                                                      @AuthenticationPrincipal CustomUserDetails caller) {
         Role targetRole = request.role() != null ? request.role() : Role.USER;
-        User user = adminCreateUserUseCase.create(
-            new AdminCreateUserCommand(request.username(), request.email(), request.password(), targetRole, caller.getRole())
+        User user = registerUseCase.register(
+            new RegisterCommand(request.username(), request.email(), request.password(), targetRole, caller.getRole())
         );
         return ResponseEntity.status(201).body(
-            new UserInfoResponse(user.id(), user.username(), user.role().name())
+            new UserInfoResponse(user.id(), user.username(), user.role())
         );
     }
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request,
                                       HttpServletResponse response) {
-        AuthTokens tokens = loginUseCase.login(new LoginCommand(request.username(), request.password()));
+        var tokens = loginUseCase.login(new LoginCommand(request.username(), request.password()));
         response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
         response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));
         return ResponseEntity.noContent().build();
@@ -69,7 +68,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> me(@AuthenticationPrincipal CustomUserDetails caller) {
         User user = getCurrentUserUseCase.getCurrentUser(caller.getUserId());
-        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role().name()));
+        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 
     @PostMapping("/refresh")
@@ -78,7 +77,7 @@ public class AuthController {
         String rawRefreshToken = cookieService
             .extractFromRequest(request, CookieService.REFRESH_COOKIE)
             .orElse(null);
-        AuthTokens tokens = refreshTokenUseCase.refresh(rawRefreshToken);
+        var tokens = refreshTokenUseCase.refresh(rawRefreshToken);
         response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
         response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));
         return ResponseEntity.noContent().build();

@@ -23,13 +23,13 @@ databaseChangeLog:
                   type: VARCHAR(50)
                   constraints:
                     nullable: false
-                    unique: true
+                    uniqueConstraintName: uq_users_username
               - column:
                   name: email
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
-                    unique: true
+                    uniqueConstraintName: uq_users_email
               - column:
                   name: password_hash
                   type: VARCHAR(255)

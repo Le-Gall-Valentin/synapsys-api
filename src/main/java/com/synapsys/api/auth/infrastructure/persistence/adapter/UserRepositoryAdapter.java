@@ -6,6 +6,7 @@ import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByEmail(String email) {
+        return jpa.findByEmail(email).map(this::toDomain);
+    }
+
+    @Override
     public Optional<User> findById(UUID id) {
         return jpa.findById(id).map(this::toDomain);
     }
@@ -41,12 +47,22 @@ public class UserRepositoryAdapter implements UserRepository {
             entity.setRole(command.role());
             return toDomain(jpa.saveAndFlush(entity));
         } catch (DataIntegrityViolationException e) {
-            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-            if (msg.contains("users_email_key") || (msg.contains("email") && !msg.contains("username"))) {
-                throw new AuthException.EmailAlreadyExists();
-            }
-            throw new AuthException.UsernameAlreadyExists();
+            throw resolveConstraintViolation(e);
         }
+    }
+
+    private AuthException resolveConstraintViolation(DataIntegrityViolationException e) {
+        if (e.getCause() instanceof ConstraintViolationException cve) {
+            String name = cve.getConstraintName();
+            if (name != null) {
+                return switch (name) {
+                    case "uq_users_email"    -> new AuthException.EmailAlreadyExists();
+                    case "uq_users_username" -> new AuthException.UsernameAlreadyExists();
+                    default -> new AuthException.DataIntegrityError(name);
+                };
+            }
+        }
+        return new AuthException.DataIntegrityError(null);
     }
 
     private User toDomain(UserEntity e) {

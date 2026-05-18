@@ -4,5 +4,6 @@ public record RegisterCommand(
     String username,
     String email,
     String password,
-    Role role
+    Role role,
+    Role callerRole
 ) {}

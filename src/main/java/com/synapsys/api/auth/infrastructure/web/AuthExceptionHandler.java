@@ -30,6 +30,7 @@ public class AuthExceptionHandler {
             case AuthException.UsernameAlreadyExists   __ -> 409;
             case AuthException.EmailAlreadyExists      __ -> 409;
             case AuthException.InsufficientPermissions __ -> 403;
+            case AuthException.DataIntegrityError      __ -> 500;
         };
         log.debug("Auth exception [{}] on {}: {}", status, request.getRequestURI(), e.getMessage());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), e.getMessage());

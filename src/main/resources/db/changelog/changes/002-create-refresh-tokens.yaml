@@ -28,7 +28,7 @@ databaseChangeLog:
                   type: VARCHAR(64)
                   constraints:
                     nullable: false
-                    unique: true
+                    uniqueConstraintName: uq_refresh_tokens_token_hash
               - column:
                   name: expires_at
                   type: TIMESTAMPTZ

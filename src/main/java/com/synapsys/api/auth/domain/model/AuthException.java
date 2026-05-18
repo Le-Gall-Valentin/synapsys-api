@@ -8,7 +8,8 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.UserNotFound,
             AuthException.UsernameAlreadyExists,
             AuthException.EmailAlreadyExists,
-            AuthException.InsufficientPermissions {
+            AuthException.InsufficientPermissions,
+            AuthException.DataIntegrityError {
 
     private AuthException(String message) {
         super(message);
@@ -45,6 +46,14 @@ public abstract sealed class AuthException extends RuntimeException
     public static final class InsufficientPermissions extends AuthException {
         public InsufficientPermissions(Role callerRole, Role targetRole) {
             super("Role '" + callerRole + "' cannot create accounts with role '" + targetRole + "'");
+        }
+    }
+
+    public static final class DataIntegrityError extends AuthException {
+        public DataIntegrityError(String constraint) {
+            super(constraint != null
+                ? "Unexpected data integrity violation on constraint: " + constraint
+                : "Unexpected data integrity violation");
         }
     }
 }
