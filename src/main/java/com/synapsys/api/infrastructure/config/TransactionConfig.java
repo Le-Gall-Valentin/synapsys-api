@@ -22,9 +22,9 @@ public class TransactionConfig {
     public Advisor applicationServiceTransactionAdvisor(TransactionManager txManager) {
         NameMatchTransactionAttributeSource source = new NameMatchTransactionAttributeSource();
 
-        // refresh(): token revocation must commit even if AuthException is thrown afterward
+        // refresh(): revocation must commit even if TokenRevoked is thrown afterward
         RuleBasedTransactionAttribute refreshAttr = new RuleBasedTransactionAttribute();
-        refreshAttr.getRollbackRules().add(new NoRollbackRuleAttribute(AuthException.class));
+        refreshAttr.getRollbackRules().add(new NoRollbackRuleAttribute(AuthException.TokenRevoked.class));
         source.addTransactionalMethod("refresh", refreshAttr);
 
         // All other methods: default transactional behavior (REQUIRED, rollback on any exception)

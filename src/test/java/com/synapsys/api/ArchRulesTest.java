@@ -47,4 +47,13 @@ class ArchRulesTest {
             .resideInAPackage("..auth.application..");
         rule.check(classes);
     }
+
+    @Test
+    void application_should_not_depend_on_spring_framework() {
+        ArchRule rule = noClasses()
+            .that().resideInAPackage("..auth.application..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage("org.springframework..");
+        rule.check(classes);
+    }
 }
