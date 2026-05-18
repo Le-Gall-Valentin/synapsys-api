@@ -1,5 +1,7 @@
 package com.synapsys.api.auth.infrastructure.web;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
@@ -20,7 +22,11 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     private static final int MAX_ATTEMPTS = 10;
     private static final long WINDOW_MS = 60_000L;
 
-    private final ConcurrentHashMap<String, Deque<Long>> attempts = new ConcurrentHashMap<>();
+    // Bounded cache: max 10 000 IPs, entries expire after WINDOW_MS + 1s of inactivity
+    private final Cache<String, Deque<Long>> attempts = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterAccess(WINDOW_MS + 1_000, TimeUnit.MILLISECONDS)
+        .build();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -28,7 +34,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
         if ("POST".equalsIgnoreCase(request.getMethod())
                 && LOGIN_PATH.equals(request.getRequestURI())) {
-            String ip = resolveClientIp(request);
+            String ip = request.getRemoteAddr();
             if (isRateLimited(ip)) {
                 log.warn("Rate limit exceeded for IP: {}", ip);
                 response.setStatus(429);
@@ -44,7 +50,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
     private boolean isRateLimited(String ip) {
         long now = System.currentTimeMillis();
-        Deque<Long> timestamps = attempts.computeIfAbsent(ip, k -> new ArrayDeque<>());
+        Deque<Long> timestamps = attempts.get(ip, k -> new ArrayDeque<>());
         synchronized (timestamps) {
             while (!timestamps.isEmpty() && timestamps.peekFirst() < now - WINDOW_MS) {
                 timestamps.pollFirst();
@@ -55,13 +61,5 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
             timestamps.addLast(now);
             return false;
         }
-    }
-
-    private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }
