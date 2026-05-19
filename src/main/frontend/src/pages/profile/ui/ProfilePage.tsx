@@ -5,10 +5,12 @@ import { useAuth } from '@/features/auth'
 import { Button } from '@/shared/ui'
 
 export function ProfilePage() {
-  const user = useAuth((s) => s.user)!
+  const user = useAuth((s) => s.user)
   const logout = useAuth((s) => s.logout)
   const { t } = useTranslation('profile')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  if (!user) return null
 
   const initials = user.username.slice(0, 2).toUpperCase()
 

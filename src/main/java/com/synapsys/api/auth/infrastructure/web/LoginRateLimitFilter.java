@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
 
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
@@ -22,16 +24,26 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     private static final int MAX_ATTEMPTS = 10;
     private static final long WINDOW_MS = 60_000L;
 
+    private final LongSupplier clock;
+
     // Bounded cache: max 10 000 IPs, entries expire after WINDOW_MS + 1s of inactivity
     private final Cache<String, Deque<Long>> attempts = Caffeine.newBuilder()
         .maximumSize(10_000)
         .expireAfterAccess(WINDOW_MS + 1_000, TimeUnit.MILLISECONDS)
         .build();
 
+    public LoginRateLimitFilter() {
+        this(System::currentTimeMillis);
+    }
+
+    public LoginRateLimitFilter(LongSupplier clock) {
+        this.clock = clock;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain chain) throws ServletException, IOException {
         if ("POST".equalsIgnoreCase(request.getMethod())
                 && LOGIN_PATH.equals(request.getRequestURI())) {
             String ip = request.getRemoteAddr();
@@ -49,7 +61,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     }
 
     private boolean isRateLimited(String ip) {
-        long now = System.currentTimeMillis();
+        long now = clock.getAsLong();
         Deque<Long> timestamps = attempts.get(ip, k -> new ArrayDeque<>());
         synchronized (timestamps) {
             while (!timestamps.isEmpty() && timestamps.peekFirst() < now - WINDOW_MS) {
