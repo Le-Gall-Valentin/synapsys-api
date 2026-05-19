@@ -13,14 +13,14 @@ public class LoginHandler implements LoginUseCase {
     private final UserRepository userRepository;
     private final PasswordHasherPort passwordHasher;
     private final AccessTokenPort accessTokenPort;
-    private final RefreshTokenPort refreshTokenPort;
+    private final RefreshTokenIssuerPort refreshTokenPort;
     private final int refreshTokenExpiryDays;
     private final String dummyHash;
 
     public LoginHandler(UserRepository userRepository,
                         PasswordHasherPort passwordHasher,
                         AccessTokenPort accessTokenPort,
-                        RefreshTokenPort refreshTokenPort,
+                        RefreshTokenIssuerPort refreshTokenPort,
                         int refreshTokenExpiryDays) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;

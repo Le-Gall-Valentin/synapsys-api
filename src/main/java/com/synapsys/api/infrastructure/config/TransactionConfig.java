@@ -4,6 +4,8 @@ import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.aop.Advisor;
 import org.springframework.aop.Pointcut;
+import org.springframework.aop.aspectj.AspectJExpressionPointcut;
+import org.springframework.aop.support.ComposablePointcut;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +32,12 @@ public class TransactionConfig {
         // All other methods: default transactional behavior (REQUIRED, rollback on any exception)
         source.addTransactionalMethod("*", new DefaultTransactionAttribute());
 
-        Pointcut pointcut = AnnotationMatchingPointcut.forClassAnnotation(ApplicationService.class);
+        // Cover both @ApplicationService beans and handlers declared as @Bean in AppConfig
+        Pointcut byAnnotation = AnnotationMatchingPointcut.forClassAnnotation(ApplicationService.class);
+        AspectJExpressionPointcut byPackage = new AspectJExpressionPointcut();
+        byPackage.setExpression("within(com.synapsys.api.auth.application..*)");
+        Pointcut pointcut = new ComposablePointcut(byAnnotation).union((Pointcut) byPackage);
+
         return new DefaultPointcutAdvisor(pointcut, new TransactionInterceptor(txManager, source));
     }
 }

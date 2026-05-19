@@ -15,7 +15,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      disabled={disabled ?? isLoading}
+      disabled={disabled || isLoading}
       className={`flex items-center justify-center gap-1.5 rounded-lg border border-border-2 bg-bg-2 px-4 py-2.5 text-sm font-medium text-fg-1 transition-colors hover:bg-bg-3 hover:text-fg-0 disabled:opacity-50 ${className}`}
       {...props}
     >

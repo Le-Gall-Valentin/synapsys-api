@@ -1,4 +1,5 @@
 {
+  "loading": "Loading...",
   "error": {
     "unexpected": "An unexpected error occurred.",
     "retry": "Try again"

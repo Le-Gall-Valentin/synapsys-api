@@ -22,7 +22,7 @@ class LoginHandlerTest {
     @Mock UserRepository userRepository;
     @Mock PasswordHasherPort passwordHasher;
     @Mock AccessTokenPort accessTokenPort;
-    @Mock RefreshTokenPort refreshTokenPort;
+    @Mock RefreshTokenIssuerPort refreshTokenPort;
 
     private LoginHandler handler;
 

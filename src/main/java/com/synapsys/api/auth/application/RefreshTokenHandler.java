@@ -15,14 +15,14 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final AccessTokenPort accessTokenPort;
-    private final RefreshTokenPort refreshTokenPort;
+    private final RefreshTokenIssuerPort refreshTokenPort;
     private final TokenHashPort tokenHashPort;
     private final int refreshTokenExpiryDays;
 
     public RefreshTokenHandler(RefreshTokenRepository refreshTokenRepository,
                                UserRepository userRepository,
                                AccessTokenPort accessTokenPort,
-                               RefreshTokenPort refreshTokenPort,
+                               RefreshTokenIssuerPort refreshTokenPort,
                                TokenHashPort tokenHashPort,
                                int refreshTokenExpiryDays) {
         this.refreshTokenRepository = refreshTokenRepository;
@@ -53,9 +53,6 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
             throw new AuthException.TokenExpired();
         }
 
-        refreshTokenRepository.markUsed(token.id());
-        refreshTokenRepository.revoke(token.id());
-
         User user = userRepository.findById(token.userId())
             .orElseThrow(AuthException.UserNotFound::new);
 
@@ -63,6 +60,9 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
             log.warn("Refresh token presented for inactive account: {}", user.id());
             throw new AuthException.UserNotActive();
         }
+
+        refreshTokenRepository.markUsed(token.id());
+        refreshTokenRepository.revoke(token.id());
 
         log.info("Token rotated for user: {}", user.id());
         return new AuthTokens(

@@ -29,9 +29,11 @@ public class SecurityConfig {
                                     JwtAuthenticationFilter jwtFilter,
                                     SynapsysProperties properties) throws Exception {
         var rateLimit = properties.rateLimit();
+        List<String> trustedProxies = rateLimit != null
+            ? rateLimit.trustedProxies().stream().filter(s -> !s.isBlank()).toList()
+            : List.of();
         LoginRateLimitFilter rateLimitFilter = new LoginRateLimitFilter(
-            System::currentTimeMillis,
-            rateLimit != null ? rateLimit.trustedProxies() : java.util.List.of());
+            System::currentTimeMillis, trustedProxies);
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource(properties)))
@@ -68,7 +70,9 @@ public class SecurityConfig {
     }
 
     private CorsConfigurationSource corsConfigurationSource(SynapsysProperties properties) {
-        List<String> allowedOrigins = properties.cors().allowedOrigins();
+        List<String> allowedOrigins = properties.cors() != null
+            ? properties.cors().allowedOrigins().stream().filter(s -> !s.isBlank()).toList()
+            : List.of();
         CorsConfiguration config = new CorsConfiguration();
         if (allowedOrigins.isEmpty()) {
             // Production: SPA served from same origin — no cross-origin requests needed

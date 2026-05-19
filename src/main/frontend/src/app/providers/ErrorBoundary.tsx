@@ -1,5 +1,21 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import i18n from '@/app/i18n'
+import { useTranslation } from 'react-i18next'
+
+function ErrorFallback({ onReset }: { onReset: () => void }) {
+  const { t } = useTranslation('common')
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
+      <p className="text-sm text-fg-2">{t('error.unexpected')}</p>
+      <button
+        className="mt-4 text-xs text-accent underline"
+        onClick={onReset}
+        aria-label={t('error.retry')}
+      >
+        {t('error.retry')}
+      </button>
+    </div>
+  )
+}
 
 interface Props {
   children: ReactNode
@@ -22,20 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
-          <p className="text-sm text-fg-2">
-            {i18n.t('error.unexpected', { ns: 'common' })}
-          </p>
-          <button
-            className="mt-4 text-xs text-accent underline"
-            onClick={() => this.setState({ hasError: false })}
-            aria-label={i18n.t('error.retry', { ns: 'common' })}
-          >
-            {i18n.t('error.retry', { ns: 'common' })}
-          </button>
-        </div>
-      )
+      return <ErrorFallback onReset={() => this.setState({ hasError: false })} />
     }
     return this.props.children
   }

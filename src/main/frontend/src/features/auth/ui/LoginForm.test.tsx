@@ -1,10 +1,10 @@
 import { render, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useAuth } from '@/features/auth'
+import { useAuth } from '@/features/auth/model/useAuth'
 import { CredentialsError, NetworkError } from '../model/errors'
 import { LoginForm } from './LoginForm'
 
-vi.mock('@/features/auth', () => ({ useAuth: vi.fn() }))
+vi.mock('@/features/auth/model/useAuth', () => ({ useAuth: vi.fn() }))
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
 
 const mockUseAuth = vi.mocked(useAuth)

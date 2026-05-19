@@ -1,8 +1,8 @@
-import type { UserDTO } from '@/entities/user'
+import type { User } from '@/entities/user'
 import type { LoginCredentials } from '../model/types'
 
 export interface IAuthApi {
-  login(credentials: LoginCredentials): Promise<UserDTO>
+  login(credentials: LoginCredentials): Promise<User>
   logout(): Promise<void>
-  getMe(): Promise<UserDTO>
+  getMe(): Promise<User>
 }

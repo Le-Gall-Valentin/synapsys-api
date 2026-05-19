@@ -2,7 +2,7 @@ import { CredentialsError } from '../model/errors'
 import { useState, type FormEvent } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '@/features/auth'
+import { useAuth } from '../model/useAuth'
 import { Button, Input } from '@/shared/ui'
 
 type ErrorKind = 'credentials' | 'network' | null

@@ -23,7 +23,7 @@ class RefreshTokenHandlerTest {
     @Mock RefreshTokenRepository refreshTokenRepository;
     @Mock UserRepository userRepository;
     @Mock AccessTokenPort accessTokenPort;
-    @Mock RefreshTokenPort refreshTokenPort;
+    @Mock RefreshTokenIssuerPort refreshTokenPort;
     @Mock TokenHashPort tokenHashPort;
 
     private RefreshTokenHandler handler;

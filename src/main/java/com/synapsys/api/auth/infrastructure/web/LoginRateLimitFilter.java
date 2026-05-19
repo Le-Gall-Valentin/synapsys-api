@@ -35,10 +35,6 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         .expireAfterAccess(WINDOW_MS + 1_000, TimeUnit.MILLISECONDS)
         .build();
 
-    public LoginRateLimitFilter() {
-        this(System::currentTimeMillis, List.of());
-    }
-
     public LoginRateLimitFilter(LongSupplier clock, List<String> trustedProxies) {
         this.clock = clock;
         this.trustedProxies = List.copyOf(trustedProxies);
