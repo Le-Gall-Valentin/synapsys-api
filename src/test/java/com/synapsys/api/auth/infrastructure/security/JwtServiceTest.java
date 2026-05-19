@@ -69,4 +69,25 @@ class JwtServiceTest {
         assertThatThrownBy(() -> jwtService.validateAndExtract(token))
             .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void validateAndExtract_throwsOnExpiredToken() {
+        var properties = new SynapsysProperties(
+            new SynapsysProperties.JwtProperties(SECRET, -1),
+            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.CookieProperties(false),
+            null,
+            new SynapsysProperties.CorsProperties(java.util.List.of()),
+            new SynapsysProperties.RateLimitProperties(java.util.List.of())
+        );
+        JwtService expiredJwtService = new JwtService(properties);
+        User user = new User(UUID.randomUUID(), "alice", "alice@test.com",
+            "hash", Role.USER, true, Instant.now());
+
+        String token = expiredJwtService.generate(user);
+
+        assertThatThrownBy(() -> expiredJwtService.validateAndExtract(token))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid JWT token");
+    }
 }

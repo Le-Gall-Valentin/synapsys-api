@@ -7,11 +7,14 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntit
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import org.springframework.stereotype.Component;
 
+import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.Base64;
 
 @Component
 public class RefreshTokenGenerator implements RefreshTokenIssuerPort {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final RefreshTokenJpaRepository jpa;
     private final TokenHashPort tokenHashPort;
@@ -23,7 +26,10 @@ public class RefreshTokenGenerator implements RefreshTokenIssuerPort {
 
     @Override
     public String generate(User user, int expiryDays) {
-        String raw = UUID.randomUUID().toString();
+        byte[] tokenBytes = new byte[32];
+        SECURE_RANDOM.nextBytes(tokenBytes);
+        String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+
         RefreshTokenEntity entity = new RefreshTokenEntity();
         entity.setUserId(user.id());
         entity.setTokenHash(tokenHashPort.hash(raw));
