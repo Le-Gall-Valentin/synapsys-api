@@ -7,8 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository {
+    boolean isEmpty();
     Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
     Optional<User> findById(UUID id);
     User save(CreateUserCommand command);
 }

@@ -1,17 +1,11 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.domain.model.Role;
-import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,25 +31,25 @@ class DataSeederTest {
     }
 
     @Test
-    void seed_duplicateUser_isIdempotent() {
-        User existing = new User(UUID.randomUUID(), "user", "user@test.com", "hash", Role.SUPER_ADMIN, true, Instant.now());
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(existing));
+    void seed_nonEmptyDatabase_skips() {
+        when(userRepository.isEmpty()).thenReturn(false);
         DataSeeder seeder = new DataSeeder(properties("secret"), userRepository, passwordHasher);
 
         assertThatNoException().isThrownBy(seeder::seed);
-        verify(userRepository).findByUsername("user");
+        verify(userRepository).isEmpty();
         verifyNoMoreInteractions(userRepository);
         verifyNoInteractions(passwordHasher);
     }
 
     @Test
-    void seed_success_savesUser() {
-        when(userRepository.findByUsername("user")).thenReturn(Optional.empty());
+    void seed_emptyDatabase_savesUser() {
+        when(userRepository.isEmpty()).thenReturn(true);
         when(passwordHasher.hash("secret")).thenReturn("hashed");
         DataSeeder seeder = new DataSeeder(properties("secret"), userRepository, passwordHasher);
 
         seeder.seed();
 
+        verify(userRepository).isEmpty();
         verify(passwordHasher).hash("secret");
         verify(userRepository).save(any());
     }

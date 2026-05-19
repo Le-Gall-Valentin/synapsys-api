@@ -23,13 +23,13 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByUsername(String username) {
-        return jpa.findByUsername(username).map(this::toDomain);
+    public boolean isEmpty() {
+        return jpa.count() == 0;
     }
 
     @Override
-    public Optional<User> findByEmail(String email) {
-        return jpa.findByEmail(email).map(this::toDomain);
+    public Optional<User> findByUsername(String username) {
+        return jpa.findByUsername(username).map(this::toDomain);
     }
 
     @Override

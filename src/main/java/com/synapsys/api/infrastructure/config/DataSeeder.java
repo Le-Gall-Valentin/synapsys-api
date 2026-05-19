@@ -35,8 +35,8 @@ public class DataSeeder {
                 "SYNAPSYS_SEED_PASSWORD must be set — the initial SUPER_ADMIN cannot be created without it"
             );
         }
-        if (userRepository.findByUsername(seed.username()).isPresent()) {
-            log.info("Seed user '{}' already exists, skipping", seed.username());
+        if (!userRepository.isEmpty()) {
+            log.info("Database already has users, skipping seed");
             return;
         }
         String hash = passwordHasher.hash(seed.password());
