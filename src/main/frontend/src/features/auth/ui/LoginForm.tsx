@@ -2,7 +2,7 @@ import { isAxiosError } from 'axios'
 import { useState, type FormEvent } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../model/useAuth'
+import { useAuth } from '@/features/auth'
 import { Button, Input } from '@/shared/ui'
 
 type ErrorKind = 'credentials' | 'network' | null
@@ -36,7 +36,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {errorKind && (
         <div
           role="alert"
