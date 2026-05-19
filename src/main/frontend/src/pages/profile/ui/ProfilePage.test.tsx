@@ -23,19 +23,25 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+const baseState = {
+  isAuthenticated: false,
+  isInitializing: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+  initialize: vi.fn(),
+  getMe: vi.fn(),
+}
+
 describe('ProfilePage', () => {
   it('renders nothing when user is null', () => {
-    mockUseAuth.mockImplementation((selector: (s: { user: null; logout: () => void }) => unknown) =>
-      selector({ user: null, logout: vi.fn() })
-    )
+    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, user: null }))
     const { container } = render(<ProfilePage />)
     expect(container.firstChild).toBeNull()
   })
 
   it('renders username and role when user is present', () => {
-    mockUseAuth.mockImplementation(
-      (selector: (s: { user: { username: string; role: string }; logout: () => void }) => unknown) =>
-        selector({ user: { username: 'alice', role: 'USER' }, logout: vi.fn() })
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const } })
     )
     const { getByText } = render(<ProfilePage />)
     expect(getByText('alice')).toBeDefined()

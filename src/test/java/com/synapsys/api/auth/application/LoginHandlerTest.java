@@ -1,6 +1,5 @@
 package com.synapsys.api.auth.application;
 
-import com.synapsys.api.TestHashUtils;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.out.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,16 +41,17 @@ class LoginHandlerTest {
     }
 
     @Test
-    void login_success_returnsTokens() {
+    void login_success_returnsTokensAndUser() {
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(activeUser));
         when(passwordHasher.matches("password", "hashed_pw")).thenReturn(true);
         when(accessTokenPort.generate(activeUser)).thenReturn("jwt_access");
         when(refreshTokenPort.generate(eq(activeUser), anyInt())).thenReturn("raw_refresh");
 
-        AuthTokens result = handler.login(new LoginCommand("user1", "password"));
+        LoginResult result = handler.login(new LoginCommand("user1", "password"));
 
-        assertThat(result.accessToken()).isEqualTo("jwt_access");
-        assertThat(result.refreshToken()).isEqualTo("raw_refresh");
+        assertThat(result.tokens().accessToken()).isEqualTo("jwt_access");
+        assertThat(result.tokens().refreshToken()).isEqualTo("raw_refresh");
+        assertThat(result.user()).isEqualTo(activeUser);
         verify(refreshTokenPort).generate(activeUser, 30);
     }
 

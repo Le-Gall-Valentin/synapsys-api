@@ -21,17 +21,14 @@ describe('authApi', () => {
     mockedClient.get.mockReset()
   })
 
-  it('login posts credentials then fetches current user', async () => {
+  it('login posts credentials and returns user from response', async () => {
     const credentials: LoginCredentials = { username: 'user', password: 'secret' }
     const user = { id: '1', username: 'user', role: 'USER' }
-    mockedClient.post.mockResolvedValue({})
-    mockedClient.get.mockResolvedValue({ data: user })
+    mockedClient.post.mockResolvedValue({ data: user })
 
     await expect(authApi.login(credentials)).resolves.toEqual(user)
     expect(mockedClient.post).toHaveBeenCalledWith('/auth/login', credentials)
-    expect(mockedClient.get).toHaveBeenCalledWith('/auth/me')
-    expect(mockedClient.post.mock.invocationCallOrder[0])
-      .toBeLessThan(mockedClient.get.mock.invocationCallOrder[0])
+    expect(mockedClient.get).not.toHaveBeenCalled()
   })
 
   it('logout calls logout endpoint', async () => {

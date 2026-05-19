@@ -1,8 +1,8 @@
 package com.synapsys.api.auth.domain.port.in;
 
-import com.synapsys.api.auth.domain.model.AuthTokens;
 import com.synapsys.api.auth.domain.model.LoginCommand;
+import com.synapsys.api.auth.domain.model.LoginResult;
 
 public interface LoginUseCase {
-    AuthTokens login(LoginCommand command);
+    LoginResult login(LoginCommand command);
 }

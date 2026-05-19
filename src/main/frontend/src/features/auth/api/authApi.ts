@@ -5,8 +5,7 @@ import type { IAuthApi } from './IAuthApi'
 
 export const authApi: IAuthApi = {
   async login(credentials: LoginCredentials): Promise<UserDTO> {
-    await client.post('/auth/login', credentials)
-    const { data } = await client.get<UserDTO>('/auth/me')
+    const { data } = await client.post<UserDTO>('/auth/login', credentials)
     return data
   },
 

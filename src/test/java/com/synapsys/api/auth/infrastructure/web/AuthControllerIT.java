@@ -3,6 +3,7 @@ package com.synapsys.api.auth.infrastructure.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapsys.api.auth.domain.model.Role;
 
+import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
@@ -83,11 +84,14 @@ class AuthControllerIT {
     }
 
     @Test
-    void login_success_setsTwoHttpOnlyCookies() throws Exception {
+    void login_success_returnUserInfoAndSetsTwoHttpOnlyCookies() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "password"))))
-            .andExpect(status().isNoContent())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.username").value("testuser"))
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.id").isNotEmpty())
             .andReturn();
 
         Cookie access = result.getResponse().getCookie("access_token");
@@ -140,7 +144,7 @@ class AuthControllerIT {
         assertThat(refreshTokenJpaRepository.findByTokenHash(sha256(firstRefresh.getValue())))
             .isPresent()
             .get()
-            .extracting(e -> e.isRevoked())
+            .extracting(RefreshTokenEntity::isRevoked)
             .isEqualTo(true);
     }
 
@@ -155,7 +159,7 @@ class AuthControllerIT {
             .andExpect(status().isUnauthorized());
 
         assertThat(refreshTokenJpaRepository.findAll())
-            .allMatch(e -> e.isRevoked());
+            .allMatch(RefreshTokenEntity::isRevoked);
     }
 
     @Test
@@ -179,7 +183,7 @@ class AuthControllerIT {
         assertThat(refreshTokenJpaRepository.findByTokenHash(sha256(refresh.getValue())))
             .isPresent()
             .get()
-            .extracting(e -> e.isRevoked())
+            .extracting(RefreshTokenEntity::isRevoked)
             .isEqualTo(true);
     }
 

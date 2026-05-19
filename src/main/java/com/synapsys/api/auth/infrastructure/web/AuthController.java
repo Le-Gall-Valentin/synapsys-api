@@ -1,9 +1,6 @@
 package com.synapsys.api.auth.infrastructure.web;
 
-import com.synapsys.api.auth.domain.model.LoginCommand;
-import com.synapsys.api.auth.domain.model.RegisterCommand;
-import com.synapsys.api.auth.domain.model.Role;
-import com.synapsys.api.auth.domain.model.User;
+import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.infrastructure.security.CookieService;
 import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
@@ -57,12 +54,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request,
-                                      HttpServletResponse response) {
-        var tokens = loginUseCase.login(new LoginCommand(request.username(), request.password()));
-        response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
-        response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
+                                                  HttpServletResponse response) {
+        LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
+        response.addCookie(cookieService.buildAccessCookie(result.tokens().accessToken()));
+        response.addCookie(cookieService.buildRefreshCookie(result.tokens().refreshToken()));
+        User user = result.user();
+        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 
     @GetMapping("/me")

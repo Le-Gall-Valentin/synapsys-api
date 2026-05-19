@@ -34,7 +34,7 @@ public class LoginHandler implements LoginUseCase {
     }
 
     @Override
-    public AuthTokens login(LoginCommand command) {
+    public LoginResult login(LoginCommand command) {
         var userOpt = userRepository.findByUsername(command.username());
 
         if (userOpt.isEmpty()) {
@@ -56,9 +56,10 @@ public class LoginHandler implements LoginUseCase {
         }
 
         log.info("Successful login for user: {}", user.id());
-        return new AuthTokens(
+        AuthTokens tokens = new AuthTokens(
             accessTokenPort.generate(user),
             refreshTokenPort.generate(user, authConfig.refreshTokenExpiryDays())
         );
+        return new LoginResult(tokens, user);
     }
 }
