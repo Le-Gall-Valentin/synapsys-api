@@ -7,6 +7,7 @@ import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.UserInfoResponse;
+import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -54,6 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @RateLimiting(byUsername = true)
     public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
                                                   HttpServletResponse response) {
         LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
@@ -70,6 +72,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @RateLimiting
     public ResponseEntity<Void> refresh(HttpServletRequest request,
                                         HttpServletResponse response) {
         String rawRefreshToken = cookieService

@@ -1,8 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapsys.api.auth.infrastructure.security.JwtAuthenticationFilter;
-import com.synapsys.api.auth.infrastructure.web.LoginRateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,13 +27,6 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtAuthenticationFilter jwtFilter,
                                     SynapsysProperties properties) throws Exception {
-        ObjectMapper objectMapper = new ObjectMapper();
-        var rateLimit = properties.rateLimit();
-        List<String> trustedProxies = rateLimit != null
-            ? rateLimit.trustedProxies().stream().filter(s -> !s.isBlank()).toList()
-            : List.of();
-        LoginRateLimitFilter rateLimitFilter = new LoginRateLimitFilter(
-            System::currentTimeMillis, trustedProxies, objectMapper);
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource(properties)))
@@ -52,7 +43,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
-            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req, res, e) -> {
