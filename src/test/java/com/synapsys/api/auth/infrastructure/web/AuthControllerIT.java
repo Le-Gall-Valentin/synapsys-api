@@ -39,6 +39,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "synapsys.jwt.expiry-minutes=15",
     "synapsys.refresh-token.expiry-days=30",
     "synapsys.cookie.secure=false",
+    "synapsys.seed.username=it-admin",
+    "synapsys.seed.email=it-admin@test.local",
     "synapsys.seed.password=integration-test-seed-password",
     "synapsys.cors.allowed-origins=",
     "spring.jpa.hibernate.ddl-auto=none"
@@ -258,6 +260,30 @@ class AuthControllerIT {
 
     private Cookie loginAndGetCookie(String name) throws Exception {
         return login().getResponse().getCookie(name);
+    }
+
+    @Test
+    void login_whenIpRateLimitExceeded_returns429() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            mockMvc.perform(post("/api/auth/login")
+                    .with(req -> { req.setRemoteAddr("198.51.100.1"); return req; })
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "wrongpass"))))
+                .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/auth/login")
+                .with(req -> { req.setRemoteAddr("198.51.100.1"); return req; })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "wrongpass"))))
+            .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void me_withTamperedToken_returns401() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                .cookie(new Cookie("access_token", "eyJhbGciOiJIUzI1NiJ9.tampered.signature")))
+            .andExpect(status().isUnauthorized());
     }
 
     private String sha256(String raw) {

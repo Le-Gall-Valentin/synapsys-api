@@ -70,10 +70,34 @@ class ArchRulesTest {
     }
 
     @Test
+    void jpa_entities_should_reside_in_persistence_entity_package() {
+        ArchRule rule = classes()
+            .that().areAnnotatedWith(Entity.class)
+            .should().resideInAPackage("..infrastructure.persistence.entity..");
+        rule.check(classes);
+    }
+
+    @Test
     void application_services_should_reside_in_application_package() {
         ArchRule rule = classes()
             .that().areAnnotatedWith(ApplicationService.class)
             .should().resideInAPackage("..auth.application..");
+        rule.check(classes);
+    }
+
+    @Test
+    void ports_in_should_be_interfaces() {
+        ArchRule rule = classes()
+            .that().resideInAPackage("..domain.port.in..")
+            .should().beInterfaces();
+        rule.check(classes);
+    }
+
+    @Test
+    void ports_out_should_be_interfaces() {
+        ArchRule rule = classes()
+            .that().resideInAPackage("..domain.port.out..")
+            .should().beInterfaces();
         rule.check(classes);
     }
 }

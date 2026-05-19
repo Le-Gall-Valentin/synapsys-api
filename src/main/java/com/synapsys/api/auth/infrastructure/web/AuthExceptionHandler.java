@@ -38,7 +38,6 @@ public class AuthExceptionHandler {
             log.error("Data integrity violation on {}: {}", request.getRequestURI(), e.getMessage());
             detail = "An unexpected error occurred. Please try again later.";
         } else {
-            log.debug("Auth exception [{}] on {}: {}", status, request.getRequestURI(), e.getMessage());
             detail = e.getMessage();
         }
 

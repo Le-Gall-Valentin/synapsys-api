@@ -1,11 +1,13 @@
 package com.synapsys.api.auth.infrastructure.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -15,6 +17,7 @@ import static org.mockito.Mockito.*;
 class LoginRateLimitFilterTest {
 
     private static final String LOGIN_PATH = "/api/auth/login";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final AtomicLong clock = new AtomicLong(0);
     private LoginRateLimitFilter filter;
@@ -22,7 +25,7 @@ class LoginRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new LoginRateLimitFilter(clock::get, List.of());
+        filter = new LoginRateLimitFilter(clock::get, List.of(), MAPPER);
         chain = mock(FilterChain.class);
     }
 
@@ -97,12 +100,6 @@ class LoginRateLimitFilterTest {
         assertThat(res.getStatus()).isEqualTo(200);
     }
 
-    private static MockHttpServletRequest loginRequest(String remoteAddr) {
-        MockHttpServletRequest req = postTo(LOGIN_PATH);
-        req.setRemoteAddr(remoteAddr);
-        return req;
-    }
-
     @Test
     void refreshPathIsRateLimited() throws Exception {
         for (int i = 0; i < 10; i++) {
@@ -115,7 +112,7 @@ class LoginRateLimitFilterTest {
 
     @Test
     void usesXForwardedForFromTrustedProxy() throws Exception {
-        LoginRateLimitFilter filterWithProxy = new LoginRateLimitFilter(clock::get, List.of("10.0.0.1"));
+        LoginRateLimitFilter filterWithProxy = new LoginRateLimitFilter(clock::get, List.of("10.0.0.1"), MAPPER);
 
         for (int i = 0; i < 10; i++) {
             MockHttpServletRequest req = loginRequest("10.0.0.1");
@@ -132,7 +129,7 @@ class LoginRateLimitFilterTest {
 
     @Test
     void doesNotUseXForwardedForFromUntrustedProxy() throws Exception {
-        LoginRateLimitFilter filterWithProxy = new LoginRateLimitFilter(clock::get, List.of("10.0.0.1"));
+        LoginRateLimitFilter filterWithProxy = new LoginRateLimitFilter(clock::get, List.of("10.0.0.1"), MAPPER);
 
         for (int i = 0; i < 10; i++) {
             MockHttpServletRequest req = loginRequest("9.9.9.9");
@@ -145,6 +142,74 @@ class LoginRateLimitFilterTest {
         MockHttpServletResponse res = new MockHttpServletResponse();
         filterWithProxy.doFilter(req2, res, chain);
         assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    // ── Username rate limit tests ──────────────────────────────────────────
+
+    @Test
+    void twentyAttemptsForSameUsernameAreAllowed() throws Exception {
+        for (int i = 0; i < 20; i++) {
+            MockHttpServletResponse res = new MockHttpServletResponse();
+            filter.doFilter(loginRequestWithBody("2.2.2." + i, "victim"), res, chain);
+            assertThat(res.getStatus()).as("attempt %d", i + 1).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void twentyFirstAttemptForSameUsernameIsRateLimited() throws Exception {
+        for (int i = 0; i < 20; i++) {
+            filter.doFilter(loginRequestWithBody("3.3." + i + ".1", "target"), new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filter.doFilter(loginRequestWithBody("3.3.21.1", "target"), res, chain);
+
+        assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    @Test
+    void usernameLimitIsCaseInsensitive() throws Exception {
+        for (int i = 0; i < 20; i++) {
+            filter.doFilter(loginRequestWithBody("4.4." + i + ".1", "Alice"), new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filter.doFilter(loginRequestWithBody("4.4.21.1", "ALICE"), res, chain);
+
+        assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    @Test
+    void requestWithoutUsernameBodyOnlyUsesIpLimit() throws Exception {
+        // 5 attempts with no body — only IP counter increments
+        for (int i = 0; i < 5; i++) {
+            filter.doFilter(loginRequest("6.6.6.6"), new MockHttpServletResponse(), chain);
+        }
+        // 5 more with a username — username counter starts, IP counter keeps going
+        for (int i = 0; i < 5; i++) {
+            filter.doFilter(loginRequestWithBody("6.6.6.6", "user"), new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filter.doFilter(loginRequestWithBody("6.6.6.6", "user"), res, chain);
+
+        // IP limit (10) reached — should be 429
+        assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private static MockHttpServletRequest loginRequest(String remoteAddr) {
+        MockHttpServletRequest req = postTo(LOGIN_PATH);
+        req.setRemoteAddr(remoteAddr);
+        return req;
+    }
+
+    private static MockHttpServletRequest loginRequestWithBody(String remoteAddr, String username) {
+        MockHttpServletRequest req = loginRequest(remoteAddr);
+        req.setContentType("application/json");
+        req.setContent(("{\"username\":\"" + username + "\",\"password\":\"pass\"}").getBytes(StandardCharsets.UTF_8));
+        return req;
     }
 
     private static MockHttpServletRequest refreshRequest(String remoteAddr) {
