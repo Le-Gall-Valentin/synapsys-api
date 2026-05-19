@@ -124,6 +124,41 @@ describe('refreshInterceptor', () => {
     expect(mockedTriggerLogout).toHaveBeenCalledTimes(1)
   })
 
+  it('queues concurrent 401s and retries all after successful refresh', async () => {
+    const instance = axios.create()
+    let refreshCallCount = 0
+    const retried: string[] = []
+
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') {
+        refreshCallCount++
+        return { data: {}, status: 204, statusText: 'No Content', headers: {}, config }
+      }
+      retried.push(config.url!)
+      return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config }
+    }
+
+    attachRefreshInterceptor(instance)
+
+    const handler = (
+      instance.interceptors.response as unknown as {
+        handlers: { rejected: (e: unknown) => Promise<unknown> }[]
+      }
+    ).handlers[0]
+
+    const [, ,] = await Promise.all([
+      handler.rejected(make401('/api/data1')),
+      handler.rejected(make401('/api/data2')),
+      handler.rejected(make401('/api/data3')),
+    ])
+
+    expect(refreshCallCount).toBe(1)
+    expect(retried).toContain('/api/data1')
+    expect(retried).toContain('/api/data2')
+    expect(retried).toContain('/api/data3')
+    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+  })
+
   it('retries original request after successful refresh', async () => {
     const instance = axios.create()
     const retried: string[] = []

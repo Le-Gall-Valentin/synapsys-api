@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +22,7 @@ class LoginRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new LoginRateLimitFilter(clock::get);
+        filter = new LoginRateLimitFilter(clock::get, List.of());
         chain = mock(FilterChain.class);
     }
 
@@ -98,6 +99,56 @@ class LoginRateLimitFilterTest {
 
     private static MockHttpServletRequest loginRequest(String remoteAddr) {
         MockHttpServletRequest req = postTo(LOGIN_PATH);
+        req.setRemoteAddr(remoteAddr);
+        return req;
+    }
+
+    @Test
+    void refreshPathIsRateLimited() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            filter.doFilter(refreshRequest("3.3.3.3"), new MockHttpServletResponse(), chain);
+        }
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filter.doFilter(refreshRequest("3.3.3.3"), res, chain);
+        assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    @Test
+    void usesXForwardedForFromTrustedProxy() throws Exception {
+        LoginRateLimitFilter filterWithProxy = new LoginRateLimitFilter(clock::get, List.of("10.0.0.1"));
+
+        for (int i = 0; i < 10; i++) {
+            MockHttpServletRequest req = loginRequest("10.0.0.1");
+            req.addHeader("X-Forwarded-For", "1.2.3.4");
+            filterWithProxy.doFilter(req, new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletRequest req = loginRequest("10.0.0.1");
+        req.addHeader("X-Forwarded-For", "1.2.3.4");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filterWithProxy.doFilter(req, res, chain);
+        assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    @Test
+    void doesNotUseXForwardedForFromUntrustedProxy() throws Exception {
+        LoginRateLimitFilter filterWithProxy = new LoginRateLimitFilter(clock::get, List.of("10.0.0.1"));
+
+        for (int i = 0; i < 10; i++) {
+            MockHttpServletRequest req = loginRequest("9.9.9.9");
+            req.addHeader("X-Forwarded-For", "1.2.3.4");
+            filterWithProxy.doFilter(req, new MockHttpServletResponse(), chain);
+        }
+
+        MockHttpServletRequest req2 = loginRequest("9.9.9.9");
+        req2.addHeader("X-Forwarded-For", "5.6.7.8");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filterWithProxy.doFilter(req2, res, chain);
+        assertThat(res.getStatus()).isEqualTo(429);
+    }
+
+    private static MockHttpServletRequest refreshRequest(String remoteAddr) {
+        MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/auth/refresh");
         req.setRemoteAddr(remoteAddr);
         return req;
     }

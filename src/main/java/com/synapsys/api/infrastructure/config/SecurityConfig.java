@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
+import com.synapsys.api.auth.infrastructure.security.JwtAuthenticationFilter;
 import com.synapsys.api.auth.infrastructure.web.LoginRateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +28,10 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtAuthenticationFilter jwtFilter,
                                     SynapsysProperties properties) throws Exception {
-        LoginRateLimitFilter rateLimitFilter = new LoginRateLimitFilter();
+        var rateLimit = properties.rateLimit();
+        LoginRateLimitFilter rateLimitFilter = new LoginRateLimitFilter(
+            System::currentTimeMillis,
+            rateLimit != null ? rateLimit.trustedProxies() : java.util.List.of());
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource(properties)))

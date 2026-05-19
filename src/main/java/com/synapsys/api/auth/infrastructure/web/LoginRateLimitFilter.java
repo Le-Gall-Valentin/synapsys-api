@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
@@ -21,10 +22,12 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(LoginRateLimitFilter.class);
     private static final String LOGIN_PATH = "/api/auth/login";
+    private static final String REFRESH_PATH = "/api/auth/refresh";
     private static final int MAX_ATTEMPTS = 10;
     private static final long WINDOW_MS = 60_000L;
 
     private final LongSupplier clock;
+    private final List<String> trustedProxies;
 
     // Bounded cache: max 10 000 IPs, entries expire after WINDOW_MS + 1s of inactivity
     private final Cache<String, Deque<Long>> attempts = Caffeine.newBuilder()
@@ -33,20 +36,22 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         .build();
 
     public LoginRateLimitFilter() {
-        this(System::currentTimeMillis);
+        this(System::currentTimeMillis, List.of());
     }
 
-    public LoginRateLimitFilter(LongSupplier clock) {
+    public LoginRateLimitFilter(LongSupplier clock, List<String> trustedProxies) {
         this.clock = clock;
+        this.trustedProxies = List.copyOf(trustedProxies);
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws ServletException, IOException {
+        String uri = request.getRequestURI();
         if ("POST".equalsIgnoreCase(request.getMethod())
-                && LOGIN_PATH.equals(request.getRequestURI())) {
-            String ip = request.getRemoteAddr();
+                && (LOGIN_PATH.equals(uri) || REFRESH_PATH.equals(uri))) {
+            String ip = resolveClientIp(request);
             if (isRateLimited(ip)) {
                 log.warn("Rate limit exceeded for IP: {}", ip);
                 response.setStatus(429);
@@ -58,6 +63,17 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
             }
         }
         chain.doFilter(request, response);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String remoteAddr = request.getRemoteAddr();
+        if (trustedProxies.contains(remoteAddr)) {
+            String xff = request.getHeader("X-Forwarded-For");
+            if (xff != null && !xff.isBlank()) {
+                return xff.split(",")[0].trim();
+            }
+        }
+        return remoteAddr;
     }
 
     private boolean isRateLimited(String ip) {

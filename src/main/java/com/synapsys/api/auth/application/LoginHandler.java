@@ -3,11 +3,9 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.LoginUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
-import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ApplicationService
 public class LoginHandler implements LoginUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(LoginHandler.class);
@@ -16,19 +14,19 @@ public class LoginHandler implements LoginUseCase {
     private final PasswordHasherPort passwordHasher;
     private final AccessTokenPort accessTokenPort;
     private final RefreshTokenPort refreshTokenPort;
-    private final AuthConfig authConfig;
+    private final int refreshTokenExpiryDays;
     private final String dummyHash;
 
     public LoginHandler(UserRepository userRepository,
                         PasswordHasherPort passwordHasher,
                         AccessTokenPort accessTokenPort,
                         RefreshTokenPort refreshTokenPort,
-                        AuthConfig authConfig) {
+                        int refreshTokenExpiryDays) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
-        this.authConfig = authConfig;
+        this.refreshTokenExpiryDays = refreshTokenExpiryDays;
         // Precomputed hash for constant-time dummy comparison — prevents timing-based username enumeration
         this.dummyHash = passwordHasher.hash("synapsys-timing-sentinel");
     }
@@ -58,7 +56,7 @@ public class LoginHandler implements LoginUseCase {
         log.info("Successful login for user: {}", user.id());
         AuthTokens tokens = new AuthTokens(
             accessTokenPort.generate(user),
-            refreshTokenPort.generate(user, authConfig.refreshTokenExpiryDays())
+            refreshTokenPort.generate(user, refreshTokenExpiryDays)
         );
         return new LoginResult(tokens, user);
     }

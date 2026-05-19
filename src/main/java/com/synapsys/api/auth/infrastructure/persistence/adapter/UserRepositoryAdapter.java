@@ -38,6 +38,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public void deactivate(UUID userId) {
+        jpa.deactivateById(userId);
+    }
+
+    @Override
     public User save(CreateUserCommand command) {
         try {
             UserEntity entity = new UserEntity();

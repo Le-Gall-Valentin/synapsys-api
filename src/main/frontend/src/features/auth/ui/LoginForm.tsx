@@ -1,4 +1,4 @@
-import { isAxiosError } from 'axios'
+import { CredentialsError } from '../model/errors'
 import { useState, type FormEvent } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -23,8 +23,7 @@ export function LoginForm() {
     try {
       await login({ username, password })
     } catch (error) {
-      const is401 = isAxiosError(error) && error.response?.status === 401
-      if (is401) {
+      if (error instanceof CredentialsError) {
         setErrorKind('credentials')
         setPassword('')
       } else {

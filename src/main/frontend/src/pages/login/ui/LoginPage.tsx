@@ -89,6 +89,7 @@ export function LoginPage() {
               viewBox="0 0 320 240"
               xmlns="http://www.w3.org/2000/svg"
               className="h-auto w-full"
+              aria-hidden="true"
             >
               <g stroke="rgba(94,234,212,0.25)" strokeWidth="1" fill="none">
                 {nodes.map((n, i) => (

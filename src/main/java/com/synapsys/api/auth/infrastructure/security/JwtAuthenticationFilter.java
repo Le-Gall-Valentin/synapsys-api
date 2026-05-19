@@ -1,13 +1,10 @@
-package com.synapsys.api.infrastructure.config;
+package com.synapsys.api.auth.infrastructure.security;
 
-import com.synapsys.api.auth.infrastructure.security.CookieService;
-import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
-import com.synapsys.api.auth.infrastructure.security.JwtService;
-import com.synapsys.api.auth.infrastructure.security.UserClaims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,9 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain chain) throws ServletException, IOException {
 
         cookieService.extractFromRequest(request, CookieService.ACCESS_COOKIE).ifPresent(token -> {
             try {

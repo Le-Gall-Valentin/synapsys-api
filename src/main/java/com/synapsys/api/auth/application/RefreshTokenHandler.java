@@ -3,13 +3,11 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.RefreshTokenUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
-import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
-@ApplicationService
 public class RefreshTokenHandler implements RefreshTokenUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenHandler.class);
@@ -19,20 +17,20 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     private final AccessTokenPort accessTokenPort;
     private final RefreshTokenPort refreshTokenPort;
     private final TokenHashPort tokenHashPort;
-    private final AuthConfig authConfig;
+    private final int refreshTokenExpiryDays;
 
     public RefreshTokenHandler(RefreshTokenRepository refreshTokenRepository,
                                UserRepository userRepository,
                                AccessTokenPort accessTokenPort,
                                RefreshTokenPort refreshTokenPort,
                                TokenHashPort tokenHashPort,
-                               AuthConfig authConfig) {
+                               int refreshTokenExpiryDays) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
         this.tokenHashPort = tokenHashPort;
-        this.authConfig = authConfig;
+        this.refreshTokenExpiryDays = refreshTokenExpiryDays;
     }
 
     @Override
@@ -69,7 +67,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
         log.info("Token rotated for user: {}", user.id());
         return new AuthTokens(
             accessTokenPort.generate(user),
-            refreshTokenPort.generate(user, authConfig.refreshTokenExpiryDays())
+            refreshTokenPort.generate(user, refreshTokenExpiryDays)
         );
     }
 }

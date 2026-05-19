@@ -1,0 +1,103 @@
+import { render, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { useAuth } from '@/features/auth'
+import { CredentialsError, NetworkError } from '../model/errors'
+import { LoginForm } from './LoginForm'
+
+vi.mock('@/features/auth', () => ({ useAuth: vi.fn() }))
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
+
+const mockUseAuth = vi.mocked(useAuth)
+
+beforeEach(() => vi.clearAllMocks())
+afterEach(cleanup)
+
+function setup(mockLogin: ReturnType<typeof vi.fn>) {
+  const baseState = {
+    user: null,
+    isAuthenticated: false,
+    isInitializing: false,
+    login: mockLogin,
+    logout: vi.fn(),
+    initialize: vi.fn(),
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockUseAuth.mockImplementation((selector) => selector(baseState as any))
+  return render(<LoginForm />)
+}
+
+describe('LoginForm', () => {
+  it('calls login with credentials on submit', async () => {
+    const mockLogin = vi.fn().mockResolvedValue(undefined)
+    const { getByLabelText, queryByRole } = setup(mockLogin)
+
+    fireEvent.change(getByLabelText('field.username'), { target: { value: 'alice' } })
+    fireEvent.change(getByLabelText('field.password'), { target: { value: 'secret' } })
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() =>
+      expect(mockLogin).toHaveBeenCalledWith({ username: 'alice', password: 'secret' })
+    )
+    expect(queryByRole('alert')).toBeNull()
+  })
+
+  it('shows credentials error and clears password on CredentialsError', async () => {
+    const mockLogin = vi.fn().mockRejectedValue(new CredentialsError())
+    const { getByLabelText, getByRole } = setup(mockLogin)
+
+    fireEvent.change(getByLabelText('field.username'), { target: { value: 'alice' } })
+    fireEvent.change(getByLabelText('field.password'), { target: { value: 'wrong' } })
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => {
+      const alert = getByRole('alert')
+      expect(alert.textContent).toContain('error.credentials')
+    })
+    expect((getByLabelText('field.password') as HTMLInputElement).value).toBe('')
+  })
+
+  it('shows network error on NetworkError', async () => {
+    const mockLogin = vi.fn().mockRejectedValue(new NetworkError())
+    const { getByLabelText, getByRole } = setup(mockLogin)
+
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => {
+      const alert = getByRole('alert')
+      expect(alert.textContent).toContain('error.network')
+    })
+  })
+
+  it('toggles password visibility', async () => {
+    const { container, getByLabelText } = setup(vi.fn())
+    const passwordInput = getByLabelText('field.password') as HTMLInputElement
+    expect(passwordInput.type).toBe('password')
+
+    const showBtn = container.querySelector('[aria-label="field.show_password"]') as HTMLButtonElement
+    await act(async () => { fireEvent.click(showBtn) })
+    expect(passwordInput.type).toBe('text')
+
+    const hideBtn = container.querySelector('[aria-label="field.hide_password"]') as HTMLButtonElement
+    await act(async () => { fireEvent.click(hideBtn) })
+    expect(passwordInput.type).toBe('password')
+  })
+
+  it('disables submit button while loading', async () => {
+    let resolveLogin!: () => void
+    const pendingPromise = new Promise<void>((resolve) => { resolveLogin = resolve })
+    const mockLogin = vi.fn().mockReturnValue(pendingPromise)
+    const { getByLabelText, container } = setup(mockLogin)
+
+    await act(async () => {
+      fireEvent.submit(getByLabelText('field.username').closest('form')!)
+      // flush microtasks so React commits setIsLoading(true)
+      await Promise.resolve()
+    })
+
+    const submitBtn = container.querySelector('button[type="submit"]') as HTMLButtonElement
+    expect(submitBtn.disabled).toBe(true)
+
+    await act(async () => { resolveLogin() })
+    expect(submitBtn.disabled).toBe(false)
+  })
+})

@@ -32,8 +32,17 @@ public class AuthExceptionHandler {
             case AuthException.InsufficientPermissions __ -> 403;
             case AuthException.DataIntegrityError      __ -> 500;
         };
-        log.debug("Auth exception [{}] on {}: {}", status, request.getRequestURI(), e.getMessage());
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), e.getMessage());
+
+        String detail;
+        if (e instanceof AuthException.DataIntegrityError) {
+            log.error("Data integrity violation on {}: {}", request.getRequestURI(), e.getMessage());
+            detail = "An unexpected error occurred. Please try again later.";
+        } else {
+            log.debug("Auth exception [{}] on {}: {}", status, request.getRequestURI(), e.getMessage());
+            detail = e.getMessage();
+        }
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), detail);
         problem.setTitle(e.getClass().getSimpleName());
         problem.setInstance(URI.create(request.getRequestURI()));
         return ResponseEntity.status(status).body(problem);

@@ -15,6 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
     "synapsys.jwt.expiry-minutes=15",
     "synapsys.refresh-token.expiry-days=30",
     "synapsys.cookie.secure=false",
+    "synapsys.seed.username=smoke-admin",
+    "synapsys.seed.email=smoke-admin@test.local",
     "synapsys.seed.password=smoke-test-seed-password",
     "synapsys.cors.allowed-origins=",
     "spring.jpa.hibernate.ddl-auto=none"

@@ -11,7 +11,8 @@ public record SynapsysProperties(
     RefreshTokenProperties refreshToken,
     CookieProperties cookie,
     SeedProperties seed,
-    CorsProperties cors
+    CorsProperties cors,
+    RateLimitProperties rateLimit
 ) {
     public record JwtProperties(
         String secret,
@@ -27,12 +28,16 @@ public record SynapsysProperties(
     ) {}
 
     public record SeedProperties(
-        @DefaultValue("admin") String username,
-        @DefaultValue("admin@synapsys.dev") String email,
+        String username,
+        String email,
         String password
     ) {}
 
     public record CorsProperties(
         @DefaultValue("") List<String> allowedOrigins
+    ) {}
+
+    public record RateLimitProperties(
+        @DefaultValue("") List<String> trustedProxies
     ) {}
 }

@@ -36,7 +36,7 @@ class RefreshTokenHandlerTest {
     @BeforeEach
     void setUp() {
         handler = new RefreshTokenHandler(
-            refreshTokenRepository, userRepository, accessTokenPort, refreshTokenPort, tokenHashPort, new AuthConfig(30)
+            refreshTokenRepository, userRepository, accessTokenPort, refreshTokenPort, tokenHashPort, 30
         );
         lenient().when(tokenHashPort.hash(any(String.class)))
             .thenAnswer(i -> TestHashUtils.sha256(i.getArgument(0, String.class)));

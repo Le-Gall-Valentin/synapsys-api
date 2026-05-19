@@ -4,8 +4,10 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntit
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,4 +29,9 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
     @Transactional
     @Query("UPDATE RefreshTokenEntity t SET t.revoked = true WHERE t.userId = :userId")
     void revokeAllByUserId(UUID userId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM RefreshTokenEntity t WHERE t.expiresAt < :now OR (t.revoked = true AND t.lastUsedAt < :cutoff)")
+    int deleteExpiredAndOldRevoked(@Param("now") Instant now, @Param("cutoff") Instant cutoff);
 }

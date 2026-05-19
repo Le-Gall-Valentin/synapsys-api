@@ -60,7 +60,8 @@ class DataSeederTest {
             new SynapsysProperties.RefreshTokenProperties(30),
             new SynapsysProperties.CookieProperties(false),
             new SynapsysProperties.SeedProperties("user", "user@test.com", password),
-            new SynapsysProperties.CorsProperties(java.util.List.of())
+            new SynapsysProperties.CorsProperties(java.util.List.of()),
+            new SynapsysProperties.RateLimitProperties(java.util.List.of())
         );
     }
 }
