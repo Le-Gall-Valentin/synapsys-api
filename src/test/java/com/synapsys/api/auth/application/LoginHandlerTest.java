@@ -1,5 +1,8 @@
 package com.synapsys.api.auth.application;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.out.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -92,5 +96,46 @@ class LoginHandlerTest {
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "password")))
             .isInstanceOf(AuthException.UserNotActive.class);
+    }
+
+    @Test
+    void login_inactiveUser_doesNotLogUsername() {
+        User inactive = new User(activeUser.id(), "alice", activeUser.email(),
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(inactive));
+        ListAppender<ILoggingEvent> logs = startLogCapture();
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("alice", "password")))
+            .isInstanceOf(AuthException.UserNotActive.class);
+
+        boolean usernameLogged = logs.list.stream()
+            .anyMatch(e -> e.getFormattedMessage().contains("alice"));
+        assertThat(usernameLogged).isFalse();
+    }
+
+    @Test
+    void login_wrongPassword_doesNotLogUsername() {
+        when(userRepository.findByUsername("bob")).thenReturn(Optional.of(
+            new User(activeUser.id(), "bob", activeUser.email(),
+                activeUser.passwordHash(), activeUser.role(), true, activeUser.createdAt())
+        ));
+        when(passwordHasher.matches("wrong", activeUser.passwordHash())).thenReturn(false);
+        ListAppender<ILoggingEvent> logs = startLogCapture();
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("bob", "wrong")))
+            .isInstanceOf(AuthException.InvalidCredentials.class);
+
+        boolean usernameLogged = logs.list.stream()
+            .anyMatch(e -> e.getFormattedMessage().contains("bob"));
+        assertThat(usernameLogged).isFalse();
+    }
+
+    private ListAppender<ILoggingEvent> startLogCapture() {
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LoginHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        return appender;
     }
 }

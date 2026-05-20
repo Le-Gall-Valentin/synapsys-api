@@ -44,12 +44,12 @@ public class LoginHandler implements LoginUseCase {
         User user = userOpt.get();
 
         if (!user.isActive()) {
-            log.warn("Login attempt on inactive account: {}", command.username());
+            log.warn("Login attempt on inactive account");
             throw new AuthException.UserNotActive();
         }
 
         if (!passwordHasher.matches(command.password(), user.passwordHash())) {
-            log.warn("Failed login attempt for username: {}", command.username());
+            log.warn("Failed login attempt — invalid credentials");
             throw new AuthException.InvalidCredentials();
         }
 
