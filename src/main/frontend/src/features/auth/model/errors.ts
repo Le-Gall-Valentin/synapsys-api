@@ -5,3 +5,7 @@ export class CredentialsError extends Error {
 export class NetworkError extends Error {
   constructor() { super('Network error') }
 }
+
+export class ServerError extends Error {
+  constructor() { super('Server error') }
+}

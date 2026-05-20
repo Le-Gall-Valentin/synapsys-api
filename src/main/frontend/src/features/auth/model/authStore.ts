@@ -1,10 +1,8 @@
 import { create } from 'zustand'
-import { isAxiosError } from 'axios'
 import type { IAuthApi } from '../api/IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
 import type { User } from '@/entities/user'
 import type { LoginCredentials } from './types'
-import { CredentialsError, NetworkError } from './errors'
 
 interface AuthState {
   user: User | null
@@ -25,14 +23,9 @@ export function createAuthStore(api: IAuthApi) {
     isInitializing: true,
 
     async login(credentials: LoginCredentials): Promise<void> {
-      try {
-        const user = await api.login(credentials)
-        setSessionHint()
-        set({ user, isAuthenticated: true })
-      } catch (error) {
-        if (isAxiosError(error) && error.response?.status === 401) throw new CredentialsError()
-        throw new NetworkError()
-      }
+      const user = await api.login(credentials)
+      setSessionHint()
+      set({ user, isAuthenticated: true })
     },
 
     async logout(): Promise<void> {
