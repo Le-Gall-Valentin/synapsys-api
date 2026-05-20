@@ -6,11 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Method;
 
@@ -56,9 +54,7 @@ class RateLimitMethodInterceptorTest {
         when(tracker.isLimitExceeded(startsWith("ip:"), anyInt(), anyInt())).thenReturn(true);
 
         assertThatThrownBy(() -> interceptor.invoke(invocation))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+            .isInstanceOf(RateLimitExceededException.class);
 
         verify(invocation, never()).proceed();
     }
@@ -74,9 +70,7 @@ class RateLimitMethodInterceptorTest {
         when(invocation.getArguments()).thenReturn(new Object[]{ new LoginReq("alice") });
 
         assertThatThrownBy(() -> interceptor.invoke(invocation))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+            .isInstanceOf(RateLimitExceededException.class);
     }
 
     @Test

@@ -5,11 +5,9 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Method;
 import java.util.Locale;
@@ -37,8 +35,7 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
 
         if (tracker.isLimitExceeded("ip:" + ip, annotation.ipMax(), annotation.ipWindowSeconds())) {
             log.warn("IP rate limit exceeded for {}", ip);
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                "Too many login attempts. Try again later.");
+            throw new RateLimitExceededException();
         }
 
         if (annotation.byUsername()) {
@@ -47,8 +44,7 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
                     "user:" + username.toLowerCase(Locale.ROOT),
                     annotation.usernameMax(), annotation.usernameWindowSeconds())) {
                 log.warn("Username rate limit exceeded for user: {}", username);
-                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Too many login attempts. Try again later.");
+                throw new RateLimitExceededException();
             }
         }
 
