@@ -33,15 +33,22 @@ class CaffeineAttemptTracker implements AttemptTracker {
     public boolean isLimitExceeded(String key, int max, int windowSeconds) {
         long windowMs = windowSeconds * 1_000L;
         String cacheKey = windowSeconds + ":" + key;
-        Deque<Long> timestamps = cache.get(cacheKey, k -> new ArrayDeque<>());
         long now = clock.getAsLong();
-        synchronized (timestamps) {
-            while (!timestamps.isEmpty() && timestamps.peekFirst() < now - windowMs) {
-                timestamps.pollFirst();
+        boolean[] exceeded = {false};
+
+        cache.asMap().compute(cacheKey, (k, existing) -> {
+            Deque<Long> deque = existing != null ? existing : new ArrayDeque<>();
+            while (!deque.isEmpty() && deque.peekFirst() < now - windowMs) {
+                deque.pollFirst();
             }
-            if (timestamps.size() >= max) return true;
-            timestamps.addLast(now);
-            return false;
-        }
+            if (deque.size() >= max) {
+                exceeded[0] = true;
+            } else {
+                deque.addLast(now);
+            }
+            return deque;
+        });
+
+        return exceeded[0];
     }
 }

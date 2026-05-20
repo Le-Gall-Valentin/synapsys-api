@@ -3,6 +3,8 @@ package com.synapsys.api.infrastructure.ratelimit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,5 +69,25 @@ class CaffeineAttemptTrackerTest {
         }
         assertThat(tracker.isLimitExceeded("user:target", 20, 300)).isTrue();
         assertThat(tracker.isLimitExceeded("user:other", 20, 300)).isFalse();
+    }
+
+    @Test
+    void concurrentRequests_enforceLimit() throws InterruptedException {
+        int threads = 20;
+        int max = 10;
+        CaffeineAttemptTracker realTracker = new CaffeineAttemptTracker();
+        CountDownLatch latch = new CountDownLatch(threads);
+        AtomicInteger allowed = new AtomicInteger();
+
+        for (int i = 0; i < threads; i++) {
+            new Thread(() -> {
+                if (!realTracker.isLimitExceeded("ip:concurrent", max, 60)) {
+                    allowed.incrementAndGet();
+                }
+                latch.countDown();
+            }).start();
+        }
+        latch.await();
+        assertThat(allowed.get()).isLessThanOrEqualTo(max);
     }
 }
