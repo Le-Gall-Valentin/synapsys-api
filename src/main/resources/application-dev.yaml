@@ -18,7 +18,7 @@ springdoc:
 
 synapsys:
   jwt:
-    secret: ${SYNAPSYS_JWT_SECRET:dev-secret-must-be-at-least-32-chars-long}
+    secret: ${SYNAPSYS_JWT_SECRET}
     expiry-minutes: ${SYNAPSYS_JWT_EXPIRY_MINUTES:15}
   refresh-token:
     expiry-days: ${SYNAPSYS_REFRESH_TOKEN_EXPIRY_DAYS:30}
