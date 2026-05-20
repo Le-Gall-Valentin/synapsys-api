@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { registerLogoutCallback } from '@/shared/lib'
+import { setSessionExpiredCallback } from '@/shared/lib'
 import { Spinner } from '@/shared/ui'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -12,7 +12,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (started.current) return
     started.current = true
-    registerLogoutCallback(() => void useAuth.getState().logout())
+    setSessionExpiredCallback(() => void useAuth.getState().logout())
     void useAuth.getState().initialize()
   }, [])
 

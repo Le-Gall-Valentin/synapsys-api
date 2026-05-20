@@ -1,17 +1,17 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { attachRefreshInterceptor } from './refreshInterceptor'
-import { triggerLogout } from '@/shared/lib'
+import { triggerSessionExpired } from '@/shared/lib'
 
 vi.mock('@/shared/lib', () => ({
-  triggerLogout: vi.fn(),
-  registerLogoutCallback: vi.fn(),
+  triggerSessionExpired: vi.fn(),
+  setSessionExpiredCallback: vi.fn(),
   setSessionHint: vi.fn(),
   clearSessionHint: vi.fn(),
   hasSessionHint: vi.fn(),
 }))
 
-const mockedTriggerLogout = vi.mocked(triggerLogout)
+const mockedTriggerSessionExpired = vi.mocked(triggerSessionExpired)
 
 function make401(url: string, retry = false): AxiosError {
   const config = {
@@ -31,7 +31,7 @@ function make401(url: string, retry = false): AxiosError {
 
 describe('refreshInterceptor', () => {
   beforeEach(() => {
-    mockedTriggerLogout.mockReset()
+    mockedTriggerSessionExpired.mockReset()
   })
 
   it('lets non-401 errors pass through untouched', async () => {
@@ -51,7 +51,7 @@ describe('refreshInterceptor', () => {
 
     const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
     await expect(handler.rejected(error)).rejects.toBeDefined()
-    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
 
   it('lets 401 on /auth/login pass through without refreshing', async () => {
@@ -67,7 +67,7 @@ describe('refreshInterceptor', () => {
     const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
     await expect(handler.rejected(error)).rejects.toBeDefined()
     expect(refreshCalled).toBe(false)
-    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
 
   it('lets 401 on /auth/refresh pass through without another refresh', async () => {
@@ -98,7 +98,7 @@ describe('refreshInterceptor', () => {
     const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
     await expect(handler.rejected(error)).rejects.toBeDefined()
     expect(refreshCalled).toBe(false)
-    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
 
   it('triggers logout when refresh fails on 401', async () => {
@@ -121,7 +121,7 @@ describe('refreshInterceptor', () => {
     const error = make401('/api/protected')
     const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
     await expect(handler.rejected(error)).rejects.toBeDefined()
-    expect(mockedTriggerLogout).toHaveBeenCalledTimes(1)
+    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
   })
 
   it('queues concurrent 401s and retries all after successful refresh', async () => {
@@ -156,7 +156,7 @@ describe('refreshInterceptor', () => {
     expect(retried).toContain('/api/data1')
     expect(retried).toContain('/api/data2')
     expect(retried).toContain('/api/data3')
-    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
 
   it('retries original request after successful refresh', async () => {
@@ -179,6 +179,6 @@ describe('refreshInterceptor', () => {
     const result = await handler.rejected(error)
     expect((result as { data: { ok: boolean } }).data.ok).toBe(true)
     expect(retried).toContain('/api/data')
-    expect(mockedTriggerLogout).not.toHaveBeenCalled()
+    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
 })

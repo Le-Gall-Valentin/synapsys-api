@@ -1,5 +1,5 @@
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { triggerLogout } from '@/shared/lib'
+import { triggerSessionExpired } from '@/shared/lib'
 
 interface QueueEntry {
   resolve: (value: unknown) => void
@@ -60,7 +60,7 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
         return client(original)
       } catch (refreshError) {
         flushQueue(refreshError)
-        triggerLogout()
+        triggerSessionExpired()
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false
