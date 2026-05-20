@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.persistence.scheduler;
 
-import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,17 +14,17 @@ public class RefreshTokenPurgeScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenPurgeScheduler.class);
 
-    private final RefreshTokenJpaRepository jpa;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public RefreshTokenPurgeScheduler(RefreshTokenJpaRepository jpa) {
-        this.jpa = jpa;
+    public RefreshTokenPurgeScheduler(RefreshTokenRepository refreshTokenRepository) {
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @Scheduled(cron = "0 0 3 * * *")
     public void purgeExpiredTokens() {
         Instant now = Instant.now();
         Instant cutoff = now.minus(30, ChronoUnit.DAYS);
-        int deleted = jpa.deleteExpiredAndOldRevoked(now, cutoff);
+        int deleted = refreshTokenRepository.deleteExpiredAndRevoked(now, cutoff);
         log.info("Purged {} expired/revoked refresh tokens", deleted);
     }
 }

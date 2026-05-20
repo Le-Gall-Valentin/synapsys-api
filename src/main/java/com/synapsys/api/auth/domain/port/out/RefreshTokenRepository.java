@@ -10,4 +10,5 @@ public interface RefreshTokenRepository {
     void markUsedAndRevoke(UUID tokenId);
     void revoke(UUID tokenId);
     void revokeAllForUser(UUID userId);
+    int deleteExpiredAndRevoked(java.time.Instant now, java.time.Instant cutoff);
 }

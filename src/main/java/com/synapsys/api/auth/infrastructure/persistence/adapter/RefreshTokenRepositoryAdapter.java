@@ -38,6 +38,11 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
         jpa.revokeAllByUserId(userId);
     }
 
+    @Override
+    public int deleteExpiredAndRevoked(java.time.Instant now, java.time.Instant cutoff) {
+        return jpa.deleteExpiredAndOldRevoked(now, cutoff);
+    }
+
     private RefreshToken toDomain(RefreshTokenEntity e) {
         return new RefreshToken(e.getId(), e.getUserId(), e.getTokenHash(),
             e.getExpiresAt(), e.isRevoked(), e.getCreatedAt(), e.getLastUsedAt());
