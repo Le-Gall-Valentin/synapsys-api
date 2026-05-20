@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
+import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
@@ -40,7 +41,11 @@ public class DataSeeder {
             return;
         }
         String hash = passwordHasher.hash(seed.password());
-        userRepository.save(new CreateUserCommand(seed.username(), seed.email(), hash, Role.SUPER_ADMIN));
-        log.info("Default SUPER_ADMIN '{}' created", seed.username());
+        try {
+            userRepository.save(new CreateUserCommand(seed.username(), seed.email(), hash, Role.SUPER_ADMIN));
+            log.info("Default SUPER_ADMIN '{}' created", seed.username());
+        } catch (AuthException.UsernameAlreadyExists e) {
+            log.info("SUPER_ADMIN already exists (concurrent startup), skipping");
+        }
     }
 }

@@ -58,8 +58,7 @@ class RefreshTokenHandlerTest {
 
         assertThat(result.accessToken()).isEqualTo("new_jwt");
         assertThat(result.refreshToken()).isEqualTo("new_raw_refresh");
-        verify(refreshTokenRepository).markUsed(stored.id());
-        verify(refreshTokenRepository).revoke(stored.id());
+        verify(refreshTokenRepository).markUsedAndRevoke(stored.id());
         verify(refreshTokenPort).generate(activeUser, 30);
     }
 

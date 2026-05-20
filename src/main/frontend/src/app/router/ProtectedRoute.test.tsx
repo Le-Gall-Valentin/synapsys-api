@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth'
 import { ProtectedRoute } from './ProtectedRoute'
 
 vi.mock('@/features/auth', () => ({ useAuth: vi.fn() }))
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
 
 const mockUseAuth = vi.mocked(useAuth)
 
@@ -38,5 +39,16 @@ describe('ProtectedRoute', () => {
       </MemoryRouter>
     )
     expect(getByText('protected')).toBeDefined()
+  })
+
+  it('renders spinner while initializing instead of redirecting', () => {
+    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isInitializing: true, isAuthenticated: false }))
+    const { container } = render(
+      <MemoryRouter>
+        <ProtectedRoute><div>protected</div></ProtectedRoute>
+      </MemoryRouter>
+    )
+    expect(container.textContent).not.toContain('protected')
+    expect(container.querySelector('[role="status"]')).not.toBeNull()
   })
 })

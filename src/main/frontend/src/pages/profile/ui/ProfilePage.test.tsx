@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useAuth } from '@/features/auth'
 import { ProfilePage } from './ProfilePage'
@@ -46,5 +46,19 @@ describe('ProfilePage', () => {
     const { getByText } = render(<ProfilePage />)
     expect(getByText('alice')).toBeDefined()
     expect(getByText('USER')).toBeDefined()
+  })
+
+  it('shows error message when logout API fails', async () => {
+    const failingLogout = vi.fn().mockRejectedValue(new Error('network'))
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout: failingLogout })
+    )
+    const { container, getByText } = render(<ProfilePage />)
+
+    await act(async () => {
+      container.querySelector('button')!.click()
+    })
+
+    expect(getByText('error.logout')).toBeDefined()
   })
 })

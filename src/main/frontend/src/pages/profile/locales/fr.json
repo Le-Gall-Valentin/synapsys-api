@@ -1,5 +1,8 @@
 {
   "action": {
     "logout": "Se déconnecter"
+  },
+  "error": {
+    "logout": "La déconnexion a échoué. Veuillez réessayer."
   }
 }

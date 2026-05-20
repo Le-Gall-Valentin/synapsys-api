@@ -61,8 +61,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
             throw new AuthException.UserNotActive();
         }
 
-        refreshTokenRepository.markUsed(token.id());
-        refreshTokenRepository.revoke(token.id());
+        refreshTokenRepository.markUsedAndRevoke(token.id());
 
         log.info("Token rotated for user: {}", user.id());
         return new AuthTokens(

@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
+import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -52,6 +54,16 @@ class DataSeederTest {
         verify(userRepository).isEmpty();
         verify(passwordHasher).hash("secret");
         verify(userRepository).save(any());
+    }
+
+    @Test
+    void seed_concurrentDuplicateInsert_completesNormally() {
+        when(userRepository.isEmpty()).thenReturn(true);
+        when(passwordHasher.hash("secret")).thenReturn("hashed");
+        doThrow(new AuthException.UsernameAlreadyExists()).when(userRepository).save(any());
+        DataSeeder seeder = new DataSeeder(properties("secret"), userRepository, passwordHasher);
+
+        assertThatNoException().isThrownBy(seeder::seed);
     }
 
     private SynapsysProperties properties(String password) {

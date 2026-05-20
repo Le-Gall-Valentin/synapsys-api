@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
 
 vi.mock('@/features/auth', () => ({ useAuth: vi.fn() }))
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
 
 const mockUseAuth = vi.mocked(useAuth)
 
@@ -38,5 +39,16 @@ describe('PublicOnlyRoute', () => {
       </MemoryRouter>
     )
     expect(container.textContent).not.toContain('public')
+  })
+
+  it('renders spinner while initializing instead of showing children', () => {
+    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isInitializing: true, isAuthenticated: false }))
+    const { container } = render(
+      <MemoryRouter>
+        <PublicOnlyRoute><div>public</div></PublicOnlyRoute>
+      </MemoryRouter>
+    )
+    expect(container.textContent).not.toContain('public')
+    expect(container.querySelector('[role="status"]')).not.toBeNull()
   })
 })

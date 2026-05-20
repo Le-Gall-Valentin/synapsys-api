@@ -17,8 +17,8 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
 
     @Modifying
     @Transactional
-    @Query("UPDATE RefreshTokenEntity t SET t.lastUsedAt = CURRENT_TIMESTAMP WHERE t.id = :id")
-    void markUsedById(UUID id);
+    @Query("UPDATE RefreshTokenEntity t SET t.revoked = true, t.lastUsedAt = CURRENT_TIMESTAMP WHERE t.id = :id")
+    void markUsedAndRevokeById(UUID id);
 
     @Modifying
     @Transactional
