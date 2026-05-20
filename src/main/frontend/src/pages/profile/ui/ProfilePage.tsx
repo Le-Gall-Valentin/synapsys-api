@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuth } from '@/features/auth'
 import { Button } from '@/shared/ui'
 
 export function ProfilePage() {
-  const user = useAuth((s) => s.user)
-  const logout = useAuth((s) => s.logout)
+  const { user, logout } = useAuth(
+    useShallow((s) => ({ user: s.user, logout: s.logout }))
+  )
   const { t } = useTranslation('profile')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState(false)
