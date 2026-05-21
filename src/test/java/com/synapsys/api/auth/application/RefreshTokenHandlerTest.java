@@ -51,6 +51,7 @@ class RefreshTokenHandlerTest {
         );
         when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(stored));
         when(userRepository.findById(activeUser.id())).thenReturn(Optional.of(activeUser));
+        when(refreshTokenRepository.tryMarkUsedAndRevoke(stored.id())).thenReturn(true);
         when(accessTokenPort.generate(activeUser)).thenReturn("new_jwt");
         when(refreshTokenPort.generate(eq(activeUser), anyInt())).thenReturn("new_raw_refresh");
 
@@ -58,7 +59,7 @@ class RefreshTokenHandlerTest {
 
         assertThat(result.accessToken()).isEqualTo("new_jwt");
         assertThat(result.refreshToken()).isEqualTo("new_raw_refresh");
-        verify(refreshTokenRepository).markUsedAndRevoke(stored.id());
+        verify(refreshTokenRepository).tryMarkUsedAndRevoke(stored.id());
         verify(refreshTokenPort).generate(activeUser, 30);
     }
 
@@ -115,6 +116,22 @@ class RefreshTokenHandlerTest {
 
         assertThatThrownBy(() -> handler.refresh(raw))
             .isInstanceOf(AuthException.UserNotFound.class);
+    }
+
+    @Test
+    void refresh_concurrentReuse_throwsTokenRevoked() {
+        String raw = "valid-concurrent";
+        RefreshToken stored = new RefreshToken(
+            UUID.randomUUID(), activeUser.id(), TestHashUtils.sha256(raw),
+            Instant.now().plusSeconds(3600), false, Instant.now(), null
+        );
+        when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(stored));
+        when(userRepository.findById(activeUser.id())).thenReturn(Optional.of(activeUser));
+        when(refreshTokenRepository.tryMarkUsedAndRevoke(stored.id())).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.refresh(raw))
+            .isInstanceOf(AuthException.TokenRevoked.class);
+        verifyNoInteractions(refreshTokenPort);
     }
 
     @Test

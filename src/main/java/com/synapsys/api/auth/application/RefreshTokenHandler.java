@@ -61,7 +61,11 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
             throw new AuthException.UserNotActive();
         }
 
-        refreshTokenRepository.markUsedAndRevoke(token.id());
+        if (!refreshTokenRepository.tryMarkUsedAndRevoke(token.id())) {
+            // Token was concurrently consumed by another request — treat as reuse
+            log.warn("Concurrent token reuse detected for user: {}", user.id());
+            throw new AuthException.TokenRevoked();
+        }
 
         log.info("Token rotated for user: {}", user.id());
         return new AuthTokens(

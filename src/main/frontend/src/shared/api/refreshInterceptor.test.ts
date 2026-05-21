@@ -1,7 +1,7 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { attachRefreshInterceptor } from './refreshInterceptor'
-import { triggerSessionExpired } from '@/shared/lib'
+import axios, {AxiosError, type InternalAxiosRequestConfig} from 'axios'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {attachRefreshInterceptor} from './refreshInterceptor'
+import {triggerSessionExpired} from '@/shared/lib'
 
 vi.mock('@/shared/lib', () => ({
   triggerSessionExpired: vi.fn(),
@@ -19,14 +19,13 @@ function make401(url: string, retry = false): AxiosError {
     headers: axios.defaults.headers as never,
     _retry: retry,
   } as InternalAxiosRequestConfig & { _retry: boolean }
-  const error = new AxiosError('Unauthorized', '401', config, null, {
+  return new AxiosError('Unauthorized', '401', config, null, {
     status: 401,
     data: null,
     headers: {} as never,
     config,
     statusText: 'Unauthorized',
   })
-  return error
 }
 
 describe('refreshInterceptor', () => {
@@ -157,6 +156,43 @@ describe('refreshInterceptor', () => {
     expect(retried).toContain('/api/data2')
     expect(retried).toContain('/api/data3')
     expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
+  })
+
+  it('triggers session expired only once when concurrent 401s arrive after failed refresh', async () => {
+    const instance = axios.create()
+    let refreshCallCount = 0
+
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') {
+        refreshCallCount++
+        const refreshConfig = { url: '/auth/refresh', headers: {} as never } as InternalAxiosRequestConfig
+        throw new AxiosError('Unauthorized', '401', refreshConfig, null, {
+          status: 401,
+          data: null,
+          headers: {} as never,
+          config: refreshConfig,
+          statusText: 'Unauthorized',
+        })
+      }
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+
+    attachRefreshInterceptor(instance)
+
+    const handler = (
+      instance.interceptors.response as unknown as {
+        handlers: { rejected: (e: unknown) => Promise<unknown> }[]
+      }
+    ).handlers[0]
+
+    await Promise.allSettled([
+      handler.rejected(make401('/api/data1')),
+      handler.rejected(make401('/api/data2')),
+      handler.rejected(make401('/api/data3')),
+    ])
+
+    expect(refreshCallCount).toBe(1)
+    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
   })
 
   it('retries original request after successful refresh', async () => {

@@ -5,13 +5,9 @@ import com.synapsys.api.auth.domain.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 class AuthExceptionHandlerTest {
 
@@ -49,10 +45,13 @@ class AuthExceptionHandlerTest {
     }
 
     @Test
-    void handle_userNotActive_returns403() {
+    void handle_userNotActive_returns401WithGenericCredentialsMessage() {
         var response = handler.handle(new AuthException.UserNotActive(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Invalid credentials");
+        assertThat(response.getBody().getTitle()).isEqualTo("InvalidCredentials");
     }
 
     @Test

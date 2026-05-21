@@ -11,6 +11,7 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
   // State local to this instance — no pollution between calls
   let isRefreshing = false
   let failedQueue: QueueEntry[] = []
+  let sessionExpiredTriggered = false
 
   function flushQueue(error: unknown): void {
     failedQueue.forEach(({ resolve, reject, config }) => {
@@ -56,11 +57,15 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
 
       try {
         await client.post('/auth/refresh')
+        sessionExpiredTriggered = false
         flushQueue(null)
         return client(original)
       } catch (refreshError) {
         flushQueue(refreshError)
-        triggerSessionExpired()
+        if (!sessionExpiredTriggered) {
+          sessionExpiredTriggered = true
+          triggerSessionExpired()
+        }
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

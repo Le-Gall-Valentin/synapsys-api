@@ -22,27 +22,32 @@ public class AuthExceptionHandler {
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ProblemDetail> handle(AuthException e, HttpServletRequest request) {
         int status = switch (e) {
-            case AuthException.InvalidCredentials      __ -> 401;
-            case AuthException.UserNotActive           __ -> 403;
-            case AuthException.TokenExpired            __ -> 401;
-            case AuthException.TokenRevoked            __ -> 401;
-            case AuthException.UserNotFound            __ -> 404;
-            case AuthException.UsernameAlreadyExists   __ -> 409;
-            case AuthException.EmailAlreadyExists      __ -> 409;
-            case AuthException.InsufficientPermissions __ -> 403;
-            case AuthException.DataIntegrityError      __ -> 500;
+            case AuthException.InvalidCredentials ignored -> 401;
+            case AuthException.UserNotActive ignored -> 401;
+            case AuthException.TokenExpired ignored -> 401;
+            case AuthException.TokenRevoked ignored -> 401;
+            case AuthException.UserNotFound ignored -> 404;
+            case AuthException.UsernameAlreadyExists ignored -> 409;
+            case AuthException.EmailAlreadyExists ignored -> 409;
+            case AuthException.InsufficientPermissions ignored -> 403;
+            case AuthException.DataIntegrityError ignored -> 500;
         };
 
+        String title = e.getClass().getSimpleName();
         String detail;
         if (e instanceof AuthException.DataIntegrityError) {
             log.error("Data integrity violation on {}: {}", request.getRequestURI(), e.getMessage());
             detail = "An unexpected error occurred. Please try again later.";
+        } else if (e instanceof AuthException.UserNotActive) {
+            // Mask account state: return same response as InvalidCredentials to prevent enumeration
+            title = AuthException.InvalidCredentials.class.getSimpleName();
+            detail = "Invalid credentials";
         } else {
             detail = e.getMessage();
         }
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), detail);
-        problem.setTitle(e.getClass().getSimpleName());
+        problem.setTitle(title);
         problem.setInstance(URI.create(request.getRequestURI()));
         return ResponseEntity.status(status).body(problem);
     }
