@@ -30,10 +30,11 @@ public class RefreshTokenGenerator implements RefreshTokenIssuerPort {
         SECURE_RANDOM.nextBytes(tokenBytes);
         String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
 
-        RefreshTokenEntity entity = new RefreshTokenEntity();
-        entity.setUserId(user.id());
-        entity.setTokenHash(tokenHashPort.hash(raw));
-        entity.setExpiresAt(Instant.now().plusSeconds((long) expiryDays * 86400));
+        RefreshTokenEntity entity = new RefreshTokenEntity(
+            user.id(),
+            tokenHashPort.hash(raw),
+            Instant.now().plusSeconds((long) expiryDays * 86400)
+        );
         jpa.save(entity);
         return raw;
     }

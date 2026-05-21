@@ -24,7 +24,8 @@ public class TransactionConfig {
     public Advisor applicationServiceTransactionAdvisor(TransactionManager txManager) {
         NameMatchTransactionAttributeSource source = new NameMatchTransactionAttributeSource();
 
-        // refresh(): revocation must commit even if TokenRevoked is thrown afterward
+        // "refresh" → RefreshTokenHandler.refresh(): revocation must commit even if TokenRevoked is thrown afterward.
+        // WARNING: this rule is bound to the method name — renaming RefreshTokenHandler.refresh() requires updating this string.
         RuleBasedTransactionAttribute refreshAttr = new RuleBasedTransactionAttribute();
         refreshAttr.getRollbackRules().add(new NoRollbackRuleAttribute(AuthException.TokenRevoked.class));
         source.addTransactionalMethod("refresh", refreshAttr);

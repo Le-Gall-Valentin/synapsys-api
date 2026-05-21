@@ -17,6 +17,8 @@ interface AuthActions {
 }
 
 export function createAuthStore(api: IAuthApi) {
+  let initializationStarted = false
+
   return create<AuthState & AuthActions>((set) => ({
     user: null,
     isAuthenticated: false,
@@ -38,6 +40,9 @@ export function createAuthStore(api: IAuthApi) {
     },
 
     async initialize(): Promise<void> {
+      if (initializationStarted) return
+      initializationStarted = true
+
       if (!hasSessionHint()) {
         set({ isInitializing: false })
         return

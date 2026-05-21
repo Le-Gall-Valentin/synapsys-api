@@ -44,7 +44,7 @@ public class DataSeeder {
         try {
             userRepository.save(new CreateUserCommand(seed.username(), seed.email(), hash, Role.SUPER_ADMIN));
             log.info("Default SUPER_ADMIN '{}' created", seed.username());
-        } catch (AuthException.UsernameAlreadyExists e) {
+        } catch (AuthException.UsernameAlreadyExists | AuthException.EmailAlreadyExists e) {
             log.info("SUPER_ADMIN already exists (concurrent startup), skipping");
         }
     }

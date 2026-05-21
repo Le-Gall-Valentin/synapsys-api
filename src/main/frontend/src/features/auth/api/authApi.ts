@@ -21,11 +21,25 @@ export const authApi: IAuthApi = {
   },
 
   async logout(): Promise<void> {
-    await client.post('/auth/logout')
+    try {
+      await client.post('/auth/logout')
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status !== undefined && error.response.status >= 500) {
+        throw new ServerError()
+      }
+      throw new NetworkError()
+    }
   },
 
   async getMe(): Promise<User> {
-    const { data } = await client.get<User>('/auth/me')
-    return data
+    try {
+      const { data } = await client.get<User>('/auth/me')
+      return data
+    } catch (error) {
+      if (isAxiosError(error)) {
+        if (error.response?.status !== undefined && error.response.status >= 500) throw new ServerError()
+      }
+      throw new NetworkError()
+    }
   },
 }

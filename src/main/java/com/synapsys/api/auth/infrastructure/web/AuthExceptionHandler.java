@@ -26,7 +26,7 @@ public class AuthExceptionHandler {
             case AuthException.UserNotActive ignored -> 401;
             case AuthException.TokenExpired ignored -> 401;
             case AuthException.TokenRevoked ignored -> 401;
-            case AuthException.UserNotFound ignored -> 404;
+            case AuthException.UserNotFound ignored -> 401;
             case AuthException.UsernameAlreadyExists ignored -> 409;
             case AuthException.EmailAlreadyExists ignored -> 409;
             case AuthException.InsufficientPermissions ignored -> 403;
@@ -38,8 +38,8 @@ public class AuthExceptionHandler {
         if (e instanceof AuthException.DataIntegrityError) {
             log.error("Data integrity violation on {}: {}", request.getRequestURI(), e.getMessage());
             detail = "An unexpected error occurred. Please try again later.";
-        } else if (e instanceof AuthException.UserNotActive) {
-            // Mask account state: return same response as InvalidCredentials to prevent enumeration
+        } else if (e instanceof AuthException.UserNotActive || e instanceof AuthException.UserNotFound) {
+            // Mask account state/existence: return same response as InvalidCredentials to prevent enumeration
             title = AuthException.InvalidCredentials.class.getSimpleName();
             detail = "Invalid credentials";
         } else {

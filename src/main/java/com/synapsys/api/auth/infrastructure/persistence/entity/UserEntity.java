@@ -2,6 +2,7 @@ package com.synapsys.api.auth.infrastructure.persistence.entity;
 
 import com.synapsys.api.auth.domain.model.Role;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,6 +41,7 @@ public class UserEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Setter(AccessLevel.NONE)
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

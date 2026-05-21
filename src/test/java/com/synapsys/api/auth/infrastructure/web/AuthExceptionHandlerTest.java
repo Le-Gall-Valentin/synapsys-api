@@ -63,10 +63,13 @@ class AuthExceptionHandlerTest {
     }
 
     @Test
-    void handle_userNotFound_returns404() {
+    void handle_userNotFound_returns401WithGenericCredentialsMessage() {
         var response = handler.handle(new AuthException.UserNotFound(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Invalid credentials");
+        assertThat(response.getBody().getTitle()).isEqualTo("InvalidCredentials");
     }
 
     @Test
