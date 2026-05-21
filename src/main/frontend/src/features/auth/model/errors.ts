@@ -9,3 +9,7 @@ export class NetworkError extends Error {
 export class ServerError extends Error {
   constructor() { super('Server error') }
 }
+
+export class RateLimitError extends Error {
+  constructor() { super('Too many requests') }
+}

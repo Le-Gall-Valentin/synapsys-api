@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.ratelimit;
 
-interface AttemptTracker {
+public interface AttemptTracker {
 
     /**
      * Records an attempt for {@code key} and returns {@code true} if the limit is exceeded.
@@ -10,4 +10,7 @@ interface AttemptTracker {
      * @param windowSeconds rolling window duration in seconds
      */
     boolean isLimitExceeded(String key, int max, int windowSeconds);
+
+    /** Clears all tracked attempts. Intended for testing only. */
+    void clearAll();
 }

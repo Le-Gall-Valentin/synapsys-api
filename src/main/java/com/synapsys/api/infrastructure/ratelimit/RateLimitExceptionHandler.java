@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.http.HttpHeaders;
+
 import java.net.URI;
 
 @RestControllerAdvice
@@ -17,6 +19,8 @@ public class RateLimitExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
         problem.setTitle("RateLimitExceeded");
         problem.setInstance(URI.create(request.getRequestURI()));
-        return ResponseEntity.status(429).body(problem);
+        return ResponseEntity.status(429)
+            .header(HttpHeaders.RETRY_AFTER, "60")
+            .body(problem);
     }
 }

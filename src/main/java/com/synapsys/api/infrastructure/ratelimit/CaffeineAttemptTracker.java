@@ -51,4 +51,9 @@ class CaffeineAttemptTracker implements AttemptTracker {
 
         return exceeded[0];
     }
+
+    @Override
+    public void clearAll() {
+        cache.invalidateAll();
+    }
 }

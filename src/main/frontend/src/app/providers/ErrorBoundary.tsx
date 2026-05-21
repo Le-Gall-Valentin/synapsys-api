@@ -7,6 +7,7 @@ function ErrorFallback({ onReset }: { onReset: () => void }) {
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
       <p className="text-sm text-fg-2">{t('error.unexpected')}</p>
       <button
+        type="button"
         className="mt-4 text-xs text-accent underline"
         onClick={onReset}
         aria-label={t('error.retry')}
@@ -40,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <ErrorFallback onReset={() => this.setState({ hasError: false })} />
+      return <ErrorFallback onReset={() => window.location.assign('/')} />
     }
     return this.props.children
   }

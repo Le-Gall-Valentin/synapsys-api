@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-add-refresh-token-revoked-last-used-index
+      author: synapsys
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_refresh_tokens_revoked_last_used
+      changes:
+        - createIndex:
+            indexName: idx_refresh_tokens_revoked_last_used
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: revoked
+              - column:
+                  name: last_used_at

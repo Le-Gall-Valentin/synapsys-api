@@ -3,7 +3,7 @@ import axios from 'axios'
 import type { LoginCredentials } from '../model/types'
 import { authApi } from './authApi'
 import { client } from '@/shared/api'
-import { CredentialsError, NetworkError, ServerError } from '../model/errors'
+import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 
 vi.mock('@/shared/api', () => ({
   client: {
@@ -64,6 +64,14 @@ describe('authApi', () => {
     })
     mockedClient.post.mockRejectedValue(err)
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(ServerError)
+  })
+
+  it('login throws RateLimitError on 429', async () => {
+    const err = new axios.AxiosError('Too Many Requests', undefined, undefined, undefined, {
+      status: 429, data: {}, headers: {}, config: {} as never, statusText: 'Too Many Requests',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(RateLimitError)
   })
 
   it('login throws NetworkError when no response', async () => {

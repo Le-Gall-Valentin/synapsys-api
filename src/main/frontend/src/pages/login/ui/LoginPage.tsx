@@ -9,7 +9,8 @@ export function LoginPage() {
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
 
       {/* ── Panneau gauche — Branding ── */}
-      <div
+      <aside
+        aria-hidden="true"
         className="relative hidden flex-col overflow-hidden border-r border-border lg:flex"
         style={{
           background:
@@ -50,7 +51,7 @@ export function LoginPage() {
 
           {/* Hero */}
           <div className="mt-16">
-            <h1
+            <p
               className="mb-4 text-[34px] font-semibold leading-[1.1] tracking-tight"
               style={{
                 background: 'linear-gradient(135deg, #ffffff 0%, #b6bbc5 100%)',
@@ -62,7 +63,7 @@ export function LoginPage() {
               {t('hero.headline_1')}
               <br />
               {t('hero.headline_2')}
-            </h1>
+            </p>
             <p className="max-w-[420px] text-[15px] leading-relaxed text-fg-1">
               {t('hero.description')}
             </p>
@@ -89,15 +90,15 @@ export function LoginPage() {
             </p>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* ── Panneau droit — Formulaire ── */}
-      <div className="relative flex flex-col justify-center bg-bg-0 px-8 py-12 sm:px-11">
+      <main className="relative flex flex-col justify-center bg-bg-0 px-8 py-12 sm:px-11">
         <div className="mx-auto w-full max-w-[380px]">
           <div className="mb-8">
-            <h2 className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+            <h1 className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
               {t('form.title')}
-            </h2>
+            </h1>
             <p className="text-sm text-fg-2">{t('form.subtitle')}</p>
           </div>
 
@@ -112,7 +113,7 @@ export function LoginPage() {
         <p className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-fg-3">
           {t('footer')}
         </p>
-      </div>
+      </main>
     </div>
   )
 }

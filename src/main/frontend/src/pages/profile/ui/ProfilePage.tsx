@@ -30,7 +30,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
       <div className="w-full max-w-sm rounded-xl border border-border bg-bg-1 p-8">
         {/* Avatar */}
         <div className="mb-6 flex justify-center">
@@ -61,6 +61,6 @@ export function ProfilePage() {
           </p>
         )}
       </div>
-    </div>
+    </main>
   )
 }

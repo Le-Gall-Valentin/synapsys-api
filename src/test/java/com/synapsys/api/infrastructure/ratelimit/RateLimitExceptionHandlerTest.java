@@ -27,5 +27,6 @@ class RateLimitExceptionHandlerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Too many requests. Please try again later.");
         assertThat(response.getBody().getInstance().toString()).isEqualTo("/api/auth/login");
+        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("60");
     }
 }

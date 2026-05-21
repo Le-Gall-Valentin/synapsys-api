@@ -32,6 +32,6 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM RefreshTokenEntity t WHERE t.expiresAt < :now OR (t.revoked = true AND t.lastUsedAt < :cutoff)")
+    @Query("DELETE FROM RefreshTokenEntity t WHERE t.expiresAt < :now OR (t.revoked = true AND (t.lastUsedAt IS NULL OR t.lastUsedAt < :cutoff))")
     int deleteExpiredAndOldRevoked(@Param("now") Instant now, @Param("cutoff") Instant cutoff);
 }

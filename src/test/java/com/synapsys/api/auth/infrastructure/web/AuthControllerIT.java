@@ -8,6 +8,7 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
+import com.synapsys.api.infrastructure.ratelimit.AttemptTracker;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +56,7 @@ class AuthControllerIT {
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
+    @Autowired AttemptTracker attemptTracker;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -65,6 +67,7 @@ class AuthControllerIT {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
             .apply(SecurityMockMvcConfigurers.springSecurity())
             .build();
+        attemptTracker.clearAll();
         refreshTokenJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
 
@@ -196,7 +199,7 @@ class AuthControllerIT {
         mockMvc.perform(post("/api/auth/register")
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"securepass\",\"role\":\"USER\"}"))
+                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"Securepass1!\",\"role\":\"USER\"}"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.username").value("newuser"))
             .andExpect(jsonPath("$.role").value("USER"));
@@ -209,7 +212,7 @@ class AuthControllerIT {
         mockMvc.perform(post("/api/auth/register")
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"securepass\",\"role\":\"USER\"}"))
+                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"Securepass1!\",\"role\":\"USER\"}"))
             .andExpect(status().isForbidden());
     }
 
@@ -228,7 +231,7 @@ class AuthControllerIT {
         mockMvc.perform(post("/api/auth/register")
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"testuser\",\"email\":\"other@test.com\",\"password\":\"securepass\"}"))
+                .content("{\"username\":\"testuser\",\"email\":\"other@test.com\",\"password\":\"Securepass1!\"}"))
             .andExpect(status().isConflict());
     }
 
@@ -239,7 +242,7 @@ class AuthControllerIT {
         mockMvc.perform(post("/api/auth/register")
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newsa\",\"email\":\"newsa@test.com\",\"password\":\"securepass\",\"role\":\"SUPER_ADMIN\"}"))
+                .content("{\"username\":\"newsa\",\"email\":\"newsa@test.com\",\"password\":\"Securepass1!\",\"role\":\"SUPER_ADMIN\"}"))
             .andExpect(status().isForbidden());
     }
 

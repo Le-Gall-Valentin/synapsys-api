@@ -3,7 +3,7 @@ import { client } from '@/shared/api'
 import type { User } from '@/entities/user'
 import type { LoginCredentials } from '../model/types'
 import type { IAuthApi } from './IAuthApi'
-import { CredentialsError, NetworkError, ServerError } from '../model/errors'
+import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 
 export const authApi: IAuthApi = {
   async login(credentials: LoginCredentials): Promise<User> {
@@ -14,6 +14,7 @@ export const authApi: IAuthApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) throw new CredentialsError()
+        if (status === 429) throw new RateLimitError()
         if (status !== undefined && status >= 500) throw new ServerError()
       }
       throw new NetworkError()
