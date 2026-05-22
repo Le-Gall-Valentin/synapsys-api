@@ -105,6 +105,21 @@ class RefreshTokenHandlerTest {
     }
 
     @Test
+    void refresh_revokedAndExpiredToken_throwsTokenExpired() {
+        // Token expired naturally after TTL and was already revoked by prior rotation — not theft
+        String raw = "expired-and-revoked";
+        RefreshToken expiredRevoked = new RefreshToken(
+            UUID.randomUUID(), activeUser.id(), TestHashUtils.sha256(raw),
+            Instant.now().minusSeconds(1), true, Instant.now(), null
+        );
+        when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(expiredRevoked));
+
+        assertThatThrownBy(() -> handler.refresh(raw))
+            .isInstanceOf(AuthException.TokenExpired.class);
+        verify(refreshTokenRepository, never()).revokeAllForUser(any());
+    }
+
+    @Test
     void refresh_deletedUser_throwsUserNotFound() {
         String raw = "valid";
         RefreshToken stored = new RefreshToken(

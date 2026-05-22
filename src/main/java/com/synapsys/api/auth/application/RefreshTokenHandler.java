@@ -43,14 +43,14 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
             .orElseThrow(AuthException.TokenExpired::new);
 
+        if (token.expiresAt().isBefore(Instant.now())) {
+            throw new AuthException.TokenExpired();
+        }
+
         if (token.revoked()) {
             log.warn("Revoked token reuse detected for user: {} — revoking all tokens", token.userId());
             refreshTokenRepository.revokeAllForUser(token.userId());
             throw new AuthException.TokenRevoked();
-        }
-
-        if (token.expiresAt().isBefore(Instant.now())) {
-            throw new AuthException.TokenExpired();
         }
 
         User user = userRepository.findById(token.userId())
