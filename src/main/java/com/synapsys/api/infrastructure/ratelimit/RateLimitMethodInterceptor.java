@@ -7,6 +7,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -76,7 +77,8 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
 
     private String resolveUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) return null;
+        if (auth == null || !auth.isAuthenticated()
+                || auth instanceof AnonymousAuthenticationToken) return null;
         if (auth.getPrincipal() instanceof CustomUserDetails details) {
             return details.getUserId().toString();
         }
@@ -97,10 +99,18 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
     }
 
     private static HttpServletRequest currentRequest() {
-        return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        ServletRequestAttributes attrs =
+            (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs == null) throw new IllegalStateException("No current HTTP request");
+        return attrs.getRequest();
     }
 
     private static HttpServletResponse currentResponse() {
-        return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+        ServletRequestAttributes attrs =
+            (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs == null) throw new IllegalStateException("No current HTTP request");
+        HttpServletResponse response = attrs.getResponse();
+        if (response == null) throw new IllegalStateException("No current HTTP response");
+        return response;
     }
 }
