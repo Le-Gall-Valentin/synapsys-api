@@ -19,16 +19,29 @@ class RateLimitExceptionHandlerTest {
         request.setRequestURI("/api/auth/login");
     }
 
+    private RateLimitExceededException exceptionWith(long limit, long resetEpoch, long retryAfter) {
+        RateLimitHeaders headers = new RateLimitHeaders(limit, 0L, resetEpoch, retryAfter);
+        return new RateLimitExceededException(headers);
+    }
+
     @Test
-    void handle_rateLimitExceeded_returns429WithProblemDetail() {
-        // retryAfterSeconds=60, remaining=0, limit=10
-        var headers = new RateLimitHeaders(10L, 0L, System.currentTimeMillis() / 1000 + 60L, 60L);
-        var response = handler.handle(new RateLimitExceededException(headers), request);
+    void handle_returns429WithProblemDetail() {
+        var response = handler.handle(exceptionWith(10L, 9999999999L, 30L), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Too many requests. Please try again later.");
         assertThat(response.getBody().getInstance().toString()).isEqualTo("/api/auth/login");
-        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("60");
+    }
+
+    @Test
+    void handle_setsAllRateLimitHeaders() {
+        long resetEpoch = 9999999999L;
+        var response = handler.handle(exceptionWith(10L, resetEpoch, 30L), request);
+
+        assertThat(response.getHeaders().getFirst("X-RateLimit-Limit")).isEqualTo("10");
+        assertThat(response.getHeaders().getFirst("X-RateLimit-Remaining")).isEqualTo("0");
+        assertThat(response.getHeaders().getFirst("X-RateLimit-Reset")).isEqualTo(String.valueOf(resetEpoch));
+        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("30");
     }
 }

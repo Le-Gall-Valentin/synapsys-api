@@ -1,13 +1,12 @@
 package com.synapsys.api.infrastructure.ratelimit;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import org.springframework.http.HttpHeaders;
 
 import java.net.URI;
 
@@ -16,11 +15,17 @@ public class RateLimitExceptionHandler {
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ProblemDetail> handle(RateLimitExceededException e, HttpServletRequest request) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Too many requests. Please try again later."
+        );
         problem.setTitle("RateLimitExceeded");
         problem.setInstance(URI.create(request.getRequestURI()));
         return ResponseEntity.status(429)
-            .header(HttpHeaders.RETRY_AFTER, "60")
+            .header("X-RateLimit-Limit",     String.valueOf(e.getLimit()))
+            .header("X-RateLimit-Remaining", "0")
+            .header("X-RateLimit-Reset",     String.valueOf(e.getResetEpochSeconds()))
+            .header(HttpHeaders.RETRY_AFTER,  String.valueOf(e.getRetryAfterSeconds()))
             .body(problem);
     }
 }
