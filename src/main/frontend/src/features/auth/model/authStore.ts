@@ -5,13 +5,13 @@ import type { User } from '@/entities/user'
 import type { LoginCredentials } from './types'
 import { CredentialsError } from './errors'
 
-interface AuthState {
+export interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isInitializing: boolean
 }
 
-interface AuthActions {
+export interface AuthActions {
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => Promise<void>
   initialize: () => Promise<void>
