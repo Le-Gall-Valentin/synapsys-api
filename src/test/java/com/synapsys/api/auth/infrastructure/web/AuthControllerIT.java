@@ -278,7 +278,7 @@ class AuthControllerIT {
 
     @Test
     void login_whenIpRateLimitExceeded_returns429() throws Exception {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             mockMvc.perform(post("/api/auth/login")
                     .with(req -> { req.setRemoteAddr("198.51.100.1"); return req; })
                     .contentType(MediaType.APPLICATION_JSON)
@@ -291,7 +291,7 @@ class AuthControllerIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "wrongpass"))))
             .andExpect(status().isTooManyRequests())
-            .andExpect(header().string("X-RateLimit-Limit", "10"))
+            .andExpect(header().string("X-RateLimit-Limit", "5"))
             .andExpect(header().string("X-RateLimit-Remaining", "0"))
             .andExpect(header().exists("X-RateLimit-Reset"))
             .andExpect(header().exists("Retry-After"));
