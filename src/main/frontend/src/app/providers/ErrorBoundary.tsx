@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 function ErrorFallback({ onReset }: { onReset: () => void }) {
   const { t } = useTranslation('common')
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
       <p className="text-sm text-fg-2">{t('error.unexpected')}</p>
       <button
         type="button"
@@ -14,7 +14,7 @@ function ErrorFallback({ onReset }: { onReset: () => void }) {
       >
         {t('error.retry')}
       </button>
-    </div>
+    </main>
   )
 }
 

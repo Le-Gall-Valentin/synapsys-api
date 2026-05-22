@@ -23,13 +23,13 @@ export function NetworkArtwork() {
       aria-hidden="true"
     >
       <g stroke="rgba(94,234,212,0.25)" strokeWidth="1" fill="none">
-        {nodes.map((n, i) => (
-          <line key={i} x1="160" y1="120" x2={n.cx} y2={n.cy} />
+        {nodes.map((n) => (
+          <line key={n.delay} x1="160" y1="120" x2={n.cx} y2={n.cy} />
         ))}
       </g>
       <g>
-        {nodes.map((n, i) => (
-          <g key={i}>
+        {nodes.map((n) => (
+          <g key={n.delay}>
             <circle cx={n.cx} cy={n.cy} r="14" fill="rgba(94,234,212,0.08)">
               <animate attributeName="r" values="12;18;12" dur="3s" begin={n.delay} repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" begin={n.delay} repeatCount="indefinite" />
@@ -53,8 +53,8 @@ export function NetworkArtwork() {
       >
         S
       </text>
-      {particles.map((p, i) => (
-        <circle key={i} r="2.5" fill="#5eead4">
+      {particles.map((p) => (
+        <circle key={p.delay} r="2.5" fill="#5eead4">
           <animate attributeName="cx" values={`${p.x1};160`} dur="2.8s" begin={p.delay} repeatCount="indefinite" />
           <animate attributeName="cy" values={`${p.y1};120`} dur="2.8s" begin={p.delay} repeatCount="indefinite" />
           <animate attributeName="opacity" values="0;1;0" dur="2.8s" begin={p.delay} repeatCount="indefinite" />

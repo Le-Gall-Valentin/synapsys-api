@@ -15,7 +15,11 @@ void i18n
   })
   .then(() => {
     document.documentElement.lang = i18n.language
-    i18n.on('languageChanged', (lng) => { document.documentElement.lang = lng })
+    const onLanguageChanged = (lng: string) => { document.documentElement.lang = lng }
+    i18n.on('languageChanged', onLanguageChanged)
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => { i18n.off('languageChanged', onLanguageChanged) })
+    }
   })
 
 export default i18n

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from './authStore'
 import type { IAuthApi } from '../api/IAuthApi'
-import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
+import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
 import { CredentialsError, NetworkError, ServerError } from './errors'
 
 vi.mock('@/shared/lib/sessionHint', () => ({
