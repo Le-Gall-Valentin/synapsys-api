@@ -2,44 +2,31 @@ package com.synapsys.api.infrastructure.ratelimit;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declarative rate limiting for controller endpoints.
- * IP-based limiting is always active; username-based is opt-in.
+ * Declarative token-bucket rate limiting for controller endpoints.
+ * Repeatable: stack multiple @RateLimiting on the same method for combined limits.
  *
- * Example:
- * <pre>
- *   {@code @PostMapping("/login")}
- *   {@code @RateLimiting(byUsername = true)}
- *   public ResponseEntity<?> login(@RequestBody LoginRequest req) { ... }
- * </pre>
+ * <pre>{@code
+ * @PostMapping("/login")
+ * @RateLimiting(mode = RateLimitMode.IP,   max = 10, windowSeconds = 60)
+ * @RateLimiting(mode = RateLimitMode.USER, max = 5,  windowSeconds = 300)
+ * public ResponseEntity<?> login(...) { ... }
+ * }</pre>
+ *
+ * USER mode requires an authenticated Spring Security principal.
+ * On unauthenticated endpoints the USER rule is silently skipped.
  */
+@Repeatable(RateLimitingList.class)
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface RateLimiting {
-
-    /** Maximum attempts per IP within the IP window. */
-    int ipMax() default 10;
-
-    /** Rolling window in seconds for IP-based limiting. */
-    int ipWindowSeconds() default 60;
-
-    /** Whether to also apply per-username limiting. */
-    boolean byUsername() default false;
-
-    /** Maximum attempts per username within the username window. */
-    int usernameMax() default 20;
-
-    /** Rolling window in seconds for username-based limiting. */
-    int usernameWindowSeconds() default 300;
-
-    /**
-     * Name of the field (record accessor or getter) on the first {@code @RequestBody}
-     * argument that holds the username string.
-     */
-    String usernameField() default "username";
+    RateLimitMode mode()   default RateLimitMode.IP;
+    int max()              default 10;
+    int windowSeconds()    default 60;
 }
