@@ -56,7 +56,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @RateLimiting(mode = RateLimitMode.USER)
+    @RateLimiting(mode = RateLimitMode.IP, max = 10, windowSeconds = 60)
     public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
                                                   HttpServletResponse response) {
         LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
@@ -73,7 +73,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @RateLimiting
+    @RateLimiting(mode = RateLimitMode.IP, max = 10, windowSeconds = 60)
     public ResponseEntity<Void> refresh(HttpServletRequest request,
                                         HttpServletResponse response) {
         String rawRefreshToken = cookieService

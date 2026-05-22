@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
-import io.github.bucket4j.Refill;
 import io.github.bucket4j.TimeMeter;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +33,10 @@ class CaffeineRateLimitBucketStore implements RateLimitBucketStore {
     public BucketResult tryConsume(String key, int max, int windowSeconds) {
         Bucket bucket = buckets.get(key, k -> Bucket.builder()
             .withCustomTimePrecision(clock)
-            .addLimit(Bandwidth.classic(max, Refill.greedy(max, Duration.ofSeconds(windowSeconds))))
+            .addLimit(Bandwidth.builder()
+                .capacity(max)
+                .refillGreedy(max, Duration.ofSeconds(windowSeconds))
+                .build())
             .build());
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         return new BucketResult(probe.isConsumed(), probe.getRemainingTokens(), probe.getNanosToWaitForRefill());

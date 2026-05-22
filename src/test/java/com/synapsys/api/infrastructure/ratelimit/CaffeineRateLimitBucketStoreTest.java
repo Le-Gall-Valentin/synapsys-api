@@ -99,7 +99,8 @@ class CaffeineRateLimitBucketStoreTest {
                 latch.countDown();
             }).start();
         }
-        latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+        boolean completed = latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+        assertThat(completed).as("All threads should complete within timeout").isTrue();
         assertThat(allowed.get()).isLessThanOrEqualTo(max);
     }
 }
