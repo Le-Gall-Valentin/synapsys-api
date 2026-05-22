@@ -55,7 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @RateLimiting
+    @RateLimiting(max = 5)
     public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
                                                   HttpServletResponse response) {
         LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
