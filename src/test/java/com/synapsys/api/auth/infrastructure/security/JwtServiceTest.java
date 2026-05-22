@@ -3,10 +3,15 @@ package com.synapsys.api.auth.infrastructure.security;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.infrastructure.config.SynapsysProperties;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +73,25 @@ class JwtServiceTest {
 
         assertThatThrownBy(() -> jwtService.validateAndExtract(token))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void validateAndExtract_throwsOnTokenWithWrongIssuer() {
+        // Token signed with same key but issued by another service — must be rejected
+        SecretKey sameKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+        String foreignToken = Jwts.builder()
+            .issuer("other-service")
+            .audience().add("other-service").and()
+            .subject(UUID.randomUUID().toString())
+            .claim("role", Role.USER.name())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 60_000))
+            .signWith(sameKey)
+            .compact();
+
+        assertThatThrownBy(() -> jwtService.validateAndExtract(foreignToken))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid JWT token");
     }
 
     @Test

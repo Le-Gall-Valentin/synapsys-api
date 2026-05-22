@@ -37,10 +37,15 @@ public class JwtService implements AccessTokenPort {
         this.expiryMinutes = properties.jwt().expiryMinutes();
     }
 
+    static final String ISSUER = "synapsys-api";
+    static final String AUDIENCE = "synapsys-api";
+
     @Override
     public String generate(User user) {
         Instant now = Instant.now();
         return Jwts.builder()
+            .issuer(ISSUER)
+            .audience().add(AUDIENCE).and()
             .subject(user.id().toString())
             .claim("role", user.role().name())
             .issuedAt(Date.from(now))
@@ -57,6 +62,12 @@ public class JwtService implements AccessTokenPort {
                 .parseSignedClaims(token)
                 .getPayload();
 
+            if (!ISSUER.equals(claims.getIssuer())) {
+                throw new JwtException("Invalid issuer: " + claims.getIssuer());
+            }
+            if (claims.getAudience() == null || !claims.getAudience().contains(AUDIENCE)) {
+                throw new JwtException("Invalid audience");
+            }
             UUID userId = UUID.fromString(claims.getSubject());
             Role role = Role.valueOf(claims.get("role", String.class));
             return new UserClaims(userId, role);
