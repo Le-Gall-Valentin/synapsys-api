@@ -23,15 +23,15 @@ public class RegisterHandler implements RegisterUseCase {
     }
 
     @Override
-    public User register(RegisterCommand command) {
-        if (!RoleCreationPolicy.canCreate(command.callerRole(), command.role())) {
-            throw new AuthException.InsufficientPermissions(command.callerRole(), command.role());
+    public User register(RegisterCommand command, Role callerRole) {
+        if (!RoleCreationPolicy.canCreate(callerRole, command.role())) {
+            throw new AuthException.InsufficientPermissions(callerRole, command.role());
         }
         String passwordHash = passwordHasher.hash(command.password());
         User created = userRepository.save(new CreateUserCommand(
             command.username(), command.email(), passwordHash, command.role()
         ));
-        log.info("User {} registered with role {} by caller {}", created.id(), created.role(), command.callerRole());
+        log.info("User {} registered with role {} by caller {}", created.id(), created.role(), callerRole);
         return created;
     }
 }

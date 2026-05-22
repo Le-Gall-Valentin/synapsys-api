@@ -1,12 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.domain.model.AuthException;
-import com.synapsys.api.auth.domain.model.CreateUserCommand;
-import com.synapsys.api.auth.domain.model.Role;
-import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
-import com.synapsys.api.auth.domain.port.out.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.synapsys.api.auth.domain.port.in.SeedUseCase;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -14,18 +8,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataSeeder {
 
-    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
-
     private final SynapsysProperties properties;
-    private final UserRepository userRepository;
-    private final PasswordHasherPort passwordHasher;
+    private final SeedUseCase seedUseCase;
 
-    public DataSeeder(SynapsysProperties properties,
-                      UserRepository userRepository,
-                      PasswordHasherPort passwordHasher) {
+    public DataSeeder(SynapsysProperties properties, SeedUseCase seedUseCase) {
         this.properties = properties;
-        this.userRepository = userRepository;
-        this.passwordHasher = passwordHasher;
+        this.seedUseCase = seedUseCase;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -36,16 +24,6 @@ public class DataSeeder {
                 "SYNAPSYS_SEED_PASSWORD must be set — the initial SUPER_ADMIN cannot be created without it"
             );
         }
-        if (!userRepository.isEmpty()) {
-            log.info("Database already has users, skipping seed");
-            return;
-        }
-        String hash = passwordHasher.hash(seed.password());
-        try {
-            userRepository.save(new CreateUserCommand(seed.username(), seed.email(), hash, Role.SUPER_ADMIN));
-            log.info("Default SUPER_ADMIN '{}' created", seed.username());
-        } catch (AuthException.UsernameAlreadyExists | AuthException.EmailAlreadyExists e) {
-            log.info("SUPER_ADMIN already exists (concurrent startup), skipping");
-        }
+        seedUseCase.seedInitialSuperAdmin(seed.username(), seed.email(), seed.password());
     }
 }

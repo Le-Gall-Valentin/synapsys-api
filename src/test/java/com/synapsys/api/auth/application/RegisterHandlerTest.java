@@ -35,7 +35,7 @@ class RegisterHandlerTest {
         when(passwordHasher.hash("pass")).thenReturn("hashed");
         when(userRepository.save(any())).thenReturn(created);
 
-        User result = handler.register(cmd("newadmin", Role.ADMIN, Role.SUPER_ADMIN));
+        User result = handler.register(cmd("newadmin", Role.ADMIN), Role.SUPER_ADMIN);
 
         assertThat(result.role()).isEqualTo(Role.ADMIN);
         verify(userRepository).save(any());
@@ -47,14 +47,14 @@ class RegisterHandlerTest {
         when(passwordHasher.hash("pass")).thenReturn("hashed");
         when(userRepository.save(any())).thenReturn(created);
 
-        User result = handler.register(cmd("newuser", Role.USER, Role.SUPER_ADMIN));
+        User result = handler.register(cmd("newuser", Role.USER), Role.SUPER_ADMIN);
 
         assertThat(result.role()).isEqualTo(Role.USER);
     }
 
     @Test
     void superAdmin_cannot_create_superAdmin() {
-        assertThatThrownBy(() -> handler.register(cmd("sa", Role.SUPER_ADMIN, Role.SUPER_ADMIN)))
+        assertThatThrownBy(() -> handler.register(cmd("sa", Role.SUPER_ADMIN), Role.SUPER_ADMIN))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
         verifyNoInteractions(userRepository);
     }
@@ -65,21 +65,21 @@ class RegisterHandlerTest {
         when(passwordHasher.hash("pass")).thenReturn("hashed");
         when(userRepository.save(any())).thenReturn(created);
 
-        User result = handler.register(cmd("newuser", Role.USER, Role.ADMIN));
+        User result = handler.register(cmd("newuser", Role.USER), Role.ADMIN);
 
         assertThat(result.role()).isEqualTo(Role.USER);
     }
 
     @Test
     void admin_cannot_create_admin() {
-        assertThatThrownBy(() -> handler.register(cmd("newadmin", Role.ADMIN, Role.ADMIN)))
+        assertThatThrownBy(() -> handler.register(cmd("newadmin", Role.ADMIN), Role.ADMIN))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
         verifyNoInteractions(userRepository);
     }
 
     @Test
     void user_cannot_create_anyone() {
-        assertThatThrownBy(() -> handler.register(cmd("someone", Role.USER, Role.USER)))
+        assertThatThrownBy(() -> handler.register(cmd("someone", Role.USER), Role.USER))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
         verifyNoInteractions(userRepository);
     }
@@ -89,7 +89,7 @@ class RegisterHandlerTest {
         when(passwordHasher.hash("pass")).thenReturn("hashed");
         when(userRepository.save(any())).thenThrow(new AuthException.UsernameAlreadyExists());
 
-        assertThatThrownBy(() -> handler.register(cmd("existing", Role.USER, Role.SUPER_ADMIN)))
+        assertThatThrownBy(() -> handler.register(cmd("existing", Role.USER), Role.SUPER_ADMIN))
             .isInstanceOf(AuthException.UsernameAlreadyExists.class);
     }
 
@@ -99,12 +99,12 @@ class RegisterHandlerTest {
         when(userRepository.save(any())).thenThrow(new AuthException.EmailAlreadyExists());
 
         assertThatThrownBy(() -> handler.register(
-            new RegisterCommand("newuser", "dup@test.com", "pass", Role.USER, Role.SUPER_ADMIN)
+            new RegisterCommand("newuser", "dup@test.com", "pass", Role.USER), Role.SUPER_ADMIN
         )).isInstanceOf(AuthException.EmailAlreadyExists.class);
     }
 
-    private RegisterCommand cmd(String username, Role role, Role callerRole) {
-        return new RegisterCommand(username, username + "@test.com", "pass", role, callerRole);
+    private RegisterCommand cmd(String username, Role role) {
+        return new RegisterCommand(username, username + "@test.com", "pass", role);
     }
 
     private User user(String username, Role role) {
