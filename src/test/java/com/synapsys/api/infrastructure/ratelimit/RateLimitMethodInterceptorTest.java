@@ -1,5 +1,7 @@
 package com.synapsys.api.infrastructure.ratelimit;
 
+import static com.synapsys.api.infrastructure.ratelimit.RateLimitMode.USER;
+
 import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,7 +114,7 @@ class RateLimitMethodInterceptorTest {
         @RateLimiting
         public void ipOnly() {}
 
-        @RateLimiting(byUsername = true, usernameField = "username")
+        @RateLimiting(mode = USER)
         public void withUsername() {}
     }
 }

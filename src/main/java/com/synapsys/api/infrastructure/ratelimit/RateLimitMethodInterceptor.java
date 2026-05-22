@@ -9,9 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.lang.reflect.Method;
-import java.util.Locale;
-
 @Component
 class RateLimitMethodInterceptor implements MethodInterceptor {
 
@@ -33,35 +30,12 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
         HttpServletRequest request = currentRequest();
         String ip = ipResolver.resolve(request);
 
-        if (tracker.isLimitExceeded("ip:" + ip, annotation.ipMax(), annotation.ipWindowSeconds())) {
+        if (tracker.isLimitExceeded("ip:" + ip, annotation.max(), annotation.windowSeconds())) {
             log.warn("IP rate limit exceeded for {}", ip);
             throw new RateLimitExceededException();
         }
 
-        if (annotation.byUsername()) {
-            String username = extractUsername(invocation.getArguments(), annotation.usernameField());
-            if (username != null && tracker.isLimitExceeded(
-                    "user:" + username.toLowerCase(Locale.ROOT),
-                    annotation.usernameMax(), annotation.usernameWindowSeconds())) {
-                log.warn("Username rate limit exceeded for user: {}", username);
-                throw new RateLimitExceededException();
-            }
-        }
-
         return invocation.proceed();
-    }
-
-    private String extractUsername(Object[] args, String fieldName) {
-        for (Object arg : args) {
-            if (arg == null) continue;
-            try {
-                // Works for records (accessor name = field name) and JavaBeans (getUsername)
-                Method accessor = arg.getClass().getMethod(fieldName);
-                Object value = accessor.invoke(arg);
-                return value instanceof String s ? s : null;
-            } catch (Exception ignored) {}
-        }
-        return null;
     }
 
     private static HttpServletRequest currentRequest() {

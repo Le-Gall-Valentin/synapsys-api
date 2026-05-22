@@ -7,6 +7,7 @@ import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.UserInfoResponse;
+import com.synapsys.api.infrastructure.ratelimit.RateLimitMode;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -55,7 +56,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @RateLimiting(byUsername = true)
+    @RateLimiting(mode = RateLimitMode.USER)
     public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
                                                   HttpServletResponse response) {
         LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
