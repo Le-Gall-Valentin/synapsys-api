@@ -21,7 +21,9 @@ class RateLimitExceptionHandlerTest {
 
     @Test
     void handle_rateLimitExceeded_returns429WithProblemDetail() {
-        var response = handler.handle(new RateLimitExceededException(), request);
+        // retryAfterSeconds=60, remaining=0, limit=10
+        var headers = new RateLimitHeaders(10L, 0L, System.currentTimeMillis() / 1000 + 60L, 60L);
+        var response = handler.handle(new RateLimitExceededException(headers), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();
