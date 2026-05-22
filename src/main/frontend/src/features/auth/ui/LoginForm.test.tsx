@@ -1,7 +1,7 @@
 import { render, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useAuth } from '@/features/auth/model/useAuth'
-import { CredentialsError, NetworkError } from '../model/errors'
+import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 import { LoginForm } from './LoginForm'
 
 vi.mock('@/features/auth/model/useAuth', () => ({ useAuth: vi.fn() }))
@@ -65,6 +65,30 @@ describe('LoginForm', () => {
     await waitFor(() => {
       const alert = getByRole('alert')
       expect(alert.textContent).toContain('error.network')
+    })
+  })
+
+  it('shows rateLimit error on RateLimitError', async () => {
+    const mockLogin = vi.fn().mockRejectedValue(new RateLimitError())
+    const { getByLabelText, getByRole } = setup(mockLogin)
+
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => {
+      const alert = getByRole('alert')
+      expect(alert.textContent).toContain('error.rateLimit')
+    })
+  })
+
+  it('shows server error on ServerError', async () => {
+    const mockLogin = vi.fn().mockRejectedValue(new ServerError())
+    const { getByLabelText, getByRole } = setup(mockLogin)
+
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => {
+      const alert = getByRole('alert')
+      expect(alert.textContent).toContain('error.server')
     })
   })
 

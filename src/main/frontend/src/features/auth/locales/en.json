@@ -12,6 +12,8 @@
   },
   "error": {
     "credentials": "Incorrect username or password.",
-    "network": "Service unavailable. Please try again."
+    "network": "Service unavailable. Please try again.",
+    "rateLimit": "Too many attempts. Please wait before trying again.",
+    "server": "Something went wrong. Please try again in a moment."
   }
 }

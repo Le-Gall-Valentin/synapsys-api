@@ -37,9 +37,11 @@ export function ProfilePage() {
           <div
             className="grid size-16 place-items-center rounded-full text-xl font-bold text-bg-0"
             style={{ background: 'linear-gradient(135deg, #5eead4, #818cf8)' }}
+            aria-hidden="true"
           >
             {initials}
           </div>
+          <span className="sr-only">{t('avatar', { username: user.username })}</span>
         </div>
 
         {/* Infos */}

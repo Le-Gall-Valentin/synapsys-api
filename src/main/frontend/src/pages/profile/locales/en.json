@@ -1,4 +1,5 @@
 {
+  "avatar": "Avatar of {{username}}",
   "action": {
     "logout": "Sign out"
   },

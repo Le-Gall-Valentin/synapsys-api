@@ -3,6 +3,7 @@ import type { IAuthApi } from '../api/IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
 import type { User } from '@/entities/user'
 import type { LoginCredentials } from './types'
+import { CredentialsError } from './errors'
 
 interface AuthState {
   user: User | null
@@ -51,8 +52,9 @@ export function createAuthStore(api: IAuthApi) {
         const user = await api.getMe()
         setSessionHint()
         set({ user, isAuthenticated: true, isInitializing: false })
-      } catch {
-        clearSessionHint()
+      } catch (error) {
+        // Only invalidate the session on actual auth failure (401); leave hint intact on transient errors
+        if (error instanceof CredentialsError) clearSessionHint()
         set({ user: null, isAuthenticated: false, isInitializing: false })
       }
     },

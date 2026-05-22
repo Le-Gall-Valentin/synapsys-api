@@ -1,11 +1,11 @@
-import { CredentialsError } from '../model/errors'
-import { useState, type FormEvent } from 'react'
+import { CredentialsError, RateLimitError, ServerError } from '../model/errors'
+import React, { useState } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../model/useAuth'
+import { useAuth } from "../model/useAuth"
 import { Button, Input } from '@/shared/ui'
 
-type ErrorKind = 'credentials' | 'network' | null
+type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null
 
 export function LoginForm() {
   const login = useAuth((s) => s.login)
@@ -16,7 +16,7 @@ export function LoginForm() {
   const [errorKind, setErrorKind] = useState<ErrorKind>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSubmit(e: React.BaseSyntheticEvent): Promise<void> {
     e.preventDefault()
     setErrorKind(null)
     setIsLoading(true)
@@ -26,6 +26,10 @@ export function LoginForm() {
       if (error instanceof CredentialsError) {
         setErrorKind('credentials')
         setPassword('')
+      } else if (error instanceof RateLimitError) {
+        setErrorKind('rateLimit')
+      } else if (error instanceof ServerError) {
+        setErrorKind('server')
       } else {
         setErrorKind('network')
       }

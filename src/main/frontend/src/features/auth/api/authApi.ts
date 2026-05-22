@@ -25,8 +25,10 @@ export const authApi: IAuthApi = {
     try {
       await client.post('/auth/logout')
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status !== undefined && error.response.status >= 500) {
-        throw new ServerError()
+      if (isAxiosError(error)) {
+        const status = error.response?.status
+        if (status !== undefined && status >= 500) throw new ServerError()
+        if (status !== undefined) return // 4xx → token already gone, treat as success
       }
       throw new NetworkError()
     }
@@ -38,7 +40,10 @@ export const authApi: IAuthApi = {
       return data
     } catch (error) {
       if (isAxiosError(error)) {
-        if (error.response?.status !== undefined && error.response.status >= 500) throw new ServerError()
+        const status = error.response?.status
+        if (status === 401) throw new CredentialsError()
+        if (status !== undefined && status >= 500) throw new ServerError()
+        if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
     }

@@ -78,4 +78,46 @@ describe('authApi', () => {
     mockedClient.post.mockRejectedValue(new Error('Network Error'))
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(NetworkError)
   })
+
+  it('logout throws ServerError on 500', async () => {
+    const err = new axios.AxiosError('Internal Server Error', undefined, undefined, undefined, {
+      status: 500, data: {}, headers: {}, config: {} as never, statusText: 'Internal Server Error',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    await expect(authApi.logout()).rejects.toBeInstanceOf(ServerError)
+  })
+
+  it('logout succeeds silently on 4xx (token already gone)', async () => {
+    const err = new axios.AxiosError('Unauthorized', undefined, undefined, undefined, {
+      status: 401, data: {}, headers: {}, config: {} as never, statusText: 'Unauthorized',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    await expect(authApi.logout()).resolves.toBeUndefined()
+  })
+
+  it('logout throws NetworkError when no response', async () => {
+    mockedClient.post.mockRejectedValue(new Error('Network Error'))
+    await expect(authApi.logout()).rejects.toBeInstanceOf(NetworkError)
+  })
+
+  it('getMe throws CredentialsError on 401', async () => {
+    const err = new axios.AxiosError('Unauthorized', undefined, undefined, undefined, {
+      status: 401, data: {}, headers: {}, config: {} as never, statusText: 'Unauthorized',
+    })
+    mockedClient.get.mockRejectedValue(err)
+    await expect(authApi.getMe()).rejects.toBeInstanceOf(CredentialsError)
+  })
+
+  it('getMe throws ServerError on 500', async () => {
+    const err = new axios.AxiosError('Internal Server Error', undefined, undefined, undefined, {
+      status: 500, data: {}, headers: {}, config: {} as never, statusText: 'Internal Server Error',
+    })
+    mockedClient.get.mockRejectedValue(err)
+    await expect(authApi.getMe()).rejects.toBeInstanceOf(ServerError)
+  })
+
+  it('getMe throws NetworkError when no response', async () => {
+    mockedClient.get.mockRejectedValue(new Error('Network Error'))
+    await expect(authApi.getMe()).rejects.toBeInstanceOf(NetworkError)
+  })
 })

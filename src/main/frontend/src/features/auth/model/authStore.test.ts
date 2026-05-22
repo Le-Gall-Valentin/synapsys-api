@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from './authStore'
 import type { IAuthApi } from '../api/IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib/sessionHint'
+import { CredentialsError, NetworkError, ServerError } from './errors'
 
 vi.mock('@/shared/lib/sessionHint', () => ({
   setSessionHint: vi.fn(),
@@ -91,10 +92,10 @@ describe('authStore', () => {
       expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
     })
 
-    it('clears state and hint when getMe fails', async () => {
+    it('clears state and hint when getMe returns 401 (session expired)', async () => {
       const api = createApiMock()
       mockedHasSessionHint.mockReturnValue(true)
-      vi.mocked(api.getMe).mockRejectedValue(new Error('401'))
+      vi.mocked(api.getMe).mockRejectedValue(new CredentialsError())
       const store = createAuthStore(api)
 
       await store.getState().initialize()
@@ -103,6 +104,22 @@ describe('authStore', () => {
       expect(store.getState().isInitializing).toBe(false)
       expect(store.getState().isAuthenticated).toBe(false)
       expect(store.getState().user).toBeNull()
+    })
+
+    it('keeps session hint when getMe fails with transient error (5xx or network)', async () => {
+      for (const error of [new ServerError(), new NetworkError()]) {
+        const api = createApiMock()
+        mockedHasSessionHint.mockReturnValue(true)
+        mockedClearSessionHint.mockClear()
+        vi.mocked(api.getMe).mockRejectedValue(error)
+        const store = createAuthStore(api)
+
+        await store.getState().initialize()
+
+        expect(mockedClearSessionHint).not.toHaveBeenCalled()
+        expect(store.getState().isInitializing).toBe(false)
+        expect(store.getState().isAuthenticated).toBe(false)
+      }
     })
   })
 })
