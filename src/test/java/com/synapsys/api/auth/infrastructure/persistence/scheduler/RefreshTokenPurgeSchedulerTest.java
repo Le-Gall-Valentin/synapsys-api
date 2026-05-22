@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.persistence.scheduler;
 
-import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
 import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class RefreshTokenPurgeSchedulerTest {
 
     @Mock
-    RefreshTokenRepository refreshTokenRepository;
+    RefreshTokenMaintenancePort refreshTokenRepository;
 
     private static final int EXPIRY_DAYS = 30;
 

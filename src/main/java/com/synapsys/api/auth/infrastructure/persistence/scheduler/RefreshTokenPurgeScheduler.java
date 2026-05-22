@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.persistence.scheduler;
 
-import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
 import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +15,12 @@ public class RefreshTokenPurgeScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenPurgeScheduler.class);
 
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenMaintenancePort refreshTokenMaintenance;
     private final int refreshTokenExpiryDays;
 
-    public RefreshTokenPurgeScheduler(RefreshTokenRepository refreshTokenRepository,
+    public RefreshTokenPurgeScheduler(RefreshTokenMaintenancePort refreshTokenMaintenance,
                                       SynapsysProperties properties) {
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.refreshTokenMaintenance = refreshTokenMaintenance;
         this.refreshTokenExpiryDays = properties.refreshToken().expiryDays();
     }
 
@@ -28,7 +28,7 @@ public class RefreshTokenPurgeScheduler {
     public void purgeExpiredTokens() {
         Instant now = Instant.now();
         Instant cutoff = now.minus(refreshTokenExpiryDays, ChronoUnit.DAYS);
-        int deleted = refreshTokenRepository.deleteExpiredAndRevoked(now, cutoff);
+        int deleted = refreshTokenMaintenance.deleteExpiredAndRevoked(now, cutoff);
         log.info("Purged {} expired/revoked refresh tokens", deleted);
     }
 }

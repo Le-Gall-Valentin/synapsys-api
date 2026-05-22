@@ -5,6 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.out.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,14 @@ class LoginHandlerTest {
         UUID.randomUUID(), "user1", "user1@test.com",
         "hashed_pw", Role.USER, true, Instant.now()
     );
+
+    @AfterEach
+    void tearDown() {
+        // Retire l'appender pour éviter une fuite mémoire entre les tests
+        ch.qos.logback.classic.Logger loginLogger =
+            (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(LoginHandler.class);
+        loginLogger.detachAndStopAllAppenders();
+    }
 
     @BeforeEach
     void setUp() {

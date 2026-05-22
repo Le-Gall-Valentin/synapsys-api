@@ -3,6 +3,7 @@ package com.synapsys.api.auth.infrastructure.persistence.adapter;
 import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
+import com.synapsys.api.auth.domain.port.out.UserAdminPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
@@ -14,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class UserRepositoryAdapter implements UserRepository {
+public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
 
     private final UserJpaRepository jpa;
 

@@ -28,7 +28,7 @@ synapsys:
   seed:
     username: ${SYNAPSYS_SEED_USERNAME:admin}
     email: ${SYNAPSYS_SEED_EMAIL:admin@synapsys.dev}
-    password: ${SYNAPSYS_SEED_PASSWORD:}
+    password: ${SYNAPSYS_SEED_PASSWORD:changeme-dev}
   cors:
     allowed-origins:
       - http://localhost:5173

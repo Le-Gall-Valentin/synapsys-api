@@ -77,7 +77,6 @@ class AuthControllerIT {
         user.setEmail("testuser@test.com");
         user.setPasswordHash(encoder.encode("password"));
         user.setRole(Role.USER);
-        user.setActive(true);
         userJpaRepository.save(user);
 
         UserEntity admin = new UserEntity();
@@ -85,7 +84,6 @@ class AuthControllerIT {
         admin.setEmail("superadmin@test.com");
         admin.setPasswordHash(encoder.encode("adminpass"));
         admin.setRole(Role.SUPER_ADMIN);
-        admin.setActive(true);
         userJpaRepository.save(admin);
     }
 

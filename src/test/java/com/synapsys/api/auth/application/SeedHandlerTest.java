@@ -3,6 +3,7 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
+import com.synapsys.api.auth.domain.port.out.UserAdminPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SeedHandlerTest {
 
+    @Mock UserAdminPort userAdminPort;
     @Mock UserRepository userRepository;
     @Mock PasswordHasherPort passwordHasher;
 
@@ -25,12 +27,12 @@ class SeedHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new SeedHandler(userRepository, passwordHasher);
+        handler = new SeedHandler(userAdminPort, userRepository, passwordHasher);
     }
 
     @Test
     void seedInitialSuperAdmin_emptyDatabase_createsUser() {
-        when(userRepository.isEmpty()).thenReturn(true);
+        when(userAdminPort.isEmpty()).thenReturn(true);
         when(passwordHasher.hash("secret")).thenReturn("hashed");
 
         handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret");
@@ -45,7 +47,7 @@ class SeedHandlerTest {
 
     @Test
     void seedInitialSuperAdmin_nonEmptyDatabase_skips() {
-        when(userRepository.isEmpty()).thenReturn(false);
+        when(userAdminPort.isEmpty()).thenReturn(false);
 
         handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret");
 
@@ -55,7 +57,7 @@ class SeedHandlerTest {
 
     @Test
     void seedInitialSuperAdmin_concurrentDuplicate_completesNormally() {
-        when(userRepository.isEmpty()).thenReturn(true);
+        when(userAdminPort.isEmpty()).thenReturn(true);
         when(passwordHasher.hash("secret")).thenReturn("hashed");
         doThrow(new AuthException.UsernameAlreadyExists()).when(userRepository).save(any());
 

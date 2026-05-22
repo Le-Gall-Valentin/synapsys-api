@@ -2,9 +2,8 @@ package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenIssuerPort;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
 import com.synapsys.api.auth.domain.port.out.TokenHashPort;
-import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
-import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -16,11 +15,11 @@ public class RefreshTokenGenerator implements RefreshTokenIssuerPort {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private final RefreshTokenJpaRepository jpa;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final TokenHashPort tokenHashPort;
 
-    public RefreshTokenGenerator(RefreshTokenJpaRepository jpa, TokenHashPort tokenHashPort) {
-        this.jpa = jpa;
+    public RefreshTokenGenerator(RefreshTokenRepository refreshTokenRepository, TokenHashPort tokenHashPort) {
+        this.refreshTokenRepository = refreshTokenRepository;
         this.tokenHashPort = tokenHashPort;
     }
 
@@ -29,13 +28,8 @@ public class RefreshTokenGenerator implements RefreshTokenIssuerPort {
         byte[] tokenBytes = new byte[32];
         SECURE_RANDOM.nextBytes(tokenBytes);
         String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-
-        RefreshTokenEntity entity = new RefreshTokenEntity(
-            user.id(),
-            tokenHashPort.hash(raw),
-            Instant.now().plusSeconds((long) expiryDays * 86400)
-        );
-        jpa.save(entity);
+        Instant expiresAt = Instant.now().plusSeconds((long) expiryDays * 86400);
+        refreshTokenRepository.save(user.id(), tokenHashPort.hash(raw), expiresAt);
         return raw;
     }
 }

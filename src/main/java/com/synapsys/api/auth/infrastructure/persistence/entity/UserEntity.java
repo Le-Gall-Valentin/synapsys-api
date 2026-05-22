@@ -38,6 +38,7 @@ public class UserEntity {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Setter(AccessLevel.NONE)
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
