@@ -8,7 +8,7 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
-import com.synapsys.api.infrastructure.ratelimit.AttemptTracker;
+import com.synapsys.api.infrastructure.ratelimit.RateLimitBucketStore;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +57,7 @@ class AuthControllerIT {
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
-    @Autowired AttemptTracker attemptTracker;
+    @Autowired RateLimitBucketStore rateLimitBucketStore;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -67,7 +68,7 @@ class AuthControllerIT {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
             .apply(SecurityMockMvcConfigurers.springSecurity())
             .build();
-        attemptTracker.clearAll();
+        rateLimitBucketStore.clearAll();
         refreshTokenJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
 
@@ -109,6 +110,18 @@ class AuthControllerIT {
         assertThat(refresh).isNotNull();
         assertThat(refresh.isHttpOnly()).isTrue();
         assertThat(refresh.getPath()).isEqualTo("/api/auth");
+    }
+
+    @Test
+    void login_success_setsRateLimitHeaders() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "password"))))
+            .andExpect(status().isOk())
+            .andExpect(header().exists("X-RateLimit-Limit"))
+            .andExpect(header().exists("X-RateLimit-Remaining"))
+            .andExpect(header().exists("X-RateLimit-Reset"))
+            .andExpect(header().doesNotExist("Retry-After"));
     }
 
     @Test
@@ -279,7 +292,11 @@ class AuthControllerIT {
                 .with(req -> { req.setRemoteAddr("198.51.100.1"); return req; })
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "wrongpass"))))
-            .andExpect(status().isTooManyRequests());
+            .andExpect(status().isTooManyRequests())
+            .andExpect(header().string("X-RateLimit-Limit", "10"))
+            .andExpect(header().string("X-RateLimit-Remaining", "0"))
+            .andExpect(header().exists("X-RateLimit-Reset"))
+            .andExpect(header().exists("Retry-After"));
     }
 
     @Test
