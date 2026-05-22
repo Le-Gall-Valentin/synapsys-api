@@ -23,7 +23,8 @@ class ClientIpResolver {
         if (trustedProxies.contains(remoteAddr)) {
             String xff = request.getHeader("X-Forwarded-For");
             if (xff != null && !xff.isBlank()) {
-                return xff.split(",")[0].trim();
+                String[] parts = xff.split(",");
+                return parts[parts.length - 1].trim();
             }
         }
         return remoteAddr;
