@@ -1,0 +1,21 @@
+package com.synapsys.api.infrastructure.ratelimit;
+
+/**
+ * Port for token-bucket storage. Swap implementations to migrate from Caffeine to Redis
+ * without touching the annotation, interceptor or exception handler.
+ */
+public interface RateLimitBucketStore {
+
+    /**
+     * @param key           composite key: "ClassName.method:MODE:identifier"
+     * @param max           bucket capacity (= max tokens)
+     * @param windowSeconds full-refill period in seconds
+     * @return result of attempting to consume 1 token
+     */
+    BucketResult tryConsume(String key, int max, int windowSeconds);
+
+    /** Invalidates all buckets. For tests only. */
+    void clearAll();
+
+    record BucketResult(boolean allowed, long remaining, long nanosToWaitForRefill) {}
+}
