@@ -5,7 +5,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.out.*;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,16 +48,8 @@ class LoginHandlerTest {
     void setUp() {
         // Constructor calls passwordHasher.hash() to precompute the dummy hash — stub it first
         lenient().when(passwordHasher.hash(anyString())).thenReturn("$2a$12$stubbed-dummy-hash-for-tests");
-        var properties = new SynapsysProperties(
-            new SynapsysProperties.JwtProperties("test-secret-key-at-least-32-chars!", 15),
-            new SynapsysProperties.RefreshTokenProperties(30),
-            new SynapsysProperties.CookieProperties(false),
-            null,
-            new SynapsysProperties.CorsProperties(java.util.List.of()),
-            new SynapsysProperties.RateLimitProperties(java.util.List.of())
-        );
         handler = new LoginHandler(
-            userRepository, passwordHasher, accessTokenPort, refreshTokenPort, properties
+            userRepository, passwordHasher, accessTokenPort, refreshTokenPort, 30
         );
     }
 
