@@ -3,11 +3,15 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.RefreshTokenUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
+import com.synapsys.api.infrastructure.config.SynapsysProperties;
+import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+@ApplicationService
 public class RefreshTokenHandler implements RefreshTokenUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenHandler.class);
@@ -24,16 +28,17 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
                                AccessTokenPort accessTokenPort,
                                RefreshTokenIssuerPort refreshTokenPort,
                                TokenHashPort tokenHashPort,
-                               int refreshTokenExpiryDays) {
+                               SynapsysProperties properties) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
         this.tokenHashPort = tokenHashPort;
-        this.refreshTokenExpiryDays = refreshTokenExpiryDays;
+        this.refreshTokenExpiryDays = properties.refreshToken().expiryDays();
     }
 
     @Override
+    @Transactional(noRollbackFor = AuthException.TokenRevoked.class)
     public AuthTokens refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new AuthException.TokenExpired();
@@ -67,10 +72,17 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
             throw new AuthException.TokenRevoked();
         }
 
-        log.info("Token rotated for user: {}", user.id());
-        return new AuthTokens(
-            accessTokenPort.generate(user),
-            refreshTokenPort.generate(user, refreshTokenExpiryDays)
-        );
+        try {
+            AuthTokens result = new AuthTokens(
+                accessTokenPort.generate(user),
+                refreshTokenPort.generate(user, refreshTokenExpiryDays)
+            );
+            log.info("Token rotated for user: {}", user.id());
+            return result;
+        } catch (RuntimeException e) {
+            log.error("Token generation failed after revocation for user: {} — revoking all", user.id());
+            refreshTokenRepository.revokeAllForUser(user.id());
+            throw e;
+        }
     }
 }
