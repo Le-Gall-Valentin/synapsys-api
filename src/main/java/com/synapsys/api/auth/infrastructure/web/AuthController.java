@@ -41,7 +41,7 @@ public class AuthController {
         this.cookieService = cookieService;
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated() and (hasRole('SUPER_ADMIN') or hasRole('ADMIN'))")
     @PostMapping("/register")
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
                                                      @AuthenticationPrincipal CustomUserDetails caller) {
