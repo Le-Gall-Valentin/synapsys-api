@@ -67,13 +67,14 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserInfoResponse> me(@AuthenticationPrincipal CustomUserDetails caller) {
         User user = getCurrentUserUseCase.getCurrentUser(caller.getUserId());
         return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 
     @PostMapping("/refresh")
-    @RateLimiting
+    @RateLimiting(max = 5)
     public ResponseEntity<Void> refresh(HttpServletRequest request,
                                         HttpServletResponse response) {
         String rawRefreshToken = cookieService
