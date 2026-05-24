@@ -98,4 +98,34 @@ class AuthExceptionHandlerTest {
         assertThat(response.getBody().getInstance()).isNotNull();
         assertThat(response.getBody().getInstance().toString()).isEqualTo("/api/auth/login");
     }
+
+    @Test
+    void handle_insufficientPermissions_doesNotLeakRoleNames() {
+        var response = handler.handle(
+            new AuthException.InsufficientPermissions(Role.USER, Role.ADMIN), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Insufficient permissions");
+        assertThat(response.getBody().getDetail()).doesNotContain("USER");
+        assertThat(response.getBody().getDetail()).doesNotContain("ADMIN");
+    }
+
+    @Test
+    void handle_tokenRevoked_returnsGenericAuthenticationRequired() {
+        var response = handler.handle(new AuthException.TokenRevoked(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+    }
+
+    @Test
+    void handle_tokenExpired_returnsGenericAuthenticationRequired() {
+        var response = handler.handle(new AuthException.TokenExpired(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+    }
 }

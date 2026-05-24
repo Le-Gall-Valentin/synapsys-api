@@ -42,6 +42,10 @@ public class AuthExceptionHandler {
             // Mask account state/existence: return same response as InvalidCredentials to prevent enumeration
             title = AuthException.InvalidCredentials.class.getSimpleName();
             detail = "Invalid credentials";
+        } else if (e instanceof AuthException.TokenExpired || e instanceof AuthException.TokenRevoked) {
+            detail = "Authentication required";
+        } else if (e instanceof AuthException.InsufficientPermissions) {
+            detail = "Insufficient permissions";
         } else {
             detail = e.getMessage();
         }
