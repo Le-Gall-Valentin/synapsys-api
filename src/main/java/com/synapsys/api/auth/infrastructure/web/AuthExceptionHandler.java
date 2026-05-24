@@ -21,50 +21,91 @@ public class AuthExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ProblemDetail> handle(AuthException e, HttpServletRequest request) {
-        int status = switch (e) {
-            case AuthException.InvalidCredentials ignored -> 401;
-            case AuthException.UserNotActive ignored -> 401;
-            case AuthException.TokenExpired ignored -> 401;
-            case AuthException.TokenRevoked ignored -> 401;
-            case AuthException.UserNotFound ignored -> 401;
-            case AuthException.UsernameAlreadyExists ignored -> 409;
-            case AuthException.EmailAlreadyExists ignored -> 409;
-            case AuthException.InsufficientPermissions ignored -> 403;
-            case AuthException.DataIntegrityError ignored -> 500;
+        AuthErrorResponse response = switch (e) {
+            case AuthException.InvalidCredentials ex ->
+                    response(401, ex, ex.getMessage());
+
+            case AuthException.UserNotActive ignored ->
+                    invalidCredentialsResponse();
+
+            case AuthException.UserNotFound ignored ->
+                    invalidCredentialsResponse();
+
+            case AuthException.TokenExpired ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthException.TokenRevoked ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthException.UsernameAlreadyExists ex ->
+                    response(409, ex, ex.getMessage());
+
+            case AuthException.EmailAlreadyExists ex ->
+                    response(409, ex, ex.getMessage());
+
+            case AuthException.InsufficientPermissions ex ->
+                    response(403, ex, "Insufficient permissions");
+
+            case AuthException.DataIntegrityError ex -> {
+                log.error(
+                        "Data integrity violation on {}: {}",
+                        request.getRequestURI(),
+                        ex.getMessage()
+                );
+
+                yield response(
+                        500,
+                        ex,
+                        "An unexpected error occurred. Please try again later."
+                );
+            }
         };
 
-        String title = e.getClass().getSimpleName();
-        String detail;
-        if (e instanceof AuthException.DataIntegrityError) {
-            log.error("Data integrity violation on {}: {}", request.getRequestURI(), e.getMessage());
-            detail = "An unexpected error occurred. Please try again later.";
-        } else if (e instanceof AuthException.UserNotActive || e instanceof AuthException.UserNotFound) {
-            // Mask account state/existence: return same response as InvalidCredentials to prevent enumeration
-            title = AuthException.InvalidCredentials.class.getSimpleName();
-            detail = "Invalid credentials";
-        } else if (e instanceof AuthException.TokenExpired || e instanceof AuthException.TokenRevoked) {
-            detail = "Authentication required";
-        } else if (e instanceof AuthException.InsufficientPermissions) {
-            detail = "Insufficient permissions";
-        } else {
-            detail = e.getMessage();
-        }
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.valueOf(response.status()),
+                response.detail()
+        );
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), detail);
-        problem.setTitle(title);
+        problem.setTitle(response.title());
         problem.setInstance(URI.create(request.getRequestURI()));
-        return ResponseEntity.status(status).body(problem);
+
+        return ResponseEntity.status(response.status()).body(problem);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException e,
                                                           HttpServletRequest request) {
         String details = e.getBindingResult().getFieldErrors().stream()
-            .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
-            .collect(Collectors.joining(", "));
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, details);
         problem.setTitle("Validation failed");
         problem.setInstance(URI.create(request.getRequestURI()));
+
         return ResponseEntity.badRequest().body(problem);
     }
+
+    private static AuthErrorResponse invalidCredentialsResponse() {
+        return new AuthErrorResponse(
+                401,
+                AuthException.InvalidCredentials.class.getSimpleName(),
+                "Invalid credentials"
+        );
+    }
+
+
+    private static AuthErrorResponse response(int status, AuthException e, String detail) {
+        return new AuthErrorResponse(
+                status,
+                e.getClass().getSimpleName(),
+                detail
+        );
+    }
+
+    private record AuthErrorResponse(
+            int status,
+            String title,
+            String detail
+    ) {}
 }
