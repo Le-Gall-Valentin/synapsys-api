@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JwtServiceTest {
 
     private JwtService jwtService;
+    private JwtValidationService validationService;
 
     private static final String SECRET = "test-secret-key-that-is-at-least-32-chars-long!";
 
@@ -34,6 +35,7 @@ class JwtServiceTest {
             new SynapsysProperties.RateLimitProperties(java.util.List.of())
         );
         jwtService = new JwtService(properties);
+        validationService = new JwtValidationService(properties);
     }
 
     @Test
@@ -53,7 +55,7 @@ class JwtServiceTest {
             "hash", Role.ADMIN, true, Instant.now());
 
         String token = jwtService.generate(user);
-        UserClaims claims = jwtService.validateAndExtract(token);
+        UserClaims claims = validationService.validateAndExtract(token);
 
         assertThat(claims.userId()).isEqualTo(userId);
         assertThat(claims.role()).isEqualTo(Role.ADMIN);
@@ -61,7 +63,7 @@ class JwtServiceTest {
 
     @Test
     void validateAndExtract_throwsOnGarbage() {
-        assertThatThrownBy(() -> jwtService.validateAndExtract("not.a.jwt"))
+        assertThatThrownBy(() -> validationService.validateAndExtract("not.a.jwt"))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -71,7 +73,7 @@ class JwtServiceTest {
             "hash", Role.USER, true, Instant.now());
         String token = jwtService.generate(user) + "tampered";
 
-        assertThatThrownBy(() -> jwtService.validateAndExtract(token))
+        assertThatThrownBy(() -> validationService.validateAndExtract(token))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -89,7 +91,7 @@ class JwtServiceTest {
             .signWith(sameKey)
             .compact();
 
-        assertThatThrownBy(() -> jwtService.validateAndExtract(foreignToken))
+        assertThatThrownBy(() -> validationService.validateAndExtract(foreignToken))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Invalid JWT token");
     }
@@ -105,13 +107,35 @@ class JwtServiceTest {
             new SynapsysProperties.RateLimitProperties(java.util.List.of())
         );
         JwtService expiredJwtService = new JwtService(properties);
+        JwtValidationService expiredValidationService = new JwtValidationService(properties);
         User user = new User(UUID.randomUUID(), "alice", "alice@test.com",
             "hash", Role.USER, true, Instant.now());
 
         String token = expiredJwtService.generate(user);
 
-        assertThatThrownBy(() -> expiredJwtService.validateAndExtract(token))
+        assertThatThrownBy(() -> expiredValidationService.validateAndExtract(token))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Invalid JWT token");
+    }
+
+    @Test
+    void jwtValidationService_validateAndExtract_returnsCorrectClaims() {
+        var properties = new SynapsysProperties(
+            new SynapsysProperties.JwtProperties(SECRET, 15),
+            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.CookieProperties(false),
+            null,
+            new SynapsysProperties.CorsProperties(java.util.List.of()),
+            new SynapsysProperties.RateLimitProperties(java.util.List.of())
+        );
+        JwtValidationService vs = new JwtValidationService(properties);
+
+        UUID userId = UUID.randomUUID();
+        User user = new User(userId, "alice", "alice@test.com", "hash", Role.ADMIN, true, Instant.now());
+        String token = jwtService.generate(user);
+
+        UserClaims claims = vs.validateAndExtract(token);
+        assertThat(claims.userId()).isEqualTo(userId);
+        assertThat(claims.role()).isEqualTo(Role.ADMIN);
     }
 }

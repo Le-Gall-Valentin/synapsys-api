@@ -19,11 +19,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    private final JwtService jwtService;
+    private final JwtValidationService jwtValidationService;
     private final CookieService cookieService;
 
-    public JwtAuthenticationFilter(JwtService jwtService, CookieService cookieService) {
-        this.jwtService = jwtService;
+    public JwtAuthenticationFilter(JwtValidationService jwtValidationService, CookieService cookieService) {
+        this.jwtValidationService = jwtValidationService;
         this.cookieService = cookieService;
     }
 
@@ -34,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         cookieService.extractFromRequest(request, CookieService.ACCESS_COOKIE).ifPresent(token -> {
             try {
-                UserClaims claims = jwtService.validateAndExtract(token);
+                UserClaims claims = jwtValidationService.validateAndExtract(token);
                 var userDetails = new CustomUserDetails(claims.userId(), claims.role());
                 var auth = new UsernamePasswordAuthenticationToken(
                     userDetails,
