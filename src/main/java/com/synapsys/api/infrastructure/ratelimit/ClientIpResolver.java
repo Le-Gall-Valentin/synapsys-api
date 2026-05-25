@@ -27,7 +27,8 @@ class ClientIpResolver {
                 // Last entry = IP appended by the trusted proxy. Assumes a single trusted
                 // reverse proxy that appends the real client IP at the end of the XFF header.
                 // (RFC 7239 leftmost-is-client convention is not used here.)
-                return parts[parts.length - 1].trim();
+                String extracted = parts[parts.length - 1].trim();
+                if (!extracted.isBlank()) return extracted;
             }
         }
         return remoteAddr;

@@ -65,4 +65,14 @@ class ClientIpResolverTest {
 
         assertThat(resolver("10.0.0.1").resolve(req)).isEqualTo("client-ip");
     }
+
+    @Test
+    void fallsBackToRemoteAddrWhenXffContainsOnlyCommas() {
+        // Malformed XFF like " , " passes the isBlank() check but yields an empty extracted IP
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setRemoteAddr("10.0.0.1");
+        req.addHeader("X-Forwarded-For", " , ");
+
+        assertThat(resolver("10.0.0.1").resolve(req)).isEqualTo("10.0.0.1");
+    }
 }

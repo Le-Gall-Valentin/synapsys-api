@@ -5,6 +5,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 public class DataSeeder {
 
@@ -24,6 +26,6 @@ public class DataSeeder {
                 "SYNAPSYS_SEED_PASSWORD must be set — the initial SUPER_ADMIN cannot be created without it"
             );
         }
-        seedUseCase.seedInitialSuperAdmin(seed.username(), seed.email(), seed.password());
+        seedUseCase.seedInitialSuperAdmin(seed.username(), seed.email().toLowerCase(Locale.ROOT), seed.password());
     }
 }
