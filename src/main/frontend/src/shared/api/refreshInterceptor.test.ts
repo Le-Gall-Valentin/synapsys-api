@@ -217,4 +217,34 @@ describe('refreshInterceptor', () => {
     expect(retried).toContain('/api/data')
     expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
+
+  it('resets sessionExpiredTriggered after successful login so next expiry triggers redirect', async () => {
+    const instance = axios.create()
+    let refreshCallCount = 0
+
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') {
+        refreshCallCount++
+        const refreshConfig = { url: '/auth/refresh', headers: {} as never } as InternalAxiosRequestConfig
+        throw new AxiosError('Unauthorized', '401', refreshConfig, null, {
+          status: 401, data: null, headers: {} as never, config: refreshConfig, statusText: 'Unauthorized',
+        })
+      }
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+
+    attachRefreshInterceptor(instance)
+    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+
+    // First 401 — refresh fails — sessionExpiredTriggered = true
+    await expect(handler.rejected(make401('/api/data1'))).rejects.toBeDefined()
+    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
+
+    // Simulate re-login (successful POST to /auth/login)
+    await instance.post('/auth/login')
+
+    // Second 401 — sessionExpiredTriggered must have been reset — must trigger again
+    await expect(handler.rejected(make401('/api/data2'))).rejects.toBeDefined()
+    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(2)
+  })
 })

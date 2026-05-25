@@ -25,7 +25,12 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
   }
 
   client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      if (response.config.url?.endsWith('/auth/login')) {
+        sessionExpiredTriggered = false
+      }
+      return response
+    },
     async (error: AxiosError) => {
       if (!error.config) {
         return Promise.reject(error)
@@ -39,9 +44,9 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
 
       const requestPath = original.url?.split('?')[0]
       if (
-        requestPath === '/auth/login' ||
-        requestPath === '/auth/refresh' ||
-        requestPath === '/auth/logout'
+        requestPath?.endsWith('/auth/login') ||
+        requestPath?.endsWith('/auth/refresh') ||
+        requestPath?.endsWith('/auth/logout')
       ) {
         return Promise.reject(error)
       }
