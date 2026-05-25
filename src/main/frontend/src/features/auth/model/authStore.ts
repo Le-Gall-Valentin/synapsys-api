@@ -48,11 +48,17 @@ export function createAuthStore(api: IAuthApi) {
       }
       try {
         const user = await api.getMe()
-        if (signal?.aborted) return
+        if (signal?.aborted) {
+          initializationStarted = false
+          return
+        }
         setSessionHint()
         set({ user, isInitializing: false })
       } catch (error) {
-        if (signal?.aborted) return
+        if (signal?.aborted) {
+          initializationStarted = false
+          return
+        }
         // Only invalidate the session on actual auth failure (401); leave hint intact on transient errors
         if (error instanceof CredentialsError) clearSessionHint()
         set({ user: null, isInitializing: false })

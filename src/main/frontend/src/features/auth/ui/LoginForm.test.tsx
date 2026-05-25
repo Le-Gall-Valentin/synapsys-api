@@ -122,4 +122,21 @@ describe('LoginForm', () => {
     await act(async () => { resolveLogin() })
     expect(submitBtn.disabled).toBe(false)
   })
+
+  it('prevents double-submit — login called only once for concurrent submits', async () => {
+    let resolveLogin!: () => void
+    const pendingPromise = new Promise<void>((resolve) => { resolveLogin = resolve })
+    const mockLogin = vi.fn().mockReturnValue(pendingPromise)
+    const { getByLabelText } = setup(mockLogin)
+    const form = getByLabelText('field.username').closest('form')!
+
+    await act(async () => {
+      fireEvent.submit(form)
+      fireEvent.submit(form)
+      await Promise.resolve()
+    })
+
+    expect(mockLogin).toHaveBeenCalledTimes(1)
+    await act(async () => { resolveLogin() })
+  })
 })

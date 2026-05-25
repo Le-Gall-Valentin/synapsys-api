@@ -118,6 +118,33 @@ describe('authStore', () => {
       }
     })
 
+    it('re-initializes after first call is aborted (StrictMode remount)', async () => {
+      const api = createApiMock()
+      const controller1 = new AbortController()
+      mockedHasSessionHint.mockReturnValue(true)
+
+      let resolveGetMe!: (value: { id: string; username: string; role: 'USER' }) => void
+      vi.mocked(api.getMe)
+        .mockImplementationOnce(
+          () => new Promise((resolve) => { resolveGetMe = resolve as typeof resolveGetMe })
+        )
+        .mockResolvedValueOnce({ id: '2', username: 'alice', role: 'USER' })
+
+      const store = createAuthStore(api)
+
+      // First call — will be aborted before getMe resolves
+      void store.getState().initialize(controller1.signal)
+      controller1.abort()
+      resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
+      await Promise.resolve() // flush microtasks
+
+      // Second call — must proceed and complete normally
+      await store.getState().initialize(new AbortController().signal)
+
+      expect(store.getState().isInitializing).toBe(false)
+      expect(store.getState().user?.username).toBe('alice')
+    })
+
     it('does not update store when signal is aborted before getMe resolves', async () => {
       const api = createApiMock()
       const abortController = new AbortController()

@@ -7,6 +7,13 @@ import { Button, Input } from '@/shared/ui'
 
 type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null
 
+const ERROR_I18N_KEYS = {
+  credentials: 'error.credentials',
+  network: 'error.network',
+  rateLimit: 'error.rateLimit',
+  server: 'error.server',
+} as const satisfies Record<NonNullable<ErrorKind>, string>
+
 export function LoginForm() {
   const login = useAuth((s) => s.login)
   const { t } = useTranslation('auth')
@@ -50,7 +57,7 @@ export function LoginForm() {
           className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red"
         >
           <AlertTriangle className="size-3.5 shrink-0" />
-          {t(`error.${errorKind}`)}
+          {t(ERROR_I18N_KEYS[errorKind!])}
         </div>
       )}
 
