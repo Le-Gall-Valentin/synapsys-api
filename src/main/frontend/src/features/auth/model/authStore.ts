@@ -52,7 +52,6 @@ export function createAuthStore(api: IAuthApi) {
       try {
         const user = await api.getMe()
         if (signal?.aborted) return
-        setSessionHint()
         set({ user, isInitializing: false })
       } catch (error) {
         if (signal?.aborted) return

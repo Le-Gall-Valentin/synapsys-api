@@ -86,7 +86,7 @@ describe('authStore', () => {
       expect(api.getMe).toHaveBeenCalledTimes(1)
       expect(store.getState().isInitializing).toBe(false)
       expect(store.getState().user?.role).toBe('ADMIN')
-      expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
+      expect(mockedSetSessionHint).toHaveBeenCalledTimes(0)
     })
 
     it('clears state and hint when getMe returns 401 (session expired)', async () => {

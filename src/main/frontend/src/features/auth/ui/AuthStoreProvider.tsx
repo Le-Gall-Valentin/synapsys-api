@@ -30,6 +30,8 @@ export function AuthStoreProvider({ api, children }: Props) {
     }
   }, [store])
 
+  // This spinner absorbs the global init phase. ProtectedRoute and PublicOnlyRoute have
+  // their own isInitializing branch only as a secondary safety net (normally unreachable).
   if (isInitializing) return <Spinner label={t('loading')} />
 
   return (

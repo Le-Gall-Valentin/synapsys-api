@@ -9,3 +9,7 @@ export function setSessionExpiredCallback(cb: VoidCallback | null): void {
 export function triggerSessionExpired(): void {
   sessionExpiredCallback?.()
 }
+
+export function resetSessionCallbacks(): void {
+  sessionExpiredCallback = null
+}
