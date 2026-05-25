@@ -112,4 +112,14 @@ class ArchRulesTest {
             .should().beInterfaces();
         rule.check(classes);
     }
+
+    @Test
+    void configuration_classes_should_not_implement_domain_ports() {
+        // SynapsysProperties is a pure config POJO — it must not carry domain port responsibilities.
+        // A dedicated adapter must implement domain ports instead.
+        ArchRule rule = noClasses()
+            .that().haveSimpleName("SynapsysProperties")
+            .should().implement(com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort.class);
+        rule.check(classes);
+    }
 }
