@@ -139,6 +139,16 @@ class LoginHandlerTest {
         assertThat(usernameLogged).isFalse();
     }
 
+    @Test
+    void login_inactiveUser_wrongPassword_throwsUserNotActive() {
+        User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "wrongpassword")))
+            .isInstanceOf(AuthException.UserNotActive.class);
+    }
+
     private ListAppender<ILoggingEvent> startLogCapture() {
         ch.qos.logback.classic.Logger logger =
             (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LoginHandler.class);
