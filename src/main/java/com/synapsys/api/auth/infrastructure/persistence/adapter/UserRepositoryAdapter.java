@@ -34,6 +34,11 @@ public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
     }
 
     @Override
+    public Optional<User> findByEmail(String email) {
+        return jpa.findByEmail(email).map(this::toDomain);
+    }
+
+    @Override
     public Optional<User> findById(UUID id) {
         return jpa.findById(id).map(this::toDomain);
     }
