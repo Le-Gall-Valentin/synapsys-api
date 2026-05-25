@@ -40,9 +40,8 @@ public class UserController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
                                                      @AuthenticationPrincipal CustomUserDetails caller) {
-        Role targetRole = request.role() != null ? request.role() : Role.USER;
         User user = registerUseCase.register(
-            new RegisterCommand(request.username(), request.email(), request.password(), targetRole),
+            new RegisterCommand(request.username(), request.email(), request.password(), request.role()),
             caller.getRole()
         );
         return ResponseEntity.status(201).body(

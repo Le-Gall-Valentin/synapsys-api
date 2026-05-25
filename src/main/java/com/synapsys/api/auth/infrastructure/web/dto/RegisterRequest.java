@@ -3,6 +3,7 @@ package com.synapsys.api.auth.infrastructure.web.dto;
 import com.synapsys.api.auth.domain.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -15,5 +16,5 @@ public record RegisterRequest(
         message = "must contain at least one uppercase letter, one digit, and one special character"
     )
     String password,
-    Role role
+    @NotNull Role role
 ) {}
