@@ -14,7 +14,7 @@ export interface AuthState {
 export interface AuthActions {
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => Promise<void>
-  initialize: () => Promise<void>
+  initialize: (signal?: AbortSignal) => Promise<void>
 }
 
 export function createAuthStore(api: IAuthApi) {
@@ -40,7 +40,7 @@ export function createAuthStore(api: IAuthApi) {
       }
     },
 
-    async initialize(): Promise<void> {
+    async initialize(signal?: AbortSignal): Promise<void> {
       if (initializationStarted) return
       initializationStarted = true
 
@@ -50,9 +50,11 @@ export function createAuthStore(api: IAuthApi) {
       }
       try {
         const user = await api.getMe()
+        if (signal?.aborted) return
         setSessionHint()
         set({ user, isAuthenticated: true, isInitializing: false })
       } catch (error) {
+        if (signal?.aborted) return
         // Only invalidate the session on actual auth failure (401); leave hint intact on transient errors
         if (error instanceof CredentialsError) clearSessionHint()
         set({ user: null, isAuthenticated: false, isInitializing: false })

@@ -121,5 +121,28 @@ describe('authStore', () => {
         expect(store.getState().isAuthenticated).toBe(false)
       }
     })
+
+    it('does not update store when signal is aborted before getMe resolves', async () => {
+      const api = createApiMock()
+      const abortController = new AbortController()
+
+      let resolveGetMe!: (value: { id: string; username: string; role: string }) => void
+      vi.mocked(api.getMe).mockImplementation(
+        () => new Promise((resolve) => { resolveGetMe = resolve })
+      )
+      mockedHasSessionHint.mockReturnValue(true)
+
+      const store = createAuthStore(api)
+      const initPromise = store.getState().initialize(abortController.signal)
+
+      // Abort before getMe resolves
+      abortController.abort()
+      resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
+      await initPromise
+
+      // isInitializing stays true because we never set it to false (aborted)
+      expect(store.getState().isInitializing).toBe(true)
+      expect(store.getState().user).toBeNull()
+    })
   })
 })

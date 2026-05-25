@@ -21,9 +21,13 @@ export function AuthStoreProvider({ api, children }: Props) {
   const { t } = useTranslation('common')
 
   useEffect(() => {
+    const abortController = new AbortController()
     setSessionExpiredCallback(() => void store.getState().logout())
-    void store.getState().initialize()
-    return () => setSessionExpiredCallback(null)
+    void store.getState().initialize(abortController.signal)
+    return () => {
+      abortController.abort()
+      setSessionExpiredCallback(null)
+    }
   }, [store])
 
   if (isInitializing) return <Spinner label={t('loading')} />
