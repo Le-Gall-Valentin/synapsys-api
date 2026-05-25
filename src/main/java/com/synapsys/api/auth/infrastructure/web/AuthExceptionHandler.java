@@ -25,11 +25,11 @@ public class AuthExceptionHandler {
             case AuthException.InvalidCredentials ex ->
                     response(401, ex, ex.getMessage());
 
-            case AuthException.UserNotActive ignored ->
-                    invalidCredentialsResponse();
+            case AuthException.UserNotActive ex ->
+                    response(403, ex, "User account is not active.");
 
-            case AuthException.UserNotFound ignored ->
-                    invalidCredentialsResponse();
+            case AuthException.UserNotFound ex ->
+                    response(404, ex, "User not found");
 
             case AuthException.TokenExpired ex ->
                     response(401, ex, "Authentication required");
@@ -80,14 +80,6 @@ public class AuthExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
 
         return ResponseEntity.badRequest().body(problem);
-    }
-
-    private static AuthErrorResponse invalidCredentialsResponse() {
-        return new AuthErrorResponse(
-                401,
-                AuthException.InvalidCredentials.class.getSimpleName(),
-                "Invalid credentials"
-        );
     }
 
 

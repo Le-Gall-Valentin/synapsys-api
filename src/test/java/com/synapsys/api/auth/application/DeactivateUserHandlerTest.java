@@ -1,0 +1,119 @@
+package com.synapsys.api.auth.application;
+
+import com.synapsys.api.auth.domain.model.AuthException;
+import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.auth.domain.model.User;
+import com.synapsys.api.auth.domain.port.out.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class DeactivateUserHandlerTest {
+
+    @Mock
+    UserRepository userRepository;
+
+    private DeactivateUserHandler handler;
+
+    private final UUID callerId = UUID.randomUUID();
+    private final UUID targetId = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        handler = new DeactivateUserHandler(userRepository);
+    }
+
+    @Test
+    void deactivate_superAdminDeactivatesAdmin_succeeds() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.ADMIN)));
+
+        assertThatCode(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+            .doesNotThrowAnyException();
+
+        verify(userRepository).deactivate(targetId);
+    }
+
+    @Test
+    void deactivate_superAdminDeactivatesUser_succeeds() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
+
+        assertThatCode(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+            .doesNotThrowAnyException();
+
+        verify(userRepository).deactivate(targetId);
+    }
+
+    @Test
+    void deactivate_adminDeactivatesUser_succeeds() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
+
+        assertThatCode(() -> handler.deactivate(targetId, callerId, Role.ADMIN))
+            .doesNotThrowAnyException();
+
+        verify(userRepository).deactivate(targetId);
+    }
+
+    @Test
+    void deactivate_adminCannotDeactivateAdmin_throwsInsufficientPermissions() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.ADMIN)));
+
+        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.ADMIN))
+            .isInstanceOf(AuthException.InsufficientPermissions.class);
+
+        verify(userRepository, never()).deactivate(any());
+    }
+
+    @Test
+    void deactivate_adminCannotDeactivateSuperAdmin_throwsInsufficientPermissions() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
+
+        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.ADMIN))
+            .isInstanceOf(AuthException.InsufficientPermissions.class);
+
+        verify(userRepository, never()).deactivate(any());
+    }
+
+    @Test
+    void deactivate_selfDeactivation_throwsInsufficientPermissions() {
+        assertThatThrownBy(() -> handler.deactivate(callerId, callerId, Role.SUPER_ADMIN))
+            .isInstanceOf(AuthException.InsufficientPermissions.class)
+            .hasMessageContaining("Self-deactivation");
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void deactivate_targetNotFound_throwsUserNotFound() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+            .isInstanceOf(AuthException.UserNotFound.class);
+
+        verify(userRepository, never()).deactivate(any());
+    }
+
+    @Test
+    void deactivate_superAdminCannotDeactivateSuperAdmin_throwsInsufficientPermissions() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
+
+        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+            .isInstanceOf(AuthException.InsufficientPermissions.class);
+
+        verify(userRepository, never()).deactivate(any());
+    }
+
+    private User user(UUID id, Role role) {
+        return new User(id, "user-" + id, id + "@test.com", "hashed", role, true, Instant.now());
+    }
+}

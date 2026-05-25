@@ -45,13 +45,13 @@ class AuthExceptionHandlerTest {
     }
 
     @Test
-    void handle_userNotActive_returns401WithGenericCredentialsMessage() {
+    void handle_userNotActive_returns403WithGenericUserNotActiveMessage() {
         var response = handler.handle(new AuthException.UserNotActive(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("Invalid credentials");
-        assertThat(response.getBody().getTitle()).isEqualTo("InvalidCredentials");
+        assertThat(response.getBody().getDetail()).isEqualTo("User account is not active.");
+        assertThat(response.getBody().getTitle()).isEqualTo("UserNotActive");
     }
 
     @Test
@@ -63,13 +63,13 @@ class AuthExceptionHandlerTest {
     }
 
     @Test
-    void handle_userNotFound_returns401WithGenericCredentialsMessage() {
+    void handle_userNotFound_returns404() {
         var response = handler.handle(new AuthException.UserNotFound(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("Invalid credentials");
-        assertThat(response.getBody().getTitle()).isEqualTo("InvalidCredentials");
+        assertThat(response.getBody().getDetail()).isEqualTo("User not found");
+        assertThat(response.getBody().getTitle()).isEqualTo("UserNotFound");
     }
 
     @Test

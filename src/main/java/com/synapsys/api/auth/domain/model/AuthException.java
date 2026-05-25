@@ -44,8 +44,14 @@ public abstract sealed class AuthException extends RuntimeException
     }
 
     public static final class InsufficientPermissions extends AuthException {
+        public InsufficientPermissions() {
+            super("Self-deactivation is not allowed");
+        }
         public InsufficientPermissions(Role callerRole, Role targetRole) {
             super("Role '" + callerRole + "' cannot create accounts with role '" + targetRole + "'");
+        }
+        public InsufficientPermissions(String action, Role callerRole, Role targetRole) {
+            super("Role '" + callerRole + "' cannot " + action + " users with role '" + targetRole + "'");
         }
     }
 
