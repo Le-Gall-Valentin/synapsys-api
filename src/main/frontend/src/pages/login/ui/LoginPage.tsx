@@ -9,7 +9,7 @@ export function LoginPage() {
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
 
       {/* ── Panneau gauche — Branding ── */}
-      <aside
+      <div
         aria-hidden="true"
         className="relative hidden flex-col overflow-hidden border-r border-border lg:flex"
         style={{
@@ -90,7 +90,7 @@ export function LoginPage() {
             </p>
           </div>
         </div>
-      </aside>
+      </div>
 
       {/* ── Panneau droit — Formulaire ── */}
       <main className="relative flex flex-col justify-center bg-bg-0 px-8 py-12 sm:px-11">
