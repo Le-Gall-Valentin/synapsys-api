@@ -124,7 +124,7 @@ class AuthControllerIT {
     void login_wrongPassword_returns401() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "wrong"))))
+                .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "wrongpassword"))))
             .andExpect(status().isUnauthorized());
     }
 
