@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act, cleanup } from '@testing-library/react'
+import { render, screen, waitFor, cleanup } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setSessionExpiredCallback, hasSessionHint } from '@/shared/lib'
 import { AuthStoreProvider } from './AuthStoreProvider'
