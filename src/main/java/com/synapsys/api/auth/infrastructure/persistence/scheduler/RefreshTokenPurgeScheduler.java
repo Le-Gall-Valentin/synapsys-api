@@ -1,7 +1,7 @@
 package com.synapsys.api.auth.infrastructure.persistence.scheduler;
 
+import com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,9 +19,9 @@ public class RefreshTokenPurgeScheduler {
     private final int refreshTokenExpiryDays;
 
     public RefreshTokenPurgeScheduler(RefreshTokenMaintenancePort refreshTokenMaintenance,
-                                      SynapsysProperties properties) {
+                                      RefreshTokenConfigPort tokenConfig) {
         this.refreshTokenMaintenance = refreshTokenMaintenance;
-        this.refreshTokenExpiryDays = properties.refreshToken().expiryDays();
+        this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
     }
 
     @Scheduled(cron = "0 0 3 * * *")

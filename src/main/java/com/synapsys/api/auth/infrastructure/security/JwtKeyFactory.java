@@ -4,10 +4,10 @@ import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 
-final class JwtKeyFactory {
+public final class JwtKeyFactory {
     private JwtKeyFactory() {}
 
-    static SecretKey from(String secret) {
+    public static SecretKey from(String secret) {
         if (secret == null || secret.isBlank()) {
             throw new IllegalStateException("synapsys.jwt.secret must be configured");
         }

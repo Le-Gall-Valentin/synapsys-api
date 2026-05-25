@@ -1,7 +1,6 @@
 package com.synapsys.api.auth.infrastructure.security;
 
 import com.synapsys.api.auth.domain.model.Role;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -15,8 +14,8 @@ public class JwtValidationService {
 
     private final SecretKey key;
 
-    public JwtValidationService(SynapsysProperties properties) {
-        this.key = JwtKeyFactory.from(properties.jwt().secret());
+    public JwtValidationService(SecretKey jwtSecretKey) {
+        this.key = jwtSecretKey;
     }
 
     public UserClaims validateAndExtract(String token) {

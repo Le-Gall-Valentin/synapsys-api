@@ -3,33 +3,19 @@ package com.synapsys.api.auth.infrastructure.persistence.repository;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
+import com.synapsys.api.IntegrationTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@TestPropertySource(properties = {
-    "synapsys.jwt.secret=integration-test-secret-at-least-32-chars!",
-    "synapsys.jwt.expiry-minutes=15",
-    "synapsys.refresh-token.expiry-days=30",
-    "synapsys.cookie.secure=false",
-    "synapsys.seed.username=it-admin",
-    "synapsys.seed.email=it-admin@test.local",
-    "synapsys.seed.password=integration-test-seed-password",
-    "synapsys.cors.allowed-origins=",
-    "spring.jpa.hibernate.ddl-auto=none"
-})
-@Testcontainers
+@IntegrationTestConfig
 class RefreshTokenRepositoryIT {
 
     @Container

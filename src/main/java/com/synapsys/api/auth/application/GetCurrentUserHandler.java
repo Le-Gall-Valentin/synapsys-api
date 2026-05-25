@@ -5,6 +5,7 @@ import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.in.GetCurrentUserUseCase;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -18,6 +19,7 @@ public class GetCurrentUserHandler implements GetCurrentUserUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User getCurrentUser(UUID userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(AuthException.UserNotFound::new);

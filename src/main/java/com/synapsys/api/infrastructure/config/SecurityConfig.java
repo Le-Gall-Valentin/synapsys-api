@@ -15,7 +15,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 @Configuration
@@ -26,7 +25,9 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtAuthenticationFilter jwtFilter,
-                                    SynapsysProperties properties) throws Exception {
+                                    SynapsysProperties properties,
+                                    UnauthorizedEntryPoint unauthorizedEntryPoint,
+                                    ForbiddenAccessDeniedHandler forbiddenAccessDeniedHandler) throws Exception {
         return http
             // CSRF disabled: all state-changing requests require a valid HttpOnly cookie (SameSite=Strict).
             // Cross-origin requests are blocked by CORS. No CSRF token header needed.
@@ -47,16 +48,8 @@ public class SecurityConfig {
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> {
-                    res.setContentType("application/problem+json");
-                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    res.getWriter().write("{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"status\":401,\"detail\":\"Authentication required\"}");
-                })
-                .accessDeniedHandler((req, res, e) -> {
-                    res.setContentType("application/problem+json");
-                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    res.getWriter().write("{\"type\":\"about:blank\",\"title\":\"Forbidden\",\"status\":403,\"detail\":\"Insufficient permissions\"}");
-                })
+                .authenticationEntryPoint(unauthorizedEntryPoint)
+                .accessDeniedHandler(forbiddenAccessDeniedHandler)
             )
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)

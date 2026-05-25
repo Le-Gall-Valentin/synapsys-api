@@ -22,7 +22,7 @@ public class CookieService {
     public CookieService(SynapsysProperties properties) {
         this.secure = properties.cookie().secure();
         this.accessMaxAgeSeconds = (int) (properties.jwt().expiryMinutes() * 60L);
-        this.refreshMaxAgeSeconds = properties.refreshToken().expiryDays() * 86_400;
+        this.refreshMaxAgeSeconds = (int) ((long) properties.refreshToken().expiryDays() * 86_400L);
     }
 
     public Cookie buildAccessCookie(String token) {

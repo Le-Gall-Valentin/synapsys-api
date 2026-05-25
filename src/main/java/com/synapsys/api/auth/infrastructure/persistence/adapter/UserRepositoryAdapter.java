@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
+// Implements both UserRepository (query/write) and UserAdminPort (admin-only mutation),
+// sharing a single JPA repository to avoid duplicating persistence logic across two adapters.
 @Component
 public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
 

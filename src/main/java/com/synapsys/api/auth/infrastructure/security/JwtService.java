@@ -16,8 +16,8 @@ public class JwtService implements AccessTokenPort {
     private final SecretKey key;
     private final int expiryMinutes;
 
-    public JwtService(SynapsysProperties properties) {
-        this.key = JwtKeyFactory.from(properties.jwt().secret());
+    public JwtService(SecretKey jwtSecretKey, SynapsysProperties properties) {
+        this.key = jwtSecretKey;
         this.expiryMinutes = properties.jwt().expiryMinutes();
     }
 

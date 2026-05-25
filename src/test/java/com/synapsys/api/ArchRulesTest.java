@@ -46,14 +46,10 @@ class ArchRulesTest {
 
     @Test
     void web_layer_should_not_bypass_use_case_ports() {
-        DescribedPredicate<JavaClass> applicationHandlers = DescribedPredicate.describe(
-            "reside in auth.application and have name ending with Handler",
-            clazz -> clazz.getPackageName().contains(".auth.application")
-                     && clazz.getSimpleName().endsWith("Handler")
-        );
         noClasses()
             .that().resideInAPackage("..auth.infrastructure.web..")
-            .should().dependOnClassesThat(applicationHandlers)
+            .should().dependOnClassesThat()
+            .resideInAPackage("..auth.application..")
             .check(classes);
     }
 

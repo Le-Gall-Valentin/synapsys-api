@@ -1,7 +1,7 @@
 package com.synapsys.api.auth.infrastructure.persistence.scheduler;
 
+import com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,15 +25,8 @@ class RefreshTokenPurgeSchedulerTest {
     private static final int EXPIRY_DAYS = 30;
 
     private RefreshTokenPurgeScheduler scheduler() {
-        SynapsysProperties properties = new SynapsysProperties(
-            new SynapsysProperties.JwtProperties("secret", 15),
-            new SynapsysProperties.RefreshTokenProperties(EXPIRY_DAYS),
-            new SynapsysProperties.CookieProperties(true),
-            new SynapsysProperties.SeedProperties("admin", "admin@test.com", "pass"),
-            new SynapsysProperties.CorsProperties(List.of()),
-            new SynapsysProperties.RateLimitProperties(List.of())
-        );
-        return new RefreshTokenPurgeScheduler(refreshTokenRepository, properties);
+        RefreshTokenConfigPort tokenConfig = () -> EXPIRY_DAYS;
+        return new RefreshTokenPurgeScheduler(refreshTokenRepository, tokenConfig);
     }
 
     @Test

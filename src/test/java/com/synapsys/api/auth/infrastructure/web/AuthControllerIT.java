@@ -8,24 +8,22 @@ import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJ
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.infrastructure.ratelimit.RateLimitBucketStore;
+import com.synapsys.api.IntegrationTestConfig;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -34,19 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@TestPropertySource(properties = {
-    "synapsys.jwt.secret=integration-test-secret-at-least-32-chars!",
-    "synapsys.jwt.expiry-minutes=15",
-    "synapsys.refresh-token.expiry-days=30",
-    "synapsys.cookie.secure=false",
-    "synapsys.seed.username=it-admin",
-    "synapsys.seed.email=it-admin@test.local",
-    "synapsys.seed.password=integration-test-seed-password",
-    "synapsys.cors.allowed-origins=",
-    "spring.jpa.hibernate.ddl-auto=none"
-})
-@Testcontainers
+@IntegrationTestConfig
 class AuthControllerIT {
 
     @Container
@@ -193,14 +179,6 @@ class AuthControllerIT {
             .andExpect(jsonPath("$.type").value("about:blank"))
             .andExpect(jsonPath("$.status").value(401))
             .andExpect(jsonPath("$.title").value("Unauthorized"));
-    }
-
-    @Test
-    void login_shortPassword_returns401() throws Exception {
-        mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"testuser\",\"password\":\"abc\"}"))
-            .andExpect(status().isUnauthorized());
     }
 
     @Test

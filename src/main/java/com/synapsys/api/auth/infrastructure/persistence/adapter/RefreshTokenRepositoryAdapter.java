@@ -37,6 +37,8 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, Re
         jpa.revokeById(tokenId);
     }
 
+    // REQUIRES_NEW: revocation must commit independently so tokens stay revoked
+    // even if the caller's outer transaction is rolled back (e.g., on reuse detection).
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllForUser(UUID userId) {
