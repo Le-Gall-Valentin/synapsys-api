@@ -2,8 +2,5 @@
   "avatar": "Avatar de {{username}}",
   "action": {
     "logout": "Se déconnecter"
-  },
-  "error": {
-    "logout": "La déconnexion a échoué. Veuillez réessayer."
   }
 }

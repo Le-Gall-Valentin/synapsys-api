@@ -28,7 +28,8 @@ export function createRefreshInterceptorHandlers(client: AxiosInstance): {
   }
 
   function onFulfilled(response: AxiosResponse): AxiosResponse {
-    if (response.config.url?.endsWith('/auth/login')) {
+    const url = response.config.url?.split('?')[0]
+    if (url?.endsWith('/auth/login')) {
       sessionExpiredTriggered = false
     }
     return response

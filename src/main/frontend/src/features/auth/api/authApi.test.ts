@@ -157,11 +157,11 @@ describe('authApi', () => {
     expect((caught as RateLimitError).retryAfterSeconds).toBeNull()
   })
 
-  it('getMe throws CredentialsError on 403', async () => {
+  it('getMe throws ServerError on 403 (should not trigger logout)', async () => {
     const err = new axios.AxiosError('Forbidden', undefined, undefined, undefined, {
       status: 403, data: {}, headers: {}, config: {} as never, statusText: 'Forbidden',
     })
     mockedClient.get.mockRejectedValue(err)
-    await expect(authApi.getMe()).rejects.toBeInstanceOf(CredentialsError)
+    await expect(authApi.getMe()).rejects.toBeInstanceOf(ServerError)
   })
 })

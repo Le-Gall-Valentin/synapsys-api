@@ -46,8 +46,7 @@ export const authApi: IAuthApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) throw new CredentialsError()
-        if (status !== undefined && status >= 500) throw new ServerError()
-        if (status !== undefined) throw new CredentialsError()
+        if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
     }

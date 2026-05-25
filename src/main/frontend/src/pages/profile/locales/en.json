@@ -2,8 +2,5 @@
   "avatar": "Avatar of {{username}}",
   "action": {
     "logout": "Sign out"
-  },
-  "error": {
-    "logout": "Sign out failed. Please try again."
   }
 }
