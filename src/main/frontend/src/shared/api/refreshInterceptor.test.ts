@@ -1,8 +1,9 @@
+// @vitest-environment node
 import axios, {AxiosError, type InternalAxiosRequestConfig} from 'axios'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi, type Mock} from 'vitest'
 import {createRefreshInterceptorHandlers} from './refreshInterceptor'
 
-let mockOnSessionExpired: ReturnType<typeof vi.fn>
+let mockOnSessionExpired: Mock<() => void>
 
 function make401(url: string, retry = false): AxiosError {
   const config = {
