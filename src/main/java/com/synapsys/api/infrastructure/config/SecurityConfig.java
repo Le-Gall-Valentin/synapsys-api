@@ -50,12 +50,12 @@ public class SecurityConfig {
                 .authenticationEntryPoint((req, res, e) -> {
                     res.setContentType("application/problem+json");
                     res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    res.getWriter().write("{\"status\":401,\"title\":\"Unauthorized\",\"detail\":\"Authentication required\"}");
+                    res.getWriter().write("{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"status\":401,\"detail\":\"Authentication required\"}");
                 })
                 .accessDeniedHandler((req, res, e) -> {
                     res.setContentType("application/problem+json");
                     res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    res.getWriter().write("{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"Insufficient permissions\"}");
+                    res.getWriter().write("{\"type\":\"about:blank\",\"title\":\"Forbidden\",\"status\":403,\"detail\":\"Insufficient permissions\"}");
                 })
             )
             .httpBasic(AbstractHttpConfigurer::disable)
