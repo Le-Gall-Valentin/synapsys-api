@@ -19,10 +19,10 @@ export function NetworkArtwork() {
     <svg
       viewBox="0 0 320 240"
       xmlns="http://www.w3.org/2000/svg"
-      className="h-auto w-full"
+      className="h-auto w-full network-artwork"
       aria-hidden="true"
     >
-      <style>{`@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }`}</style>
+      <style>{`@media (prefers-reduced-motion: reduce) { .network-artwork * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }`}</style>
       <g stroke="rgba(94,234,212,0.25)" strokeWidth="1" fill="none">
         {nodes.map((n) => (
           <line key={n.delay} x1="160" y1="120" x2={n.cx} y2={n.cy} />

@@ -78,6 +78,18 @@ describe('LoginForm', () => {
     })
   })
 
+  it('shows rateLimit error with delay when retryAfterSeconds is set', async () => {
+    const mockLogin = vi.fn().mockRejectedValue(new RateLimitError(42))
+    const { getByLabelText, getByRole } = setup(mockLogin)
+
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => {
+      const alert = getByRole('alert')
+      expect(alert.textContent).toContain('error.rateLimitWithDelay')
+    })
+  })
+
   it('shows server error on ServerError', async () => {
     const mockLogin = vi.fn().mockRejectedValue(new ServerError())
     const { getByLabelText, getByRole } = setup(mockLogin)

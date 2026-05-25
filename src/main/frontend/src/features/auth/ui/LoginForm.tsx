@@ -21,6 +21,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorKind, setErrorKind] = useState<ErrorKind>(null)
+  const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const isSubmittingRef = useRef(false)
 
@@ -29,6 +30,7 @@ export function LoginForm() {
     if (isSubmittingRef.current) return
     isSubmittingRef.current = true
     setErrorKind(null)
+    setRetryAfterSeconds(null)
     setIsLoading(true)
     try {
       await login({ username, password })
@@ -38,6 +40,7 @@ export function LoginForm() {
         setPassword('')
       } else if (error instanceof RateLimitError) {
         setErrorKind('rateLimit')
+        setRetryAfterSeconds(error.retryAfterSeconds)
       } else if (error instanceof ServerError) {
         setErrorKind('server')
       } else {
@@ -57,7 +60,9 @@ export function LoginForm() {
           className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red"
         >
           <AlertTriangle className="size-3.5 shrink-0" />
-          {t(ERROR_I18N_KEYS[errorKind!])}
+          {errorKind === 'rateLimit' && retryAfterSeconds !== null
+            ? t('error.rateLimitWithDelay', { seconds: retryAfterSeconds })
+            : t(ERROR_I18N_KEYS[errorKind!])}
         </div>
       )}
 
