@@ -46,6 +46,9 @@ class ArchRulesTest {
 
     @Test
     void web_controllers_should_not_depend_on_application_layer() {
+        // Controllers inject use cases via port.in interfaces, so this rule currently passes trivially.
+        // Kept as a regression guard: would catch any accidental direct import of a handler (e.g. LoginHandler)
+        // from the web layer.
         ArchRule rule = noClasses()
             .that().resideInAPackage("..auth.infrastructure.web..")
             .should().dependOnClassesThat()

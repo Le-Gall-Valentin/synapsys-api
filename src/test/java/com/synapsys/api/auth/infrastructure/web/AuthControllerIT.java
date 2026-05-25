@@ -206,6 +206,20 @@ class AuthControllerIT {
             .andExpect(header().exists("Retry-After"));
     }
 
+    @Test
+    void refresh_whenIpRateLimitExceeded_returns429() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/api/auth/refresh")
+                    .with(req -> { req.setRemoteAddr("198.51.100.2"); return req; }))
+                .andExpect(status().isUnauthorized()); // pas de cookie refresh → 401
+        }
+
+        mockMvc.perform(post("/api/auth/refresh")
+                .with(req -> { req.setRemoteAddr("198.51.100.2"); return req; }))
+            .andExpect(status().isTooManyRequests())
+            .andExpect(header().exists("Retry-After"));
+    }
+
     MvcResult login() throws Exception {
         return mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)

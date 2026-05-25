@@ -5,11 +5,9 @@ import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Component
@@ -18,17 +16,7 @@ public class JwtValidationService {
     private final SecretKey key;
 
     public JwtValidationService(SynapsysProperties properties) {
-        String secret = properties.jwt().secret();
-        if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("synapsys.jwt.secret must be configured");
-        }
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length < 32) {
-            throw new IllegalStateException(
-                "synapsys.jwt.secret must be at least 32 characters long (got " + keyBytes.length + ")"
-            );
-        }
-        this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.key = JwtKeyFactory.from(properties.jwt().secret());
     }
 
     public UserClaims validateAndExtract(String token) {

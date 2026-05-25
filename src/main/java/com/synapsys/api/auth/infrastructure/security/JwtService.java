@@ -4,11 +4,9 @@ import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.AccessTokenPort;
 import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 
@@ -19,17 +17,7 @@ public class JwtService implements AccessTokenPort {
     private final int expiryMinutes;
 
     public JwtService(SynapsysProperties properties) {
-        String secret = properties.jwt().secret();
-        if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("synapsys.jwt.secret must be configured");
-        }
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length < 32) {
-            throw new IllegalStateException(
-                "synapsys.jwt.secret must be at least 32 characters long (got " + keyBytes.length + ")"
-            );
-        }
-        this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.key = JwtKeyFactory.from(properties.jwt().secret());
         this.expiryMinutes = properties.jwt().expiryMinutes();
     }
 

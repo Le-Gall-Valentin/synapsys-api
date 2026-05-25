@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @ApplicationService
 public class RegisterHandler implements RegisterUseCase {
 
@@ -29,9 +31,10 @@ public class RegisterHandler implements RegisterUseCase {
         if (!RoleCreationPolicy.canCreate(callerRole, command.role())) {
             throw new AuthException.InsufficientPermissions(callerRole, command.role());
         }
+        String normalizedEmail = command.email().toLowerCase(Locale.ROOT);
         String passwordHash = passwordHasher.hash(command.password());
         User created = userRepository.save(new CreateUserCommand(
-            command.username(), command.email(), passwordHash, command.role()
+            command.username(), normalizedEmail, passwordHash, command.role()
         ));
         log.info("User {} registered with role {} by caller {}", created.id(), created.role(), callerRole);
         return created;
