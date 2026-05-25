@@ -26,6 +26,9 @@ public class SeedHandler implements SeedUseCase {
         this.passwordHasher = passwordHasher;
     }
 
+    // Intentionally non-transactional: the catch on UsernameAlreadyExists / EmailAlreadyExists
+    // handles concurrent startup races. saveAndFlush() flushes within the caller transaction,
+    // so the constraint violation is visible before any outer transaction commits.
     @Override
     public void seedInitialSuperAdmin(String username, String email, String password) {
         if (!userAdminPort.isEmpty()) {
