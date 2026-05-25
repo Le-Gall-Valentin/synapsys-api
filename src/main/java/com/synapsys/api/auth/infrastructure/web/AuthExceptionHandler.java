@@ -47,11 +47,7 @@ public class AuthExceptionHandler {
                     response(403, ex, "Insufficient permissions");
 
             case AuthException.DataIntegrityError ex -> {
-                log.error(
-                        "Data integrity violation on {}: {}",
-                        request.getRequestURI(),
-                        ex.getMessage()
-                );
+                log.error("Data integrity violation on {}", request.getRequestURI());
 
                 yield response(
                         500,
