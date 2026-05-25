@@ -10,7 +10,6 @@ function ErrorFallback({ onReset }: { onReset: () => void }) {
         type="button"
         className="mt-4 text-xs text-accent underline"
         onClick={onReset}
-        aria-label={t('error.retry')}
       >
         {t('error.retry')}
       </button>
