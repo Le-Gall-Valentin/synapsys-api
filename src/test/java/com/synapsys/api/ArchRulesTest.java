@@ -1,6 +1,8 @@
 package com.synapsys.api;
 
 import com.synapsys.api.shared.annotation.ApplicationService;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
@@ -53,11 +55,17 @@ class ArchRulesTest {
 
     @Test
     void application_should_not_depend_on_spring_framework() {
-        ArchRule rule = noClasses()
+        // @Transactional is intentionally allowed: transaction boundaries are an application-level concern.
+        // All other Spring framework dependencies remain forbidden in this layer.
+        DescribedPredicate<JavaClass> springExceptTransactions = DescribedPredicate.describe(
+            "reside in org.springframework.. but not org.springframework.transaction.annotation..",
+            clazz -> clazz.getPackageName().startsWith("org.springframework.")
+                     && !clazz.getPackageName().startsWith("org.springframework.transaction.annotation")
+        );
+        noClasses()
             .that().resideInAPackage("..auth.application..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..");
-        rule.check(classes);
+            .should().dependOnClassesThat(springExceptTransactions)
+            .check(classes);
     }
 
     @Test

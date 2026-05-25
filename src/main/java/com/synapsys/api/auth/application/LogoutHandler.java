@@ -6,6 +6,7 @@ import com.synapsys.api.auth.domain.port.out.TokenHashPort;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 @ApplicationService
 public class LogoutHandler implements LogoutUseCase {
@@ -22,6 +23,7 @@ public class LogoutHandler implements LogoutUseCase {
     }
 
     @Override
+    @Transactional
     public void logout(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) return;
         String hash = tokenHashPort.hash(rawRefreshToken);
