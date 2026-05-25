@@ -37,9 +37,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     }
 
     @Override
-    // noRollbackFor: TokenRevoked is thrown after revokeAllForUser — that write must commit.
-    // Any future write added after that throw must be reviewed carefully.
-    @Transactional(noRollbackFor = AuthException.TokenRevoked.class)
+    @Transactional
     public AuthTokens refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new AuthException.TokenExpired();

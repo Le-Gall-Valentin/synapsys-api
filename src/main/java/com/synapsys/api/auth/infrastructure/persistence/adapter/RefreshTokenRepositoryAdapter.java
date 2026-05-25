@@ -6,6 +6,8 @@ import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -36,6 +38,7 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, Re
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllForUser(UUID userId) {
         jpa.revokeAllByUserId(userId);
     }
