@@ -9,6 +9,8 @@ void i18n
   .init({
     fallbackLng: 'en',
     supportedLngs: ['en', 'fr'],
+    ns: ['common', 'auth', 'login', 'profile'],
+    defaultNS: 'common',
     load: 'languageOnly',
     interpolation: { escapeValue: false },
     resources: i18nResources,
