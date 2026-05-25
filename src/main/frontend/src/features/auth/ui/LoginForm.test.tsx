@@ -20,8 +20,7 @@ function setup(mockLogin: ReturnType<typeof vi.fn>) {
     logout: vi.fn(),
     initialize: vi.fn(),
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockUseAuth.mockImplementation((selector) => selector(baseState as any))
+  mockUseAuth.mockImplementation((selector) => selector(baseState as Parameters<typeof selector>[0]))
   return render(<LoginForm />)
 }
 
