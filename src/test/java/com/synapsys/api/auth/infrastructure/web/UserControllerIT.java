@@ -25,6 +25,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -156,6 +157,47 @@ class UserControllerIT {
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"newsa\",\"email\":\"newsa@test.com\",\"password\":\"Securepass1!\",\"role\":\"SUPER_ADMIN\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deactivate_asSuperAdmin_deletesUser_returns204() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        String targetId = userJpaRepository.findByUsername("testuser").get().getId().toString();
+
+        mockMvc.perform(delete("/api/users/" + targetId).cookie(access))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deactivate_asUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        String targetId = userJpaRepository.findByUsername("superadmin").get().getId().toString();
+
+        mockMvc.perform(delete("/api/users/" + targetId).cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deactivate_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(delete("/api/users/" + java.util.UUID.randomUUID()))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deactivate_nonExistentUser_returns404() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(delete("/api/users/" + java.util.UUID.randomUUID()).cookie(access))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deactivate_self_returns403() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        String selfId = userJpaRepository.findByUsername("superadmin").get().getId().toString();
+
+        mockMvc.perform(delete("/api/users/" + selfId).cookie(access))
             .andExpect(status().isForbidden());
     }
 
