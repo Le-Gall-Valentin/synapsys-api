@@ -11,5 +11,9 @@ export class ServerError extends Error {
 }
 
 export class RateLimitError extends Error {
-  constructor() { super('Too many requests') }
+  readonly retryAfterSeconds: number | null
+  constructor(retryAfterSeconds: number | null = null) {
+    super('Too many requests')
+    this.retryAfterSeconds = retryAfterSeconds
+  }
 }

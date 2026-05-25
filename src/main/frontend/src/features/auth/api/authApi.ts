@@ -14,8 +14,12 @@ export const authApi: IAuthApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) throw new CredentialsError()
-        if (status === 429) throw new RateLimitError()
-        if (status !== undefined && status >= 500) throw new ServerError()
+        if (status === 429) {
+          const retryAfter = error.response?.headers?.['retry-after']
+          const seconds = retryAfter ? (parseInt(retryAfter, 10) || null) : null
+          throw new RateLimitError(seconds)
+        }
+        if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
     }
@@ -43,7 +47,7 @@ export const authApi: IAuthApi = {
         const status = error.response?.status
         if (status === 401) throw new CredentialsError()
         if (status !== undefined && status >= 500) throw new ServerError()
-        if (status !== undefined) throw new ServerError()
+        if (status !== undefined) throw new CredentialsError()
       }
       throw new NetworkError()
     }

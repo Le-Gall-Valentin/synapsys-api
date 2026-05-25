@@ -120,4 +120,48 @@ describe('authApi', () => {
     mockedClient.get.mockRejectedValue(new Error('Network Error'))
     await expect(authApi.getMe()).rejects.toBeInstanceOf(NetworkError)
   })
+
+  it('login throws ServerError on 400 (validation error)', async () => {
+    const err = new axios.AxiosError('Bad Request', undefined, undefined, undefined, {
+      status: 400, data: {}, headers: {}, config: {} as never, statusText: 'Bad Request',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(ServerError)
+  })
+
+  it('login throws ServerError on 403', async () => {
+    const err = new axios.AxiosError('Forbidden', undefined, undefined, undefined, {
+      status: 403, data: {}, headers: {}, config: {} as never, statusText: 'Forbidden',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(ServerError)
+  })
+
+  it('login RateLimitError carries retryAfterSeconds from header', async () => {
+    const err = new axios.AxiosError('Too Many Requests', undefined, undefined, undefined, {
+      status: 429, data: {}, headers: { 'retry-after': '45' }, config: {} as never, statusText: 'Too Many Requests',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    const caught = await authApi.login({ username: 'u', password: 'p' }).catch((e) => e)
+    expect(caught).toBeInstanceOf(RateLimitError)
+    expect((caught as RateLimitError).retryAfterSeconds).toBe(45)
+  })
+
+  it('login RateLimitError has null retryAfterSeconds when header absent', async () => {
+    const err = new axios.AxiosError('Too Many Requests', undefined, undefined, undefined, {
+      status: 429, data: {}, headers: {}, config: {} as never, statusText: 'Too Many Requests',
+    })
+    mockedClient.post.mockRejectedValue(err)
+    const caught = await authApi.login({ username: 'u', password: 'p' }).catch((e) => e)
+    expect(caught).toBeInstanceOf(RateLimitError)
+    expect((caught as RateLimitError).retryAfterSeconds).toBeNull()
+  })
+
+  it('getMe throws CredentialsError on 403', async () => {
+    const err = new axios.AxiosError('Forbidden', undefined, undefined, undefined, {
+      status: 403, data: {}, headers: {}, config: {} as never, statusText: 'Forbidden',
+    })
+    mockedClient.get.mockRejectedValue(err)
+    await expect(authApi.getMe()).rejects.toBeInstanceOf(CredentialsError)
+  })
 })
