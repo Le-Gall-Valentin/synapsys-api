@@ -88,7 +88,7 @@ class DeactivateUserHandlerTest {
     void deactivate_selfDeactivation_throwsInsufficientPermissions() {
         assertThatThrownBy(() -> handler.deactivate(callerId, callerId, Role.SUPER_ADMIN))
             .isInstanceOf(AuthException.InsufficientPermissions.class)
-            .hasMessageContaining("Self-deactivation");
+            .hasMessageContaining("Insufficient permissions");
 
         verifyNoInteractions(userRepository);
     }

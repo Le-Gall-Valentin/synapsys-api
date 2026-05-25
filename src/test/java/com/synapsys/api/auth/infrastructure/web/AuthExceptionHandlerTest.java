@@ -1,7 +1,6 @@
 package com.synapsys.api.auth.infrastructure.web;
 
 import com.synapsys.api.auth.domain.model.AuthException;
-import com.synapsys.api.auth.domain.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -57,7 +56,7 @@ class AuthExceptionHandlerTest {
     @Test
     void handle_insufficientPermissions_returns403() {
         var response = handler.handle(
-            new AuthException.InsufficientPermissions(Role.USER, Role.ADMIN), request);
+            new AuthException.InsufficientPermissions(), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
@@ -102,7 +101,7 @@ class AuthExceptionHandlerTest {
     @Test
     void handle_insufficientPermissions_doesNotLeakRoleNames() {
         var response = handler.handle(
-            new AuthException.InsufficientPermissions(Role.USER, Role.ADMIN), request);
+            new AuthException.InsufficientPermissions(), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();

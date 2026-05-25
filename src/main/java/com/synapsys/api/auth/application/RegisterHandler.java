@@ -29,7 +29,7 @@ public class RegisterHandler implements RegisterUseCase {
     @Transactional
     public User register(RegisterCommand command, Role callerRole) {
         if (!RoleCreationPolicy.canCreate(callerRole, command.role())) {
-            throw new AuthException.InsufficientPermissions(callerRole, command.role());
+            throw new AuthException.InsufficientPermissions();
         }
         String normalizedEmail = command.email().toLowerCase(Locale.ROOT);
         String passwordHash = passwordHasher.hash(command.password());

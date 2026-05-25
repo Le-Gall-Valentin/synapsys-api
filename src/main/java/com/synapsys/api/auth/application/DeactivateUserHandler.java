@@ -33,7 +33,7 @@ public class DeactivateUserHandler implements DeactivateUserUseCase {
         User target = userRepository.findById(targetUserId)
             .orElseThrow(AuthException.UserNotFound::new);
         if (!RoleDeactivationPolicy.canDeactivate(callerRole, target.role())) {
-            throw new AuthException.InsufficientPermissions("deactivate", callerRole, target.role());
+            throw new AuthException.InsufficientPermissions();
         }
         userRepository.deactivate(targetUserId);
         log.info("User {} deactivated by caller {} with role {}", targetUserId, callerId, callerRole);

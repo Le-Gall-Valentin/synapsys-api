@@ -45,12 +45,6 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class InsufficientPermissions extends AuthException {
         public InsufficientPermissions() {
-            super("Self-deactivation is not allowed");
-        }
-        public InsufficientPermissions(Role callerRole, Role targetRole) {
-            super("Insufficient permissions");
-        }
-        public InsufficientPermissions(String action, Role callerRole, Role targetRole) {
             super("Insufficient permissions");
         }
     }
