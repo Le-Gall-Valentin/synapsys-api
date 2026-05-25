@@ -53,6 +53,10 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
 
                 if (!result.allowed()) {
                     log.warn("Rate limit exceeded — key={} limit={} window={}s", key, rule.max(), rule.windowSeconds());
+                    HttpServletResponse blockedResponse = currentResponse();
+                    blockedResponse.setHeader("X-RateLimit-Limit",     String.valueOf(worst.limit()));
+                    blockedResponse.setHeader("X-RateLimit-Remaining", "0");
+                    blockedResponse.setHeader("X-RateLimit-Reset",     String.valueOf(worst.resetEpochSeconds()));
                     throw new RateLimitExceededException(worst);
                 }
             }

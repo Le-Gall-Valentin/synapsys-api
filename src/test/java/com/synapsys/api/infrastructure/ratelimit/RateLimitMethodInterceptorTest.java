@@ -92,6 +92,20 @@ class RateLimitMethodInterceptorTest {
         verify(invocation, never()).proceed();
     }
 
+    @Test
+    void ipMode_blocked_setsRateLimitHeadersOnResponse() throws Throwable {
+        when(invocation.getMethod()).thenReturn(method("ipOnly"));
+        when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
+        when(store.tryConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
+
+        assertThatThrownBy(() -> interceptor.invoke(invocation))
+            .isInstanceOf(RateLimitExceededException.class);
+
+        assertThat(response.getHeader("X-RateLimit-Limit")).isNotNull();
+        assertThat(response.getHeader("X-RateLimit-Remaining")).isEqualTo("0");
+        assertThat(response.getHeader("X-RateLimit-Reset")).isNotNull();
+    }
+
     // ── USER mode ────────────────────────────────────────────────────────
 
     @Test
