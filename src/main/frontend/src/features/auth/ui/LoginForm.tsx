@@ -52,17 +52,21 @@ export function LoginForm() {
     }
   }
 
+  const errorMessage = errorKind === null
+    ? null
+    : errorKind === 'rateLimit' && retryAfterSeconds !== null
+      ? t('error.rateLimitWithDelay', { seconds: retryAfterSeconds })
+      : t(ERROR_I18N_KEYS[errorKind])
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {errorKind && (
+      {errorMessage && (
         <div
           role="alert"
           className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red"
         >
           <AlertTriangle className="size-3.5 shrink-0" />
-          {errorKind === 'rateLimit' && retryAfterSeconds !== null
-            ? t('error.rateLimitWithDelay', { seconds: retryAfterSeconds })
-            : t(ERROR_I18N_KEYS[errorKind!])}
+          {errorMessage}
         </div>
       )}
 
