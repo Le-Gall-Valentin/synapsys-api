@@ -42,7 +42,6 @@ describe('authStore', () => {
 
     expect(api.login).toHaveBeenCalledWith({ username: 'user', password: 'secret' })
     expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
-    expect(store.getState().isAuthenticated).toBe(true)
     expect(store.getState().user?.username).toBe('user')
   })
 
@@ -60,7 +59,6 @@ describe('authStore', () => {
     await expect(store.getState().logout()).rejects.toThrow('network')
 
     expect(mockedClearSessionHint).toHaveBeenCalledTimes(1)
-    expect(store.getState().isAuthenticated).toBe(false)
     expect(store.getState().user).toBeNull()
   })
 
@@ -74,7 +72,7 @@ describe('authStore', () => {
 
       expect(api.getMe).not.toHaveBeenCalled()
       expect(store.getState().isInitializing).toBe(false)
-      expect(store.getState().isAuthenticated).toBe(false)
+      expect(store.getState().user).toBeNull()
     })
 
     it('calls getMe and hydrates user when session hint is set', async () => {
@@ -87,7 +85,6 @@ describe('authStore', () => {
 
       expect(api.getMe).toHaveBeenCalledTimes(1)
       expect(store.getState().isInitializing).toBe(false)
-      expect(store.getState().isAuthenticated).toBe(true)
       expect(store.getState().user?.role).toBe('ADMIN')
       expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
     })
@@ -102,7 +99,6 @@ describe('authStore', () => {
 
       expect(mockedClearSessionHint).toHaveBeenCalledTimes(1)
       expect(store.getState().isInitializing).toBe(false)
-      expect(store.getState().isAuthenticated).toBe(false)
       expect(store.getState().user).toBeNull()
     })
 
@@ -118,7 +114,7 @@ describe('authStore', () => {
 
         expect(mockedClearSessionHint).not.toHaveBeenCalled()
         expect(store.getState().isInitializing).toBe(false)
-        expect(store.getState().isAuthenticated).toBe(false)
+        expect(store.getState().user).toBeNull()
       }
     })
 

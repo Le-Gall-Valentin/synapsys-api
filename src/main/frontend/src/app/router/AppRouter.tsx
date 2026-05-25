@@ -7,7 +7,7 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
 
 function DefaultRedirect() {
-  const isAuthenticated = useAuth((s) => s.isAuthenticated)
+  const isAuthenticated = useAuth((s) => s.user !== null)
   return <Navigate to={isAuthenticated ? ROUTES.PROFILE : ROUTES.LOGIN} replace />
 }
 

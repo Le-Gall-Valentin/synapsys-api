@@ -10,7 +10,6 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }
 const mockUseAuth = vi.mocked(useAuth)
 
 const baseState = {
-  isAuthenticated: false,
   isInitializing: false,
   user: null,
   login: vi.fn(),
@@ -22,7 +21,7 @@ beforeEach(() => vi.clearAllMocks())
 
 describe('PublicOnlyRoute', () => {
   it('renders children when not authenticated', () => {
-    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isAuthenticated: false }))
+    mockUseAuth.mockImplementation((selector) => selector({ ...baseState }))
     const { getByText } = render(
       <MemoryRouter>
         <PublicOnlyRoute><div>public</div></PublicOnlyRoute>
@@ -32,7 +31,9 @@ describe('PublicOnlyRoute', () => {
   })
 
   it('redirects and hides children when authenticated', () => {
-    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isAuthenticated: true }))
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'test', role: 'USER' as const } })
+    )
     const { container } = render(
       <MemoryRouter>
         <PublicOnlyRoute><div>public</div></PublicOnlyRoute>
@@ -42,7 +43,7 @@ describe('PublicOnlyRoute', () => {
   })
 
   it('renders spinner while initializing instead of showing children', () => {
-    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isInitializing: true, isAuthenticated: false }))
+    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isInitializing: true }))
     const { container } = render(
       <MemoryRouter>
         <PublicOnlyRoute><div>public</div></PublicOnlyRoute>

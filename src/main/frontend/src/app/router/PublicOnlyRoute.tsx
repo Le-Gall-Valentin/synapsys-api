@@ -8,7 +8,7 @@ import { Spinner } from '@/shared/ui'
 
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { isInitializing, isAuthenticated } = useAuth(
-    useShallow((s) => ({ isInitializing: s.isInitializing, isAuthenticated: s.isAuthenticated }))
+    useShallow((s) => ({ isInitializing: s.isInitializing, isAuthenticated: s.user !== null }))
   )
   const { t } = useTranslation('common')
   if (isInitializing) return <Spinner label={t('loading')} />

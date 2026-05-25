@@ -1,5 +1,6 @@
-import { render, act } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { ReactNode } from 'react'
 import { useAuth } from '@/features/auth'
 import { ProfilePage } from './ProfilePage'
 
@@ -12,7 +13,7 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@/shared/ui', () => ({
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
+  Button: ({ children, onClick }: { children: ReactNode; onClick: () => void }) => (
     <button onClick={onClick}>{children}</button>
   ),
 }))
@@ -24,7 +25,6 @@ beforeEach(() => {
 })
 
 const baseState = {
-  isAuthenticated: false,
   isInitializing: false,
   login: vi.fn(),
   logout: vi.fn(),

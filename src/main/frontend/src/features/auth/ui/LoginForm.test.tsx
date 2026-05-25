@@ -15,7 +15,6 @@ afterEach(cleanup)
 function setup(mockLogin: ReturnType<typeof vi.fn>) {
   const baseState = {
     user: null,
-    isAuthenticated: false,
     isInitializing: false,
     login: mockLogin,
     logout: vi.fn(),

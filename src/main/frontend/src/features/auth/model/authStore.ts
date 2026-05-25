@@ -7,7 +7,6 @@ import { CredentialsError } from './errors'
 
 export interface AuthState {
   user: User | null
-  isAuthenticated: boolean
   isInitializing: boolean
 }
 
@@ -22,13 +21,12 @@ export function createAuthStore(api: IAuthApi) {
 
   return create<AuthState & AuthActions>((set) => ({
     user: null,
-    isAuthenticated: false,
     isInitializing: true,
 
     async login(credentials: LoginCredentials): Promise<void> {
       const user = await api.login(credentials)
       setSessionHint()
-      set({ user, isAuthenticated: true })
+      set({ user })
     },
 
     async logout(): Promise<void> {
@@ -36,7 +34,7 @@ export function createAuthStore(api: IAuthApi) {
         await api.logout()
       } finally {
         clearSessionHint()
-        set({ user: null, isAuthenticated: false })
+        set({ user: null })
       }
     },
 
@@ -52,12 +50,12 @@ export function createAuthStore(api: IAuthApi) {
         const user = await api.getMe()
         if (signal?.aborted) return
         setSessionHint()
-        set({ user, isAuthenticated: true, isInitializing: false })
+        set({ user, isInitializing: false })
       } catch (error) {
         if (signal?.aborted) return
         // Only invalidate the session on actual auth failure (401); leave hint intact on transient errors
         if (error instanceof CredentialsError) clearSessionHint()
-        set({ user: null, isAuthenticated: false, isInitializing: false })
+        set({ user: null, isInitializing: false })
       }
     },
   }))
