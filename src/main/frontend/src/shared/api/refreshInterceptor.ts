@@ -1,4 +1,4 @@
-import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
+import type { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { triggerSessionExpired } from '@/shared/lib'
 
 interface QueueEntry {
@@ -7,7 +7,10 @@ interface QueueEntry {
   config: InternalAxiosRequestConfig
 }
 
-export function attachRefreshInterceptor(client: AxiosInstance): void {
+export function createRefreshInterceptorHandlers(client: AxiosInstance): {
+  onFulfilled: (response: AxiosResponse) => AxiosResponse
+  onRejected: (error: AxiosError) => Promise<unknown>
+} {
   // State local to this instance — no pollution between calls
   let isRefreshing = false
   let failedQueue: QueueEntry[] = []
@@ -24,57 +27,63 @@ export function attachRefreshInterceptor(client: AxiosInstance): void {
     failedQueue = []
   }
 
-  client.interceptors.response.use(
-    (response) => {
-      if (response.config.url?.endsWith('/auth/login')) {
-        sessionExpiredTriggered = false
-      }
-      return response
-    },
-    async (error: AxiosError) => {
-      if (!error.config) {
-        return Promise.reject(error)
-      }
+  function onFulfilled(response: AxiosResponse): AxiosResponse {
+    if (response.config.url?.endsWith('/auth/login')) {
+      sessionExpiredTriggered = false
+    }
+    return response
+  }
 
-      const original = error.config as InternalAxiosRequestConfig
+  async function onRejected(error: AxiosError): Promise<unknown> {
+    if (!error.config) {
+      return Promise.reject(error)
+    }
 
-      if (error.response?.status !== 401 || original._retry) {
-        return Promise.reject(error)
+    const original = error.config as InternalAxiosRequestConfig
+
+    if (error.response?.status !== 401 || original._retry) {
+      return Promise.reject(error)
+    }
+
+    const requestPath = original.url?.split('?')[0]
+    if (
+      requestPath?.endsWith('/auth/login') ||
+      requestPath?.endsWith('/auth/refresh') ||
+      requestPath?.endsWith('/auth/logout')
+    ) {
+      return Promise.reject(error)
+    }
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject, config: original })
+      })
+    }
+
+    original._retry = true
+    isRefreshing = true
+
+    try {
+      await client.post('/auth/refresh')
+      sessionExpiredTriggered = false
+      flushQueue(null)
+      return client(original)
+    } catch (refreshError) {
+      flushQueue(refreshError)
+      if (!sessionExpiredTriggered) {
+        sessionExpiredTriggered = true
+        triggerSessionExpired()
       }
+      return Promise.reject(refreshError)
+    } finally {
+      isRefreshing = false
+    }
+  }
 
-      const requestPath = original.url?.split('?')[0]
-      if (
-        requestPath?.endsWith('/auth/login') ||
-        requestPath?.endsWith('/auth/refresh') ||
-        requestPath?.endsWith('/auth/logout')
-      ) {
-        return Promise.reject(error)
-      }
+  return { onFulfilled, onRejected }
+}
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject, config: original })
-        })
-      }
-
-      original._retry = true
-      isRefreshing = true
-
-      try {
-        await client.post('/auth/refresh')
-        sessionExpiredTriggered = false
-        flushQueue(null)
-        return client(original)
-      } catch (refreshError) {
-        flushQueue(refreshError)
-        if (!sessionExpiredTriggered) {
-          sessionExpiredTriggered = true
-          triggerSessionExpired()
-        }
-        return Promise.reject(refreshError)
-      } finally {
-        isRefreshing = false
-      }
-    },
-  )
+export function attachRefreshInterceptor(client: AxiosInstance): void {
+  const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(client)
+  client.interceptors.response.use(onFulfilled, onRejected)
 }

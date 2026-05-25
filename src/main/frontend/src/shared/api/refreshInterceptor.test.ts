@@ -1,6 +1,6 @@
 import axios, {AxiosError, type InternalAxiosRequestConfig} from 'axios'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {attachRefreshInterceptor} from './refreshInterceptor'
+import {createRefreshInterceptorHandlers} from './refreshInterceptor'
 import {triggerSessionExpired} from '@/shared/lib'
 
 vi.mock('@/shared/lib', () => ({
@@ -35,7 +35,7 @@ describe('refreshInterceptor', () => {
 
   it('lets non-401 errors pass through untouched', async () => {
     const instance = axios.create()
-    attachRefreshInterceptor(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
     const config = {
       url: '/api/data',
       headers: {} as never,
@@ -48,8 +48,7 @@ describe('refreshInterceptor', () => {
       statusText: 'Internal Server Error',
     })
 
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
-    await expect(handler.rejected(error)).rejects.toBeDefined()
+    await expect(onRejected(error)).rejects.toBeDefined()
     expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
 
@@ -60,11 +59,10 @@ describe('refreshInterceptor', () => {
       if (config.url === '/auth/refresh') refreshCalled = true
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    attachRefreshInterceptor(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     const error = make401('/auth/login')
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
-    await expect(handler.rejected(error)).rejects.toBeDefined()
+    await expect(onRejected(error)).rejects.toBeDefined()
     expect(refreshCalled).toBe(false)
     expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
@@ -76,11 +74,10 @@ describe('refreshInterceptor', () => {
       if (config.url === '/auth/refresh') refreshCallCount++
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    attachRefreshInterceptor(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     const error = make401('/auth/refresh')
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
-    await expect(handler.rejected(error)).rejects.toBeDefined()
+    await expect(onRejected(error)).rejects.toBeDefined()
     expect(refreshCallCount).toBe(0)
   })
 
@@ -91,11 +88,10 @@ describe('refreshInterceptor', () => {
       if (config.url === '/auth/refresh') refreshCalled = true
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    attachRefreshInterceptor(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     const error = make401('/api/protected', true)
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
-    await expect(handler.rejected(error)).rejects.toBeDefined()
+    await expect(onRejected(error)).rejects.toBeDefined()
     expect(refreshCalled).toBe(false)
     expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
   })
@@ -115,11 +111,10 @@ describe('refreshInterceptor', () => {
       }
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    attachRefreshInterceptor(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     const error = make401('/api/protected')
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
-    await expect(handler.rejected(error)).rejects.toBeDefined()
+    await expect(onRejected(error)).rejects.toBeDefined()
     expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
   })
 
@@ -137,18 +132,12 @@ describe('refreshInterceptor', () => {
       return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    attachRefreshInterceptor(instance)
-
-    const handler = (
-      instance.interceptors.response as unknown as {
-        handlers: { rejected: (e: unknown) => Promise<unknown> }[]
-      }
-    ).handlers[0]
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     const [, ,] = await Promise.all([
-      handler.rejected(make401('/api/data1')),
-      handler.rejected(make401('/api/data2')),
-      handler.rejected(make401('/api/data3')),
+      onRejected(make401('/api/data1')),
+      onRejected(make401('/api/data2')),
+      onRejected(make401('/api/data3')),
     ])
 
     expect(refreshCallCount).toBe(1)
@@ -177,18 +166,12 @@ describe('refreshInterceptor', () => {
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    attachRefreshInterceptor(instance)
-
-    const handler = (
-      instance.interceptors.response as unknown as {
-        handlers: { rejected: (e: unknown) => Promise<unknown> }[]
-      }
-    ).handlers[0]
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     await Promise.allSettled([
-      handler.rejected(make401('/api/data1')),
-      handler.rejected(make401('/api/data2')),
-      handler.rejected(make401('/api/data3')),
+      onRejected(make401('/api/data1')),
+      onRejected(make401('/api/data2')),
+      onRejected(make401('/api/data3')),
     ])
 
     expect(refreshCallCount).toBe(1)
@@ -208,11 +191,10 @@ describe('refreshInterceptor', () => {
       }
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    attachRefreshInterceptor(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance)
 
     const error = make401('/api/data')
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
-    const result = await handler.rejected(error)
+    const result = await onRejected(error)
     expect((result as { data: { ok: boolean } }).data.ok).toBe(true)
     expect(retried).toContain('/api/data')
     expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
@@ -233,18 +215,18 @@ describe('refreshInterceptor', () => {
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    attachRefreshInterceptor(instance)
-    const handler = (instance.interceptors.response as unknown as { handlers: { rejected: (e: unknown) => Promise<unknown> }[] }).handlers[0]
+    const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(instance)
+    instance.interceptors.response.use(onFulfilled, onRejected)
 
     // First 401 — refresh fails — sessionExpiredTriggered = true
-    await expect(handler.rejected(make401('/api/data1'))).rejects.toBeDefined()
+    await expect(onRejected(make401('/api/data1'))).rejects.toBeDefined()
     expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
 
     // Simulate re-login (successful POST to /auth/login)
     await instance.post('/auth/login')
 
     // Second 401 — sessionExpiredTriggered must have been reset — must trigger again
-    await expect(handler.rejected(make401('/api/data2'))).rejects.toBeDefined()
+    await expect(onRejected(make401('/api/data2'))).rejects.toBeDefined()
     expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(2)
   })
 })
