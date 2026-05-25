@@ -5,6 +5,8 @@ import com.synapsys.api.auth.domain.port.out.RefreshTokenIssuerPort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
 import com.synapsys.api.auth.domain.port.out.TokenHashPort;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -24,6 +26,7 @@ public class RefreshTokenGenerator implements RefreshTokenIssuerPort {
     }
 
     @Override
+    @Transactional(propagation = Propagation.MANDATORY)
     public String generate(User user, int expiryDays) {
         byte[] tokenBytes = new byte[32];
         SECURE_RANDOM.nextBytes(tokenBytes);

@@ -3,6 +3,7 @@ package com.synapsys.api.auth.domain.model;
 public abstract sealed class AuthException extends RuntimeException
     permits AuthException.InvalidCredentials,
             AuthException.UserNotActive,
+            AuthException.UserAlreadyInactive,
             AuthException.TokenExpired,
             AuthException.TokenRevoked,
             AuthException.UserNotFound,
@@ -21,6 +22,10 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class UserNotActive extends AuthException {
         public UserNotActive() { super("User account is disabled"); }
+    }
+
+    public static final class UserAlreadyInactive extends AuthException {
+        public UserAlreadyInactive() { super("User account is already inactive"); }
     }
 
     public static final class TokenExpired extends AuthException {

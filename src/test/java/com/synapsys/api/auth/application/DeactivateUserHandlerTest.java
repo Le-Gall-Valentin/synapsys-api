@@ -113,7 +113,21 @@ class DeactivateUserHandlerTest {
         verify(userRepository, never()).deactivate(any());
     }
 
+    @Test
+    void deactivate_alreadyInactiveUser_throwsUserAlreadyInactive() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(inactiveUser(targetId, Role.USER)));
+
+        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+            .isInstanceOf(AuthException.UserAlreadyInactive.class);
+
+        verify(userRepository, never()).deactivate(any());
+    }
+
     private User user(UUID id, Role role) {
         return new User(id, "user-" + id, id + "@test.com", "hashed", role, true, Instant.now());
+    }
+
+    private User inactiveUser(UUID id, Role role) {
+        return new User(id, "user-" + id, id + "@test.com", "hashed", role, false, Instant.now());
     }
 }

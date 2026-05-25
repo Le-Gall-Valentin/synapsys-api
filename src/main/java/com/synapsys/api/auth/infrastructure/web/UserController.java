@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -44,9 +45,8 @@ public class UserController {
             new RegisterCommand(request.username(), request.email(), request.password(), request.role()),
             caller.getRole()
         );
-        return ResponseEntity.status(201).body(
-            new UserInfoResponse(user.id(), user.username(), user.role())
-        );
+        URI location = URI.create("/api/users/" + user.id());
+        return ResponseEntity.created(location).body(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 
     @DeleteMapping("/{id}")

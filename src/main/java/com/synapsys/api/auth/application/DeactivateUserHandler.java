@@ -32,6 +32,9 @@ public class DeactivateUserHandler implements DeactivateUserUseCase {
         }
         User target = userRepository.findById(targetUserId)
             .orElseThrow(AuthException.UserNotFound::new);
+        if (!target.isActive()) {
+            throw new AuthException.UserAlreadyInactive();
+        }
         if (!RoleDeactivationPolicy.canDeactivate(callerRole, target.role())) {
             throw new AuthException.InsufficientPermissions();
         }

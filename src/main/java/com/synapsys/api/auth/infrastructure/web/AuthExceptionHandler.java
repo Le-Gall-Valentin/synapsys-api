@@ -28,6 +28,9 @@ public class AuthExceptionHandler {
             case AuthException.UserNotActive ex ->
                     response(403, ex, "User account is not active.");
 
+            case AuthException.UserAlreadyInactive ex ->
+                    response(409, ex, "User account is already inactive.");
+
             case AuthException.UserNotFound ex ->
                     response(404, ex, "User not found");
 

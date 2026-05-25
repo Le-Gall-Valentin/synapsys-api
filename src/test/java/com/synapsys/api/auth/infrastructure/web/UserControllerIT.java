@@ -26,6 +26,7 @@ import org.testcontainers.junit.jupiter.Container;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -101,6 +102,7 @@ class UserControllerIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"Securepass1!\",\"role\":\"USER\"}"))
             .andExpect(status().isCreated())
+            .andExpect(header().string("Location", org.hamcrest.Matchers.matchesPattern("/api/users/[0-9a-f-]+")))
             .andExpect(jsonPath("$.username").value("newuser"))
             .andExpect(jsonPath("$.role").value("USER"));
     }

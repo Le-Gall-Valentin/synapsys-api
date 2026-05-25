@@ -134,6 +134,12 @@ class AuthControllerIT {
     }
 
     @Test
+    void refresh_withNoRefreshCookie_returns401() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void refresh_revokedToken_revokesAllAndReturns401() throws Exception {
         Cookie firstRefresh = loginAndGetCookie("refresh_token");
 
