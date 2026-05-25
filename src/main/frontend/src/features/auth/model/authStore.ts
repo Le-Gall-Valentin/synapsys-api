@@ -42,23 +42,20 @@ export function createAuthStore(api: IAuthApi) {
       if (initializationStarted) return
       initializationStarted = true
 
+      // Reset synchronously on abort so a StrictMode remount can re-enter
+      signal?.addEventListener('abort', () => { initializationStarted = false }, { once: true })
+
       if (!hasSessionHint()) {
-        set({ isInitializing: false })
+        if (!signal?.aborted) set({ isInitializing: false })
         return
       }
       try {
         const user = await api.getMe()
-        if (signal?.aborted) {
-          initializationStarted = false
-          return
-        }
+        if (signal?.aborted) return
         setSessionHint()
         set({ user, isInitializing: false })
       } catch (error) {
-        if (signal?.aborted) {
-          initializationStarted = false
-          return
-        }
+        if (signal?.aborted) return
         // Only invalidate the session on actual auth failure (401); leave hint intact on transient errors
         if (error instanceof CredentialsError) clearSessionHint()
         set({ user: null, isInitializing: false })
