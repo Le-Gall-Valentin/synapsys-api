@@ -1,17 +1,8 @@
 import axios, {AxiosError, type InternalAxiosRequestConfig} from 'axios'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {createRefreshInterceptorHandlers} from './refreshInterceptor'
-import {triggerSessionExpired} from '@/shared/lib'
 
-vi.mock('@/shared/lib', () => ({
-  triggerSessionExpired: vi.fn(),
-  setSessionExpiredCallback: vi.fn(),
-  setSessionHint: vi.fn(),
-  clearSessionHint: vi.fn(),
-  hasSessionHint: vi.fn(),
-}))
-
-const mockedTriggerSessionExpired = vi.mocked(triggerSessionExpired)
+let mockOnSessionExpired: ReturnType<typeof vi.fn>
 
 function make401(url: string, retry = false): AxiosError {
   const config = {
@@ -30,12 +21,12 @@ function make401(url: string, retry = false): AxiosError {
 
 describe('refreshInterceptor', () => {
   beforeEach(() => {
-    mockedTriggerSessionExpired.mockReset()
+    mockOnSessionExpired = vi.fn()
   })
 
   it('lets non-401 errors pass through untouched', async () => {
     const instance = axios.create()
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
     const config = {
       url: '/api/data',
       headers: {} as never,
@@ -49,7 +40,7 @@ describe('refreshInterceptor', () => {
     })
 
     await expect(onRejected(error)).rejects.toBeDefined()
-    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
   })
 
   it('lets 401 on /auth/login pass through without refreshing', async () => {
@@ -59,12 +50,12 @@ describe('refreshInterceptor', () => {
       if (config.url === '/auth/refresh') refreshCalled = true
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     const error = make401('/auth/login')
     await expect(onRejected(error)).rejects.toBeDefined()
     expect(refreshCalled).toBe(false)
-    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
   })
 
   it('lets 401 on /auth/refresh pass through without another refresh', async () => {
@@ -74,7 +65,7 @@ describe('refreshInterceptor', () => {
       if (config.url === '/auth/refresh') refreshCallCount++
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     const error = make401('/auth/refresh')
     await expect(onRejected(error)).rejects.toBeDefined()
@@ -88,12 +79,12 @@ describe('refreshInterceptor', () => {
       if (config.url === '/auth/refresh') refreshCalled = true
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     const error = make401('/api/protected', true)
     await expect(onRejected(error)).rejects.toBeDefined()
     expect(refreshCalled).toBe(false)
-    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
   })
 
   it('triggers logout when refresh fails on 401', async () => {
@@ -111,11 +102,11 @@ describe('refreshInterceptor', () => {
       }
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     const error = make401('/api/protected')
     await expect(onRejected(error)).rejects.toBeDefined()
-    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
+    expect(mockOnSessionExpired).toHaveBeenCalledTimes(1)
   })
 
   it('queues concurrent 401s and retries all after successful refresh', async () => {
@@ -132,7 +123,7 @@ describe('refreshInterceptor', () => {
       return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     const [, ,] = await Promise.all([
       onRejected(make401('/api/data1')),
@@ -144,7 +135,7 @@ describe('refreshInterceptor', () => {
     expect(retried).toContain('/api/data1')
     expect(retried).toContain('/api/data2')
     expect(retried).toContain('/api/data3')
-    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
   })
 
   it('triggers session expired only once when concurrent 401s arrive after failed refresh', async () => {
@@ -166,7 +157,7 @@ describe('refreshInterceptor', () => {
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     await Promise.allSettled([
       onRejected(make401('/api/data1')),
@@ -175,7 +166,7 @@ describe('refreshInterceptor', () => {
     ])
 
     expect(refreshCallCount).toBe(1)
-    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
+    expect(mockOnSessionExpired).toHaveBeenCalledTimes(1)
   })
 
   it('retries original request after successful refresh', async () => {
@@ -191,13 +182,13 @@ describe('refreshInterceptor', () => {
       }
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
-    const { onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     const error = make401('/api/data')
     const result = await onRejected(error)
     expect((result as { data: { ok: boolean } }).data.ok).toBe(true)
     expect(retried).toContain('/api/data')
-    expect(mockedTriggerSessionExpired).not.toHaveBeenCalled()
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
   })
 
   it('resets sessionExpiredTriggered after successful login so next expiry triggers redirect', async () => {
@@ -215,18 +206,18 @@ describe('refreshInterceptor', () => {
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(instance)
+    const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
     instance.interceptors.response.use(onFulfilled, onRejected)
 
     // First 401 — refresh fails — sessionExpiredTriggered = true
     await expect(onRejected(make401('/api/data1'))).rejects.toBeDefined()
-    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(1)
+    expect(mockOnSessionExpired).toHaveBeenCalledTimes(1)
 
     // Simulate re-login (successful POST to /auth/login)
     await instance.post('/auth/login')
 
     // Second 401 — sessionExpiredTriggered must have been reset — must trigger again
     await expect(onRejected(make401('/api/data2'))).rejects.toBeDefined()
-    expect(mockedTriggerSessionExpired).toHaveBeenCalledTimes(2)
+    expect(mockOnSessionExpired).toHaveBeenCalledTimes(2)
   })
 })

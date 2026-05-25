@@ -48,4 +48,13 @@ describe('ProfilePage', () => {
     expect(getByText('USER')).toBeDefined()
   })
 
+  it('renders fallback initials when username is empty', () => {
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: '', role: 'USER' as const } })
+    )
+    const { container } = render(<ProfilePage />)
+    const avatar = container.querySelector('[role="img"]')
+    expect(avatar?.textContent).toBe('?')
+  })
+
 })

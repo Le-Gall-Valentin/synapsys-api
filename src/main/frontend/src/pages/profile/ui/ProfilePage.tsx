@@ -14,7 +14,7 @@ export function ProfilePage() {
 
   if (!user) return null
 
-  const initials = [...user.username].slice(0, 2).join('').toUpperCase()
+  const initials = [...user.username].slice(0, 2).join('').toUpperCase() || '?'
 
   async function handleLogout(): Promise<void> {
     setIsLoggingOut(true)

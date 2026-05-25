@@ -2,7 +2,7 @@ import { CredentialsError, RateLimitError, ServerError } from '../model/errors'
 import React, { useRef, useState } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from "../model/useAuth"
+import { useAuth } from '../model/useAuth'
 import { Button, Input } from '@/shared/ui'
 
 type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null

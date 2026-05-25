@@ -1,15 +1,10 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { useAuth } from '@/features/auth'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { LoginPage } from '@/pages/login'
 import { ProfilePage } from '@/pages/profile'
 import { ROUTES } from '@/shared/config'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
-
-function DefaultRedirect() {
-  const isAuthenticated = useAuth((s) => s.user !== null)
-  return <Navigate to={isAuthenticated ? ROUTES.PROFILE : ROUTES.LOGIN} replace />
-}
+import { DefaultRedirect } from './DefaultRedirect'
 
 export function AppRouter() {
   return (

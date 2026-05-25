@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react'
-import { authApi, AuthStoreProvider } from '@/features/auth'
+import { authApi, AuthStoreProvider, type IAuthApi } from '@/features/auth'
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  return <AuthStoreProvider api={authApi}>{children}</AuthStoreProvider>
+interface Props {
+  children: ReactNode
+  api?: IAuthApi
+}
+
+export function AuthProvider({ children, api = authApi }: Props) {
+  return <AuthStoreProvider api={api}>{children}</AuthStoreProvider>
 }

@@ -1,13 +1,18 @@
 import type { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { triggerSessionExpired } from '@/shared/lib'
 
+
+
 interface QueueEntry {
   resolve: (value: unknown) => void
   reject: (reason: unknown) => void
   config: InternalAxiosRequestConfig
 }
 
-export function createRefreshInterceptorHandlers(client: AxiosInstance): {
+export function createRefreshInterceptorHandlers(
+  client: AxiosInstance,
+  onSessionExpired: () => void
+): {
   onFulfilled: (response: AxiosResponse) => AxiosResponse
   onRejected: (error: AxiosError) => Promise<unknown>
 } {
@@ -73,7 +78,7 @@ export function createRefreshInterceptorHandlers(client: AxiosInstance): {
       flushQueue(refreshError)
       if (!sessionExpiredTriggered) {
         sessionExpiredTriggered = true
-        triggerSessionExpired()
+        onSessionExpired()
       }
       return Promise.reject(refreshError)
     } finally {
@@ -85,6 +90,6 @@ export function createRefreshInterceptorHandlers(client: AxiosInstance): {
 }
 
 export function attachRefreshInterceptor(client: AxiosInstance): void {
-  const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(client)
+  const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(client, triggerSessionExpired)
   client.interceptors.response.use(onFulfilled, onRejected)
 }
