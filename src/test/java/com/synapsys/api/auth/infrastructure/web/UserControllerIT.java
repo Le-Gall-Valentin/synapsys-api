@@ -145,8 +145,30 @@ class UserControllerIT {
         mockMvc.perform(post("/api/users")
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"testuser\",\"email\":\"other@test.com\",\"password\":\"Securepass1!\"}"))
+                .content("{\"username\":\"testuser\",\"email\":\"other@test.com\",\"password\":\"Securepass1!\",\"role\":\"USER\"}"))
             .andExpect(status().isConflict());
+    }
+
+    @Test
+    void register_withoutRole_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/users")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"brandnewuser\",\"email\":\"brand@test.com\",\"password\":\"Securepass1!\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_weakPassword_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/users")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"simpleuser\",\"email\":\"simple@test.com\",\"password\":\"simplepass\",\"role\":\"USER\"}"))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
