@@ -56,17 +56,4 @@ describe('ProfilePage', () => {
     expect(mockUseAuth).toHaveBeenCalledTimes(1)
   })
 
-  it('shows error message when logout API fails', async () => {
-    const failingLogout = vi.fn().mockRejectedValue(new Error('network'))
-    mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout: failingLogout })
-    )
-    const { container, getByText } = render(<ProfilePage />)
-
-    await act(async () => {
-      container.querySelector('button')!.click()
-    })
-
-    expect(getByText('error.logout')).toBeDefined()
-  })
 })
