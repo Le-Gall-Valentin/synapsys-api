@@ -21,6 +21,7 @@ public class ForbiddenAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request, HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Insufficient permissions");
+        problem.setType(URI.create("about:blank"));
         problem.setTitle("Forbidden");
         problem.setInstance(URI.create(request.getRequestURI()));
 

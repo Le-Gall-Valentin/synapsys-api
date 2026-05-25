@@ -21,6 +21,7 @@ public class UnauthorizedEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication required");
+        problem.setType(URI.create("about:blank"));
         problem.setTitle("Unauthorized");
         problem.setInstance(URI.create(request.getRequestURI()));
 
