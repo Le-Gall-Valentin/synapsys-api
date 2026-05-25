@@ -37,7 +37,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated() and (hasRole('SUPER_ADMIN') or hasRole('ADMIN'))")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
                                                      @AuthenticationPrincipal CustomUserDetails caller) {
         Role targetRole = request.role() != null ? request.role() : Role.USER;
@@ -51,7 +51,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated() and (hasRole('SUPER_ADMIN') or hasRole('ADMIN'))")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id,
                                            @AuthenticationPrincipal CustomUserDetails caller) {
         deactivateUserUseCase.deactivate(id, caller.getUserId(), caller.getRole());

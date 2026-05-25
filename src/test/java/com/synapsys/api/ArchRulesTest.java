@@ -40,7 +40,7 @@ class ArchRulesTest {
         ArchRule rule = noClasses()
             .that().resideInAPackage("..auth.application..")
             .should().dependOnClassesThat()
-            .resideInAPackage("..auth.infrastructure..");
+            .resideInAnyPackage("..auth.infrastructure..", "..infrastructure..");
         rule.check(classes);
     }
 

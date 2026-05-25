@@ -3,7 +3,6 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.TestHashUtils;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.out.*;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +25,7 @@ class RefreshTokenHandlerTest {
     @Mock AccessTokenPort accessTokenPort;
     @Mock RefreshTokenIssuerPort refreshTokenPort;
     @Mock TokenHashPort tokenHashPort;
+    @Mock RefreshTokenConfigPort tokenConfig;
 
     private RefreshTokenHandler handler;
 
@@ -36,16 +36,9 @@ class RefreshTokenHandlerTest {
 
     @BeforeEach
     void setUp() {
-        var properties = new SynapsysProperties(
-            new SynapsysProperties.JwtProperties("test-secret-key-at-least-32-chars!", 15),
-            new SynapsysProperties.RefreshTokenProperties(30),
-            new SynapsysProperties.CookieProperties(false),
-            null,
-            new SynapsysProperties.CorsProperties(java.util.List.of()),
-            new SynapsysProperties.RateLimitProperties(java.util.List.of())
-        );
+        when(tokenConfig.refreshTokenExpiryDays()).thenReturn(30);
         handler = new RefreshTokenHandler(
-            refreshTokenRepository, userRepository, accessTokenPort, refreshTokenPort, tokenHashPort, properties
+            refreshTokenRepository, userRepository, accessTokenPort, refreshTokenPort, tokenHashPort, tokenConfig
         );
         lenient().when(tokenHashPort.hash(any(String.class)))
             .thenAnswer(i -> TestHashUtils.sha256(i.getArgument(0, String.class)));

@@ -3,7 +3,6 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.RefreshTokenUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
-import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,16 +27,18 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
                                AccessTokenPort accessTokenPort,
                                RefreshTokenIssuerPort refreshTokenPort,
                                TokenHashPort tokenHashPort,
-                               SynapsysProperties properties) {
+                               RefreshTokenConfigPort tokenConfig) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
         this.tokenHashPort = tokenHashPort;
-        this.refreshTokenExpiryDays = properties.refreshToken().expiryDays();
+        this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
     }
 
     @Override
+    // noRollbackFor: TokenRevoked is thrown after revokeAllForUser — that write must commit.
+    // Any future write added after that throw must be reviewed carefully.
     @Transactional(noRollbackFor = AuthException.TokenRevoked.class)
     public AuthTokens refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {

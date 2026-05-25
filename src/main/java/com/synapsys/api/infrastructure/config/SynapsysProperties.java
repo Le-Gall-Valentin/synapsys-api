@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
+import com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -13,7 +14,13 @@ public record SynapsysProperties(
     SeedProperties seed,
     CorsProperties cors,
     RateLimitProperties rateLimit
-) {
+) implements RefreshTokenConfigPort {
+
+    @Override
+    public int refreshTokenExpiryDays() {
+        return refreshToken().expiryDays();
+    }
+
     public record JwtProperties(
         String secret,
         @DefaultValue("15") int expiryMinutes
