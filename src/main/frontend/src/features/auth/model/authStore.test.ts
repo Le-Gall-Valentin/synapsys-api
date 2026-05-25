@@ -126,9 +126,9 @@ describe('authStore', () => {
       const api = createApiMock()
       const abortController = new AbortController()
 
-      let resolveGetMe!: (value: { id: string; username: string; role: string }) => void
+      let resolveGetMe!: (value: { id: string; username: string; role: 'USER' }) => void
       vi.mocked(api.getMe).mockImplementation(
-        () => new Promise((resolve) => { resolveGetMe = resolve })
+        () => new Promise((resolve) => { resolveGetMe = resolve as typeof resolveGetMe })
       )
       mockedHasSessionHint.mockReturnValue(true)
 
