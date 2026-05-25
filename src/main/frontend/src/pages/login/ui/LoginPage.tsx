@@ -110,9 +110,9 @@ export function LoginPage() {
           </p>
         </div>
 
-        <p className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-fg-3">
+        <footer className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-fg-3">
           {t('footer')}
-        </p>
+        </footer>
       </main>
     </div>
   )

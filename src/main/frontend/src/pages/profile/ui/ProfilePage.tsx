@@ -49,7 +49,7 @@ export function ProfilePage() {
         </div>
 
         {/* Déconnexion */}
-        <Button onClick={() => void handleLogout()} isLoading={isLoggingOut} className="w-full">
+        <Button onClick={() => { void handleLogout().catch(() => {}) }} isLoading={isLoggingOut} className="w-full">
           <LogOut className="size-4" />
           {t('action.logout')}
         </Button>

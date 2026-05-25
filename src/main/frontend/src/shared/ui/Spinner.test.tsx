@@ -1,8 +1,6 @@
 import { render } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { Spinner } from './Spinner'
-
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
 
 describe('Spinner', () => {
   it('renders with default label', () => {

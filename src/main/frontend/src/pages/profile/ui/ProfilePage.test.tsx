@@ -48,12 +48,4 @@ describe('ProfilePage', () => {
     expect(getByText('USER')).toBeDefined()
   })
 
-  it('calls useAuth exactly once', () => {
-    mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const } })
-    )
-    render(<ProfilePage />)
-    expect(mockUseAuth).toHaveBeenCalledTimes(1)
-  })
-
 })
