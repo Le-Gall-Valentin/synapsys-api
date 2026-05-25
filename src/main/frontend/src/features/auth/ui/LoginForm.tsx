@@ -1,5 +1,5 @@
 import { CredentialsError, RateLimitError, ServerError } from '../model/errors'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from "../model/useAuth"
@@ -15,9 +15,12 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [errorKind, setErrorKind] = useState<ErrorKind>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const isSubmittingRef = useRef(false)
 
   async function handleSubmit(e: React.BaseSyntheticEvent): Promise<void> {
     e.preventDefault()
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
     setErrorKind(null)
     setIsLoading(true)
     try {
@@ -34,6 +37,7 @@ export function LoginForm() {
         setErrorKind('network')
       }
     } finally {
+      isSubmittingRef.current = false
       setIsLoading(false)
     }
   }
