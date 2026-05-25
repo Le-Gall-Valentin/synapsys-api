@@ -39,10 +39,9 @@ public class CustomUserDetails implements UserDetails {
         return userId.toString();
     }
 
-    // Pas de mot de passe dans le principal JWT
     @Override
     public String getPassword() {
-        return null;
+        return "";
     }
 
     // Le compte est stateless JWT — is_active est vérifié à la connexion dans LoginHandler
