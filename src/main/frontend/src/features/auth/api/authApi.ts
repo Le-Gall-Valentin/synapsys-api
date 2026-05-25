@@ -40,7 +40,7 @@ export const authApi: IAuthApi = {
 
   async getMe(): Promise<User> {
     try {
-      const { data } = await client.get<User>('/auth/me')
+      const { data } = await client.get<User>('/users/me')
       return data
     } catch (error) {
       if (isAxiosError(error)) {

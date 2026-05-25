@@ -2,7 +2,6 @@ package com.synapsys.api.auth.infrastructure.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapsys.api.auth.domain.model.Role;
-
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
@@ -29,7 +28,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -59,9 +57,9 @@ class AuthControllerIT {
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired RateLimitBucketStore rateLimitBucketStore;
 
-    private MockMvc mockMvc;
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+    MockMvc mockMvc;
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     @BeforeEach
     void setUp() {
@@ -131,22 +129,6 @@ class AuthControllerIT {
     }
 
     @Test
-    void me_withValidAccessToken_returnsUserInfo() throws Exception {
-        Cookie access = loginAndGetCookie("access_token");
-
-        mockMvc.perform(get("/api/auth/me").cookie(access))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.username").value("testuser"))
-            .andExpect(jsonPath("$.role").value("USER"));
-    }
-
-    @Test
-    void me_withoutCookie_returns401() throws Exception {
-        mockMvc.perform(get("/api/auth/me"))
-            .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     void refresh_validToken_rotatesAndSetsNewCookies() throws Exception {
         Cookie firstRefresh = loginAndGetCookie("refresh_token");
 
@@ -204,79 +186,6 @@ class AuthControllerIT {
     }
 
     @Test
-    void register_asSuperAdmin_createsUser() throws Exception {
-        Cookie access = loginAs("superadmin", "adminpass");
-
-        mockMvc.perform(post("/api/auth/register")
-                .cookie(access)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"Securepass1!\",\"role\":\"USER\"}"))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.username").value("newuser"))
-            .andExpect(jsonPath("$.role").value("USER"));
-    }
-
-    @Test
-    void register_asUser_returns403() throws Exception {
-        Cookie access = loginAndGetCookie("access_token");
-
-        mockMvc.perform(post("/api/auth/register")
-                .cookie(access)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"Securepass1!\",\"role\":\"USER\"}"))
-            .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void register_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"email\":\"newuser@test.com\",\"password\":\"securepass\"}"))
-            .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void register_duplicateUsername_returns409() throws Exception {
-        Cookie access = loginAs("superadmin", "adminpass");
-
-        mockMvc.perform(post("/api/auth/register")
-                .cookie(access)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"testuser\",\"email\":\"other@test.com\",\"password\":\"Securepass1!\"}"))
-            .andExpect(status().isConflict());
-    }
-
-    @Test
-    void register_superAdminCannotCreateSuperAdmin_returns403() throws Exception {
-        Cookie access = loginAs("superadmin", "adminpass");
-
-        mockMvc.perform(post("/api/auth/register")
-                .cookie(access)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newsa\",\"email\":\"newsa@test.com\",\"password\":\"Securepass1!\",\"role\":\"SUPER_ADMIN\"}"))
-            .andExpect(status().isForbidden());
-    }
-
-    private MvcResult login() throws Exception {
-        return mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "password"))))
-            .andReturn();
-    }
-
-    private Cookie loginAs(String username, String password) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(username, password))))
-            .andReturn();
-        return result.getResponse().getCookie("access_token");
-    }
-
-    private Cookie loginAndGetCookie(String name) throws Exception {
-        return login().getResponse().getCookie(name);
-    }
-
-    @Test
     void login_whenIpRateLimitExceeded_returns429() throws Exception {
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(post("/api/auth/login")
@@ -297,14 +206,26 @@ class AuthControllerIT {
             .andExpect(header().exists("Retry-After"));
     }
 
-    @Test
-    void me_withTamperedToken_returns401() throws Exception {
-        mockMvc.perform(get("/api/auth/me")
-                .cookie(new Cookie("access_token", "eyJhbGciOiJIUzI1NiJ9.tampered.signature")))
-            .andExpect(status().isUnauthorized());
+    MvcResult login() throws Exception {
+        return mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("testuser", "password"))))
+            .andReturn();
     }
 
-    private String sha256(String raw) {
+    Cookie loginAs(String username, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest(username, password))))
+            .andReturn();
+        return result.getResponse().getCookie("access_token");
+    }
+
+    Cookie loginAndGetCookie(String name) throws Exception {
+        return login().getResponse().getCookie(name);
+    }
+
+    String sha256(String raw) {
         return TestHashUtils.sha256(raw);
     }
 }

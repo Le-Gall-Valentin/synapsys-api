@@ -47,7 +47,7 @@ describe('authApi', () => {
     mockedClient.get.mockResolvedValue({ data: user })
 
     await expect(authApi.getMe()).resolves.toEqual(user)
-    expect(mockedClient.get).toHaveBeenCalledWith('/auth/me')
+    expect(mockedClient.get).toHaveBeenCalledWith('/users/me')
   })
 
   it('login throws CredentialsError on 401', async () => {
