@@ -28,6 +28,8 @@ public class SecurityConfig {
                                     JwtAuthenticationFilter jwtFilter,
                                     SynapsysProperties properties) throws Exception {
         return http
+            // CSRF disabled: all state-changing requests require a valid HttpOnly cookie (SameSite=Strict).
+            // Cross-origin requests are blocked by CORS. No CSRF token header needed.
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource(properties)))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

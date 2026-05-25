@@ -24,6 +24,9 @@ class ClientIpResolver {
             String xff = request.getHeader("X-Forwarded-For");
             if (xff != null && !xff.isBlank()) {
                 String[] parts = xff.split(",");
+                // Last entry = IP appended by the trusted proxy. Assumes a single trusted
+                // reverse proxy that appends the real client IP at the end of the XFF header.
+                // (RFC 7239 leftmost-is-client convention is not used here.)
                 return parts[parts.length - 1].trim();
             }
         }
