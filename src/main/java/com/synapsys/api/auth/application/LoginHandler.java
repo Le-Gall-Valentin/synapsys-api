@@ -47,14 +47,15 @@ public class LoginHandler implements LoginUseCase {
 
         User user = userOpt.get();
 
-        if (!user.isActive()) {
-            log.warn("Login attempt on inactive account");
-            throw new AuthException.UserNotActive();
-        }
-
+        // Password is verified before isActive to avoid disclosing account status on wrong credentials.
         if (!passwordHasher.matches(command.password(), user.passwordHash())) {
             log.warn("Failed login attempt — invalid credentials");
             throw new AuthException.InvalidCredentials();
+        }
+
+        if (!user.isActive()) {
+            log.warn("Login attempt on inactive account");
+            throw new AuthException.UserNotActive();
         }
 
         log.info("Successful login for user: {}", user.id());

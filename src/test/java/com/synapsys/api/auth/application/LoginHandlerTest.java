@@ -102,6 +102,7 @@ class LoginHandlerTest {
         User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
             activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
+        when(passwordHasher.matches("password", inactive.passwordHash())).thenReturn(true);
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "password")))
             .isInstanceOf(AuthException.UserNotActive.class);
@@ -112,6 +113,7 @@ class LoginHandlerTest {
         User inactive = new User(activeUser.id(), "alice", activeUser.email(),
             activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(inactive));
+        when(passwordHasher.matches("password", inactive.passwordHash())).thenReturn(true);
         ListAppender<ILoggingEvent> logs = startLogCapture();
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("alice", "password")))
@@ -140,13 +142,27 @@ class LoginHandlerTest {
     }
 
     @Test
-    void login_inactiveUser_wrongPassword_throwsUserNotActive() {
+    void login_inactiveUser_correctPassword_throwsUserNotActive() {
         User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
             activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
+        when(passwordHasher.matches("correctpassword", inactive.passwordHash())).thenReturn(true);
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "correctpassword")))
+            .isInstanceOf(AuthException.UserNotActive.class);
+    }
+
+    @Test
+    void login_inactiveUser_wrongPassword_throwsInvalidCredentials() {
+        // Password is checked before isActive to prevent account status info disclosure.
+        // An attacker who doesn't know the password must not learn the account exists and is inactive.
+        User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
+        when(passwordHasher.matches("wrongpassword", inactive.passwordHash())).thenReturn(false);
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "wrongpassword")))
-            .isInstanceOf(AuthException.UserNotActive.class);
+            .isInstanceOf(AuthException.InvalidCredentials.class);
     }
 
     private ListAppender<ILoggingEvent> startLogCapture() {
