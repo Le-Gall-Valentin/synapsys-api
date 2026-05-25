@@ -2,7 +2,7 @@ import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
 import type { User } from '@/entities/user'
 import type { LoginCredentials } from '../model/types'
-import type { IAuthApi } from './IAuthApi'
+import type { IAuthApi } from '../model/IAuthApi'
 import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 
 export const authApi: IAuthApi = {

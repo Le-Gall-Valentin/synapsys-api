@@ -3,7 +3,7 @@ import { useStore } from 'zustand'
 import { useTranslation } from 'react-i18next'
 import { setSessionExpiredCallback } from '@/shared/lib'
 import { Spinner } from '@/shared/ui'
-import type { IAuthApi } from '../api/IAuthApi'
+import type { IAuthApi } from '../model/IAuthApi'
 import { createAuthStore } from '../model/authStore'
 import { AuthStoreContext, type AuthStoreApi } from '../model/authStoreContext'
 

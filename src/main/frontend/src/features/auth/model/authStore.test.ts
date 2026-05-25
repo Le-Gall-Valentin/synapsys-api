@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from './authStore'
-import type { IAuthApi } from '../api/IAuthApi'
+import type { IAuthApi } from './IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
 import { CredentialsError, NetworkError, ServerError } from './errors'
 

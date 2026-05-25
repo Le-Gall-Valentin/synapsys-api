@@ -1,5 +1,5 @@
 import type { User } from '@/entities/user'
-import type { LoginCredentials } from '../model/types'
+import type { LoginCredentials } from './types'
 
 export interface IAuthApi {
   login(credentials: LoginCredentials): Promise<User>
