@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .authenticationEntryPoint(unauthorizedEntryPoint)
                 .accessDeniedHandler(forbiddenAccessDeniedHandler)
             )
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .build();
@@ -67,7 +69,8 @@ public class SecurityConfig {
         } else {
             config.setAllowedOrigins(allowedOrigins);
             config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            config.setAllowedHeaders(List.of("*"));
+            config.setAllowedHeaders(List.of("Content-Type", "Accept", "X-Requested-With"));
+            config.setExposedHeaders(List.of("X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"));
             config.setAllowCredentials(true);
         }
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

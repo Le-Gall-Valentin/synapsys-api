@@ -9,6 +9,7 @@ import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,8 +37,8 @@ public class AuthController {
     public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
                                                   HttpServletResponse response) {
         LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
-        response.addCookie(cookieService.buildAccessCookie(result.tokens().accessToken()));
-        response.addCookie(cookieService.buildRefreshCookie(result.tokens().refreshToken()));
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildAccessCookie(result.tokens().accessToken()).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildRefreshCookie(result.tokens().refreshToken()).toString());
         User user = result.user();
         return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
@@ -50,8 +51,8 @@ public class AuthController {
             .extractFromRequest(request, CookieService.REFRESH_COOKIE)
             .orElseThrow(AuthException.TokenNotFound::new);
         var tokens = refreshTokenUseCase.refresh(rawRefreshToken);
-        response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
-        response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildAccessCookie(tokens.accessToken()).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildRefreshCookie(tokens.refreshToken()).toString());
         return ResponseEntity.noContent().build();
     }
 
@@ -62,7 +63,7 @@ public class AuthController {
             .extractFromRequest(request, CookieService.REFRESH_COOKIE)
             .orElse(null);
         logoutUseCase.logout(rawRefreshToken);
-        cookieService.buildClearCookies().forEach(response::addCookie);
+        cookieService.buildClearCookies().forEach(c -> response.addHeader(HttpHeaders.SET_COOKIE, c.toString()));
         return ResponseEntity.noContent().build();
     }
 }

@@ -18,4 +18,9 @@ public record RegisterRequest(
     )
     String password,
     @NotNull Role role
-) {}
+) {
+    @Override
+    public String toString() {
+        return "RegisterRequest[username=" + username + ", email=" + email + ", role=" + role + "]";
+    }
+}

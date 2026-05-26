@@ -27,7 +27,7 @@ public class JwtValidationService {
                 .getPayload();
 
             if (!JwtService.ISSUER.equals(claims.getIssuer())) {
-                throw new JwtException("Invalid issuer: " + claims.getIssuer());
+                throw new JwtException("Invalid issuer");
             }
             if (claims.getAudience() == null || !claims.getAudience().contains(JwtService.AUDIENCE)) {
                 throw new JwtException("Invalid audience");

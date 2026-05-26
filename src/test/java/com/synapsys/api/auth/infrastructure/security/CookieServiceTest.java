@@ -4,6 +4,7 @@ import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.List;
@@ -30,30 +31,30 @@ class CookieServiceTest {
 
     @Test
     void buildAccessCookie_isHttpOnlyOnApiPath() {
-        Cookie cookie = cookieService.buildAccessCookie("token123");
+        ResponseCookie cookie = cookieService.buildAccessCookie("token123");
 
         assertThat(cookie.getName()).isEqualTo(CookieService.ACCESS_COOKIE);
         assertThat(cookie.getValue()).isEqualTo("token123");
         assertThat(cookie.isHttpOnly()).isTrue();
         assertThat(cookie.getPath()).isEqualTo("/api");
-        assertThat(cookie.getMaxAge()).isEqualTo(15 * 60);
+        assertThat(cookie.getMaxAge().getSeconds()).isEqualTo(15 * 60);
     }
 
     @Test
     void buildRefreshCookie_hasRestrictedPath() {
-        Cookie cookie = cookieService.buildRefreshCookie("refresh123");
+        ResponseCookie cookie = cookieService.buildRefreshCookie("refresh123");
 
         assertThat(cookie.getName()).isEqualTo(CookieService.REFRESH_COOKIE);
         assertThat(cookie.getPath()).isEqualTo("/api/auth");
-        assertThat(cookie.getMaxAge()).isEqualTo(30 * 86_400);
+        assertThat(cookie.getMaxAge().getSeconds()).isEqualTo(30 * 86_400);
     }
 
     @Test
     void buildClearCookies_setsMaxAgeZero() {
-        List<Cookie> cookies = cookieService.buildClearCookies();
+        List<ResponseCookie> cookies = cookieService.buildClearCookies();
 
         assertThat(cookies).hasSize(2);
-        assertThat(cookies).allMatch(c -> c.getMaxAge() == 0);
+        assertThat(cookies).allMatch(c -> c.getMaxAge().getSeconds() == 0);
         assertThat(cookies).allMatch(c -> c.getValue().isEmpty());
     }
 
