@@ -40,7 +40,7 @@ class SeedHandlerTest {
         verify(userRepository).save(argThat(cmd ->
             cmd.username().equals("admin") &&
             cmd.email().equals("admin@test.com") &&
-            cmd.passwordHash().equals("hashed") &&
+            cmd.password().equals("hashed") &&
             cmd.role() == Role.SUPER_ADMIN
         ));
     }

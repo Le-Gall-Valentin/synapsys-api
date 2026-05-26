@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.AuthException;
+import com.synapsys.api.auth.domain.model.DeactivateUserCommand;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
@@ -38,7 +39,7 @@ class DeactivateUserHandlerTest {
     void deactivate_superAdminDeactivatesAdmin_succeeds() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.ADMIN)));
 
-        assertThatCode(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+        assertThatCode(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .doesNotThrowAnyException();
 
         verify(userRepository).deactivate(targetId);
@@ -48,7 +49,7 @@ class DeactivateUserHandlerTest {
     void deactivate_superAdminDeactivatesUser_succeeds() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
 
-        assertThatCode(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+        assertThatCode(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .doesNotThrowAnyException();
 
         verify(userRepository).deactivate(targetId);
@@ -58,7 +59,7 @@ class DeactivateUserHandlerTest {
     void deactivate_adminDeactivatesUser_succeeds() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
 
-        assertThatCode(() -> handler.deactivate(targetId, callerId, Role.ADMIN))
+        assertThatCode(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
             .doesNotThrowAnyException();
 
         verify(userRepository).deactivate(targetId);
@@ -68,7 +69,7 @@ class DeactivateUserHandlerTest {
     void deactivate_adminCannotDeactivateAdmin_throwsInsufficientPermissions() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.ADMIN)));
 
-        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.ADMIN))
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
 
         verify(userRepository, never()).deactivate(any());
@@ -78,7 +79,7 @@ class DeactivateUserHandlerTest {
     void deactivate_adminCannotDeactivateSuperAdmin_throwsInsufficientPermissions() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
 
-        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.ADMIN))
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
 
         verify(userRepository, never()).deactivate(any());
@@ -86,7 +87,7 @@ class DeactivateUserHandlerTest {
 
     @Test
     void deactivate_selfDeactivation_throwsInsufficientPermissions() {
-        assertThatThrownBy(() -> handler.deactivate(callerId, callerId, Role.SUPER_ADMIN))
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(callerId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class)
             .hasMessageContaining("Insufficient permissions");
 
@@ -97,7 +98,7 @@ class DeactivateUserHandlerTest {
     void deactivate_targetNotFound_throwsUserNotFound() {
         when(userRepository.findById(targetId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.UserNotFound.class);
 
         verify(userRepository, never()).deactivate(any());
@@ -107,7 +108,7 @@ class DeactivateUserHandlerTest {
     void deactivate_superAdminCannotDeactivateSuperAdmin_throwsInsufficientPermissions() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
 
-        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
 
         verify(userRepository, never()).deactivate(any());
@@ -117,7 +118,7 @@ class DeactivateUserHandlerTest {
     void deactivate_alreadyInactiveUser_throwsUserAlreadyInactive() {
         when(userRepository.findById(targetId)).thenReturn(Optional.of(inactiveUser(targetId, Role.USER)));
 
-        assertThatThrownBy(() -> handler.deactivate(targetId, callerId, Role.SUPER_ADMIN))
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.UserAlreadyInactive.class);
 
         verify(userRepository, never()).deactivate(any());

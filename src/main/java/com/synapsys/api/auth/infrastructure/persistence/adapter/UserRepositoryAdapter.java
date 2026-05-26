@@ -56,7 +56,7 @@ public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
             UserEntity entity = new UserEntity();
             entity.setUsername(command.username());
             entity.setEmail(command.email());
-            entity.setPasswordHash(command.passwordHash());
+            entity.setPasswordHash(command.password());
             entity.setRole(command.role());
             return toDomain(jpa.saveAndFlush(entity));
         } catch (DataIntegrityViolationException e) {

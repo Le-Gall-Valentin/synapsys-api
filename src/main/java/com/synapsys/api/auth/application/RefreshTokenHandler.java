@@ -14,6 +14,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenHandler.class);
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRevocationPort revocationPort;
     private final UserRepository userRepository;
     private final AccessTokenPort accessTokenPort;
     private final RefreshTokenIssuerPort refreshTokenPort;
@@ -21,12 +22,14 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     private final int refreshTokenExpiryDays;
 
     public RefreshTokenHandler(RefreshTokenRepository refreshTokenRepository,
+                               RefreshTokenRevocationPort revocationPort,
                                UserRepository userRepository,
                                AccessTokenPort accessTokenPort,
                                RefreshTokenIssuerPort refreshTokenPort,
                                TokenHashPort tokenHashPort,
                                RefreshTokenConfigPort tokenConfig) {
         this.refreshTokenRepository = refreshTokenRepository;
+        this.revocationPort = revocationPort;
         this.userRepository = userRepository;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
@@ -47,7 +50,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
 
         if (token.isRevoked()) {
             log.warn("Revoked token reuse detected for user: {} — revoking all tokens", token.userId());
-            refreshTokenRepository.revokeAllForUser(token.userId());
+            revocationPort.revokeAllForUser(token.userId());
             throw new AuthException.TokenRevoked();
         }
 
@@ -63,7 +66,7 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
             throw new AuthException.UserNotActive();
         }
 
-        if (!refreshTokenRepository.tryMarkUsedAndRevoke(token.id())) {
+        if (!revocationPort.tryMarkUsedAndRevoke(token.id())) {
             // Token was concurrently consumed by another request — treat as reuse
             log.warn("Concurrent token reuse detected for user: {}", user.id());
             throw new AuthException.TokenRevoked();

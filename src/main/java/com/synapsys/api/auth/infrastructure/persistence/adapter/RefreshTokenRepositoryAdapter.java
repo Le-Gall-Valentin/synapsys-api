@@ -3,6 +3,7 @@ package com.synapsys.api.auth.infrastructure.persistence.adapter;
 import com.synapsys.api.auth.domain.model.RefreshToken;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenRevocationPort;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, RefreshTokenMaintenancePort {
+public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, RefreshTokenRevocationPort, RefreshTokenMaintenancePort {
 
     private final RefreshTokenJpaRepository jpa;
 

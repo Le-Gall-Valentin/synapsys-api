@@ -53,7 +53,7 @@ public class UserController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id,
                                            @AuthenticationPrincipal CustomUserDetails caller) {
-        deactivateUserUseCase.deactivate(id, caller.getUserId(), caller.getRole());
+        deactivateUserUseCase.deactivate(new DeactivateUserCommand(id, caller.getUserId(), caller.getRole()));
         return ResponseEntity.noContent().build();
     }
 }

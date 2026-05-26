@@ -1,17 +1,15 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.AuthException;
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.auth.domain.model.DeactivateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.in.DeactivateUserUseCase;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
-import com.synapsys.api.auth.domain.service.RoleDeactivationPolicy;
+import com.synapsys.api.auth.domain.service.RoleHierarchy;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @ApplicationService
 public class DeactivateUserHandler implements DeactivateUserUseCase {
@@ -26,19 +24,20 @@ public class DeactivateUserHandler implements DeactivateUserUseCase {
 
     @Override
     @Transactional
-    public void deactivate(UUID targetUserId, UUID callerId, Role callerRole) {
-        if (targetUserId.equals(callerId)) {
+    public void deactivate(DeactivateUserCommand command) {
+        if (command.targetUserId().equals(command.callerId())) {
             throw new AuthException.InsufficientPermissions();
         }
-        User target = userRepository.findById(targetUserId)
+        User target = userRepository.findById(command.targetUserId())
             .orElseThrow(AuthException.UserNotFound::new);
         if (!target.isActive()) {
             throw new AuthException.UserAlreadyInactive();
         }
-        if (!RoleDeactivationPolicy.canDeactivate(callerRole, target.role())) {
+        if (!RoleHierarchy.canManage(command.callerRole(), target.role())) {
             throw new AuthException.InsufficientPermissions();
         }
-        userRepository.deactivate(targetUserId);
-        log.info("User {} deactivated by caller {} with role {}", targetUserId, callerId, callerRole);
+        userRepository.deactivate(command.targetUserId());
+        log.info("User {} deactivated by caller {} with role {}",
+            command.targetUserId(), command.callerId(), command.callerRole());
     }
 }

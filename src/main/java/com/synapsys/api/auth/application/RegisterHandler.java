@@ -1,7 +1,7 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.*;
-import com.synapsys.api.auth.domain.service.RoleCreationPolicy;
+import com.synapsys.api.auth.domain.service.RoleHierarchy;
 import com.synapsys.api.auth.domain.port.in.RegisterUseCase;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
 
 @ApplicationService
 public class RegisterHandler implements RegisterUseCase {
@@ -28,13 +27,12 @@ public class RegisterHandler implements RegisterUseCase {
     @Override
     @Transactional
     public User register(RegisterCommand command, Role callerRole) {
-        if (!RoleCreationPolicy.canCreate(callerRole, command.role())) {
+        if (!RoleHierarchy.canManage(callerRole, command.role())) {
             throw new AuthException.InsufficientPermissions();
         }
-        String normalizedEmail = command.email().toLowerCase(Locale.ROOT);
         String passwordHash = passwordHasher.hash(command.password());
         User created = userRepository.save(new CreateUserCommand(
-            command.username(), normalizedEmail, passwordHash, command.role()
+            command.username(), command.email(), passwordHash, command.role()
         ));
         log.info("User {} registered with role {} by caller {}", created.id(), created.role(), callerRole);
         return created;

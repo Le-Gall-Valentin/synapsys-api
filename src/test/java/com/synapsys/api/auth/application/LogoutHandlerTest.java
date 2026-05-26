@@ -21,13 +21,14 @@ import static org.mockito.Mockito.*;
 class LogoutHandlerTest {
 
     @Mock RefreshTokenRepository refreshTokenRepository;
+    @Mock RefreshTokenRevocationPort revocationPort;
     @Mock TokenHashPort tokenHashPort;
 
     private LogoutHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new LogoutHandler(refreshTokenRepository, tokenHashPort);
+        handler = new LogoutHandler(refreshTokenRepository, revocationPort, tokenHashPort);
         lenient().when(tokenHashPort.hash(any(String.class)))
             .thenAnswer(i -> TestHashUtils.sha256(i.getArgument(0, String.class)));
     }
@@ -44,14 +45,14 @@ class LogoutHandlerTest {
 
         handler.logout(raw);
 
-        verify(refreshTokenRepository).revoke(stored.id());
+        verify(revocationPort).revoke(stored.id());
     }
 
     @Test
     void logout_unknownToken_isIdempotent() {
         when(refreshTokenRepository.findByTokenHash(any())).thenReturn(Optional.empty());
         assertThatNoException().isThrownBy(() -> handler.logout("unknown"));
-        verify(refreshTokenRepository, never()).revoke(any());
+        verify(revocationPort, never()).revoke(any());
     }
 
     @Test

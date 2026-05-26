@@ -22,6 +22,7 @@ import org.mockito.InOrder;
 class RefreshTokenHandlerTest {
 
     @Mock RefreshTokenRepository refreshTokenRepository;
+    @Mock RefreshTokenRevocationPort revocationPort;
     @Mock UserRepository userRepository;
     @Mock AccessTokenPort accessTokenPort;
     @Mock RefreshTokenIssuerPort refreshTokenPort;
@@ -39,7 +40,7 @@ class RefreshTokenHandlerTest {
     void setUp() {
         when(tokenConfig.refreshTokenExpiryDays()).thenReturn(30);
         handler = new RefreshTokenHandler(
-            refreshTokenRepository, userRepository, accessTokenPort, refreshTokenPort, tokenHashPort, tokenConfig
+            refreshTokenRepository, revocationPort, userRepository, accessTokenPort, refreshTokenPort, tokenHashPort, tokenConfig
         );
         lenient().when(tokenHashPort.hash(any(String.class)))
             .thenAnswer(i -> TestHashUtils.sha256(i.getArgument(0, String.class)));
@@ -54,7 +55,7 @@ class RefreshTokenHandlerTest {
         );
         when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(stored));
         when(userRepository.findById(activeUser.id())).thenReturn(Optional.of(activeUser));
-        when(refreshTokenRepository.tryMarkUsedAndRevoke(stored.id())).thenReturn(true);
+        when(revocationPort.tryMarkUsedAndRevoke(stored.id())).thenReturn(true);
         when(accessTokenPort.generate(activeUser)).thenReturn("new_jwt");
         when(refreshTokenPort.generate(eq(activeUser), anyInt())).thenReturn("new_raw_refresh");
 
@@ -62,8 +63,8 @@ class RefreshTokenHandlerTest {
 
         assertThat(result.accessToken()).isEqualTo("new_jwt");
         assertThat(result.refreshToken()).isEqualTo("new_raw_refresh");
-        InOrder inOrder = inOrder(refreshTokenRepository, refreshTokenPort);
-        inOrder.verify(refreshTokenRepository).tryMarkUsedAndRevoke(stored.id());
+        InOrder inOrder = inOrder(revocationPort, refreshTokenPort);
+        inOrder.verify(revocationPort).tryMarkUsedAndRevoke(stored.id());
         inOrder.verify(refreshTokenPort).generate(activeUser, 30);
     }
 
@@ -92,7 +93,7 @@ class RefreshTokenHandlerTest {
 
         assertThatThrownBy(() -> handler.refresh(raw))
             .isInstanceOf(AuthException.TokenRevoked.class);
-        verify(refreshTokenRepository).revokeAllForUser(activeUser.id());
+        verify(revocationPort).revokeAllForUser(activeUser.id());
     }
 
     @Test
@@ -121,7 +122,7 @@ class RefreshTokenHandlerTest {
 
         assertThatThrownBy(() -> handler.refresh(raw))
             .isInstanceOf(AuthException.TokenRevoked.class);
-        verify(refreshTokenRepository).revokeAllForUser(activeUser.id());
+        verify(revocationPort).revokeAllForUser(activeUser.id());
     }
 
     @Test
@@ -147,7 +148,7 @@ class RefreshTokenHandlerTest {
         );
         when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(stored));
         when(userRepository.findById(activeUser.id())).thenReturn(Optional.of(activeUser));
-        when(refreshTokenRepository.tryMarkUsedAndRevoke(stored.id())).thenReturn(false);
+        when(revocationPort.tryMarkUsedAndRevoke(stored.id())).thenReturn(false);
 
         assertThatThrownBy(() -> handler.refresh(raw))
             .isInstanceOf(AuthException.TokenRevoked.class);

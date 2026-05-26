@@ -2,6 +2,7 @@ package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.port.in.LogoutUseCase;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenRevocationPort;
 import com.synapsys.api.auth.domain.port.out.TokenHashPort;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
@@ -14,11 +15,14 @@ public class LogoutHandler implements LogoutUseCase {
     private static final Logger log = LoggerFactory.getLogger(LogoutHandler.class);
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRevocationPort revocationPort;
     private final TokenHashPort tokenHashPort;
 
     public LogoutHandler(RefreshTokenRepository refreshTokenRepository,
+                         RefreshTokenRevocationPort revocationPort,
                          TokenHashPort tokenHashPort) {
         this.refreshTokenRepository = refreshTokenRepository;
+        this.revocationPort = revocationPort;
         this.tokenHashPort = tokenHashPort;
     }
 
@@ -29,7 +33,7 @@ public class LogoutHandler implements LogoutUseCase {
         String hash = tokenHashPort.hash(rawRefreshToken);
         refreshTokenRepository.findByTokenHash(hash)
             .ifPresent(token -> {
-                refreshTokenRepository.revoke(token.id());
+                revocationPort.revoke(token.id());
                 log.info("Token revoked on logout for user: {}", token.userId());
             });
     }
