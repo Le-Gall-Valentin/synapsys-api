@@ -4,6 +4,7 @@ import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.DeactivateUserCommand;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.model.User;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DeactivateUserHandlerTest {
 
-    @Mock
-    UserRepository userRepository;
+    @Mock UserRepository userRepository;
+    @Mock UserCommandPort userCommandPort;
 
     private DeactivateUserHandler handler;
 
@@ -32,7 +33,7 @@ class DeactivateUserHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new DeactivateUserHandler(userRepository);
+        handler = new DeactivateUserHandler(userRepository, userCommandPort);
     }
 
     @Test
@@ -42,7 +43,7 @@ class DeactivateUserHandlerTest {
         assertThatCode(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .doesNotThrowAnyException();
 
-        verify(userRepository).deactivate(targetId);
+        verify(userCommandPort).deactivate(targetId);
     }
 
     @Test
@@ -52,7 +53,7 @@ class DeactivateUserHandlerTest {
         assertThatCode(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .doesNotThrowAnyException();
 
-        verify(userRepository).deactivate(targetId);
+        verify(userCommandPort).deactivate(targetId);
     }
 
     @Test
@@ -62,7 +63,7 @@ class DeactivateUserHandlerTest {
         assertThatCode(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
             .doesNotThrowAnyException();
 
-        verify(userRepository).deactivate(targetId);
+        verify(userCommandPort).deactivate(targetId);
     }
 
     @Test
@@ -72,7 +73,7 @@ class DeactivateUserHandlerTest {
         assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
 
-        verify(userRepository, never()).deactivate(any());
+        verify(userCommandPort, never()).deactivate(any());
     }
 
     @Test
@@ -82,7 +83,7 @@ class DeactivateUserHandlerTest {
         assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
 
-        verify(userRepository, never()).deactivate(any());
+        verify(userCommandPort, never()).deactivate(any());
     }
 
     @Test
@@ -101,7 +102,7 @@ class DeactivateUserHandlerTest {
         assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.UserNotFound.class);
 
-        verify(userRepository, never()).deactivate(any());
+        verify(userCommandPort, never()).deactivate(any());
     }
 
     @Test
@@ -111,7 +112,7 @@ class DeactivateUserHandlerTest {
         assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.InsufficientPermissions.class);
 
-        verify(userRepository, never()).deactivate(any());
+        verify(userCommandPort, never()).deactivate(any());
     }
 
     @Test
@@ -121,7 +122,7 @@ class DeactivateUserHandlerTest {
         assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(AuthException.UserAlreadyInactive.class);
 
-        verify(userRepository, never()).deactivate(any());
+        verify(userCommandPort, never()).deactivate(any());
     }
 
     private User user(UUID id, Role role) {

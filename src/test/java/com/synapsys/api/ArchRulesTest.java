@@ -111,17 +111,14 @@ class ArchRulesTest {
 
     @Test
     void global_infrastructure_should_not_depend_on_auth_infrastructure() {
-        // SecurityConfig: injects JwtAuthenticationFilter — legitimate
-        // RateLimitMethodInterceptor (Bm-8-1) and AppConfig (Bm-8-2): pending fix in Phase 7
+        // SecurityConfig: injects JwtAuthenticationFilter — legitimate cross-BC dependency
         // Test classes are excluded — they may reference auth infrastructure for test setup
         noClasses()
             .that().resideInAPackage("com.synapsys.api.infrastructure..")
-            .and(DescribedPredicate.describe("excluding tests and temporarily exempt classes",
+            .and(DescribedPredicate.describe("excluding tests and SecurityConfig",
                 c -> !c.getSimpleName().endsWith("Test")
                   && !c.getSimpleName().endsWith("IT")
-                  && !c.getSimpleName().equals("SecurityConfig")
-                  && !c.getSimpleName().equals("RateLimitMethodInterceptor")
-                  && !c.getSimpleName().equals("AppConfig")))
+                  && !c.getSimpleName().equals("SecurityConfig")))
             .should().dependOnClassesThat()
             .resideInAPackage("com.synapsys.api.auth.infrastructure..")
             .check(classes);

@@ -15,7 +15,11 @@ import java.net.URI;
 @Component
 public class UnauthorizedEntryPoint implements AuthenticationEntryPoint {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final ObjectMapper mapper;
+
+    public UnauthorizedEntryPoint(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
@@ -27,6 +31,6 @@ public class UnauthorizedEntryPoint implements AuthenticationEntryPoint {
 
         response.setContentType("application/problem+json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        MAPPER.writeValue(response.getWriter(), problem);
+        mapper.writeValue(response.getWriter(), problem);
     }
 }

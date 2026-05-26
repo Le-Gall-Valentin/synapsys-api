@@ -4,7 +4,7 @@ import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserAdminPort;
-import com.synapsys.api.auth.domain.port.out.UserRepository;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,14 +20,14 @@ import static org.mockito.Mockito.*;
 class SeedHandlerTest {
 
     @Mock UserAdminPort userAdminPort;
-    @Mock UserRepository userRepository;
+    @Mock UserCommandPort userCommandPort;
     @Mock PasswordHasherPort passwordHasher;
 
     private SeedHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new SeedHandler(userAdminPort, userRepository, passwordHasher);
+        handler = new SeedHandler(userAdminPort, userCommandPort, passwordHasher);
     }
 
     @Test
@@ -37,7 +37,7 @@ class SeedHandlerTest {
 
         handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret");
 
-        verify(userRepository).save(argThat(cmd ->
+        verify(userCommandPort).save(argThat(cmd ->
             cmd.username().equals("admin") &&
             cmd.email().equals("admin@test.com") &&
             cmd.password().equals("hashed") &&
@@ -52,14 +52,14 @@ class SeedHandlerTest {
         handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret");
 
         verifyNoInteractions(passwordHasher);
-        verify(userRepository, never()).save(any());
+        verify(userCommandPort, never()).save(any());
     }
 
     @Test
     void seedInitialSuperAdmin_concurrentDuplicate_completesNormally() {
         when(userAdminPort.isEmpty()).thenReturn(true);
         when(passwordHasher.hash("secret")).thenReturn("hashed");
-        doThrow(new AuthException.UsernameAlreadyExists()).when(userRepository).save(any());
+        doThrow(new AuthException.UsernameAlreadyExists()).when(userCommandPort).save(any());
 
         assertThatNoException().isThrownBy(() ->
             handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret")
@@ -70,7 +70,7 @@ class SeedHandlerTest {
     void seedInitialSuperAdmin_emailAlreadyExists_completesNormally() {
         when(userAdminPort.isEmpty()).thenReturn(true);
         when(passwordHasher.hash("secret")).thenReturn("hashed");
-        doThrow(new AuthException.EmailAlreadyExists()).when(userRepository).save(any());
+        doThrow(new AuthException.EmailAlreadyExists()).when(userCommandPort).save(any());
 
         assertThatNoException().isThrownBy(() ->
             handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret")

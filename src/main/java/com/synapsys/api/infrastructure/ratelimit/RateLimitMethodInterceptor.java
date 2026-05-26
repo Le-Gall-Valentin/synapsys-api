@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.ratelimit;
 
-import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
+import com.synapsys.api.shared.security.RateLimitPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -48,7 +48,7 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
             List<String> keys = resolveKeys(rule.mode(), endpoint, ip, userId);
             for (String key : keys) {
                 RateLimitBucketStore.BucketResult result = store.tryConsume(key, rule.max(), rule.windowSeconds());
-                RateLimitHeaders headers = RateLimitHeaders.from(result, rule.max());
+                RateLimitHeaders headers = RateLimitHeaders.from(result, rule.max(), System.currentTimeMillis() / 1000);
                 worst = worst == null ? headers : worst.worstCase(headers);
 
                 if (!result.allowed()) {
@@ -83,8 +83,8 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()
                 || auth instanceof AnonymousAuthenticationToken) return null;
-        if (auth.getPrincipal() instanceof CustomUserDetails details) {
-            return details.getUserId().toString();
+        if (auth.getPrincipal() instanceof RateLimitPrincipal principal) {
+            return principal.getUserId().toString();
         }
         return null;
     }

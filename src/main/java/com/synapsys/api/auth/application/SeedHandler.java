@@ -6,7 +6,7 @@ import com.synapsys.api.auth.domain.model.Role;
 import com.synapsys.api.auth.domain.port.in.SeedUseCase;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserAdminPort;
-import com.synapsys.api.auth.domain.port.out.UserRepository;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +17,12 @@ public class SeedHandler implements SeedUseCase {
     private static final Logger log = LoggerFactory.getLogger(SeedHandler.class);
 
     private final UserAdminPort userAdminPort;
-    private final UserRepository userRepository;
+    private final UserCommandPort userCommandPort;
     private final PasswordHasherPort passwordHasher;
 
-    public SeedHandler(UserAdminPort userAdminPort, UserRepository userRepository, PasswordHasherPort passwordHasher) {
+    public SeedHandler(UserAdminPort userAdminPort, UserCommandPort userCommandPort, PasswordHasherPort passwordHasher) {
         this.userAdminPort = userAdminPort;
-        this.userRepository = userRepository;
+        this.userCommandPort = userCommandPort;
         this.passwordHasher = passwordHasher;
     }
 
@@ -37,7 +37,7 @@ public class SeedHandler implements SeedUseCase {
         }
         String hash = passwordHasher.hash(password);
         try {
-            userRepository.save(new CreateUserCommand(username, email, hash, Role.SUPER_ADMIN));
+            userCommandPort.save(new CreateUserCommand(username, email, hash, Role.SUPER_ADMIN));
             log.info("Default SUPER_ADMIN '{}' created", username);
         } catch (AuthException.UsernameAlreadyExists | AuthException.EmailAlreadyExists e) {
             log.info("SUPER_ADMIN already exists (concurrent startup), skipping");

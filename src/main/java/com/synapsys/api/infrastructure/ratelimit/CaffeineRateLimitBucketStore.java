@@ -12,7 +12,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Component
-class CaffeineRateLimitBucketStore implements RateLimitBucketStore {
+public class CaffeineRateLimitBucketStore implements RateLimitBucketStore {
 
     private final TimeMeter clock;
     private final Cache<String, Bucket> buckets;
@@ -42,7 +42,6 @@ class CaffeineRateLimitBucketStore implements RateLimitBucketStore {
         return new BucketResult(probe.isConsumed(), probe.getRemainingTokens(), probe.getNanosToWaitForRefill());
     }
 
-    @Override
     public void clearAll() {
         buckets.invalidateAll();
     }

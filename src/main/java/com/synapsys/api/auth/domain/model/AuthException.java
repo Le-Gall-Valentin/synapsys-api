@@ -60,10 +60,8 @@ public abstract sealed class AuthException extends RuntimeException
     }
 
     public static final class DataIntegrityError extends AuthException {
-        public DataIntegrityError(String constraint) {
-            super(constraint != null
-                ? "Unexpected data integrity violation on constraint: " + constraint
-                : "Unexpected data integrity violation");
+        public DataIntegrityError() {
+            super("Unexpected data integrity violation");
         }
     }
 }

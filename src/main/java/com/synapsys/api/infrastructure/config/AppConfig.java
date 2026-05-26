@@ -1,12 +1,10 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.infrastructure.security.JwtKeyFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import javax.crypto.SecretKey;
 
 @Configuration
 public class AppConfig {
@@ -17,7 +15,7 @@ public class AppConfig {
     }
 
     @Bean
-    SecretKey jwtSecretKey(SynapsysProperties properties) {
-        return JwtKeyFactory.from(properties.jwt().secret());
+    ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }

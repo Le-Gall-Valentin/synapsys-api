@@ -15,7 +15,11 @@ import java.net.URI;
 @Component
 public class ForbiddenAccessDeniedHandler implements AccessDeniedHandler {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final ObjectMapper mapper;
+
+    public ForbiddenAccessDeniedHandler(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
@@ -27,6 +31,6 @@ public class ForbiddenAccessDeniedHandler implements AccessDeniedHandler {
 
         response.setContentType("application/problem+json");
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        MAPPER.writeValue(response.getWriter(), problem);
+        mapper.writeValue(response.getWriter(), problem);
     }
 }

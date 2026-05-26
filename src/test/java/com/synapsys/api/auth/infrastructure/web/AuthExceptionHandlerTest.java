@@ -87,7 +87,7 @@ class AuthExceptionHandlerTest {
 
     @Test
     void handle_dataIntegrityError_returns500WithGenericMessage() {
-        var response = handler.handle(new AuthException.DataIntegrityError("uq_users_email"), request);
+        var response = handler.handle(new AuthException.DataIntegrityError(), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();

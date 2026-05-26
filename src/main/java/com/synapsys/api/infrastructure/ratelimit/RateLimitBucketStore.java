@@ -14,8 +14,5 @@ public interface RateLimitBucketStore {
      */
     BucketResult tryConsume(String key, int max, int windowSeconds);
 
-    /** Invalidates all buckets. For tests only. */
-    void clearAll();
-
     record BucketResult(boolean allowed, long remaining, long nanosToWaitForRefill) {}
 }

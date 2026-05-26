@@ -4,6 +4,7 @@ import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.DeactivateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.in.DeactivateUserUseCase;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.domain.service.RoleHierarchy;
 import com.synapsys.api.shared.annotation.ApplicationService;
@@ -17,9 +18,11 @@ public class DeactivateUserHandler implements DeactivateUserUseCase {
     private static final Logger log = LoggerFactory.getLogger(DeactivateUserHandler.class);
 
     private final UserRepository userRepository;
+    private final UserCommandPort userCommandPort;
 
-    public DeactivateUserHandler(UserRepository userRepository) {
+    public DeactivateUserHandler(UserRepository userRepository, UserCommandPort userCommandPort) {
         this.userRepository = userRepository;
+        this.userCommandPort = userCommandPort;
     }
 
     @Override
@@ -36,7 +39,7 @@ public class DeactivateUserHandler implements DeactivateUserUseCase {
         if (!RoleHierarchy.canManage(command.callerRole(), target.role())) {
             throw new AuthException.InsufficientPermissions();
         }
-        userRepository.deactivate(command.targetUserId());
+        userCommandPort.deactivate(command.targetUserId());
         log.info("User {} deactivated by caller {} with role {}",
             command.targetUserId(), command.callerId(), command.callerRole());
     }

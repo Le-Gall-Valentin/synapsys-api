@@ -6,8 +6,7 @@ package com.synapsys.api.infrastructure.ratelimit;
  */
 record RateLimitHeaders(long limit, long remaining, long resetEpochSeconds, long retryAfterSeconds) {
 
-    static RateLimitHeaders from(RateLimitBucketStore.BucketResult result, int max) {
-        long nowSeconds = System.currentTimeMillis() / 1000;
+    static RateLimitHeaders from(RateLimitBucketStore.BucketResult result, int max, long nowSeconds) {
         long retryAfterSeconds = result.nanosToWaitForRefill() <= 0 ? 0L
             : Math.max(1L, (result.nanosToWaitForRefill() + 999_999_999L) / 1_000_000_000L);
         long resetEpochSeconds = nowSeconds + retryAfterSeconds;

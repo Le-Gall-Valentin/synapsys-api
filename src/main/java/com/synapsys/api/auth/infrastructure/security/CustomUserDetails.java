@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.infrastructure.security;
 
 import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.shared.security.RateLimitPrincipal;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, RateLimitPrincipal {
 
     private final UUID userId;
     private final Role role;

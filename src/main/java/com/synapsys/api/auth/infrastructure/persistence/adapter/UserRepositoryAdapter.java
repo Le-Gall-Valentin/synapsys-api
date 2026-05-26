@@ -4,20 +4,20 @@ import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserAdminPort;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.UUID;
 
-// Implements both UserRepository (query/write) and UserAdminPort (admin-only mutation),
-// sharing a single JPA repository to avoid duplicating persistence logic across two adapters.
+// Implements UserRepository (queries), UserCommandPort (mutations), and UserAdminPort (admin checks),
+// sharing a single JPA repository to avoid duplicating persistence logic across multiple adapters.
 @Component
-public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
+public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort {
 
     private final UserJpaRepository jpa;
 
@@ -65,17 +65,12 @@ public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
     }
 
     private AuthException resolveConstraintViolation(DataIntegrityViolationException e) {
-        if (e.getCause() instanceof ConstraintViolationException cve) {
-            String name = cve.getConstraintName();
-            if (name != null) {
-                return switch (name) {
-                    case "uq_users_email"    -> new AuthException.EmailAlreadyExists();
-                    case "uq_users_username" -> new AuthException.UsernameAlreadyExists();
-                    default -> new AuthException.DataIntegrityError(name);
-                };
-            }
+        if (e.getCause() != null && e.getCause().getMessage() != null) {
+            String msg = e.getCause().getMessage();
+            if (msg.contains("uq_users_email"))    return new AuthException.EmailAlreadyExists();
+            if (msg.contains("uq_users_username")) return new AuthException.UsernameAlreadyExists();
         }
-        return new AuthException.DataIntegrityError(null);
+        return new AuthException.DataIntegrityError();
     }
 
     private User toDomain(UserEntity e) {

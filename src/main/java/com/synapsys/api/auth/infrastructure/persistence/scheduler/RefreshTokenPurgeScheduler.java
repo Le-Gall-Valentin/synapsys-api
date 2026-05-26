@@ -24,7 +24,7 @@ public class RefreshTokenPurgeScheduler {
         this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
     }
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "${synapsys.refresh-token.purge-cron:0 0 3 * * *}")
     public void purgeExpiredTokens() {
         Instant now = Instant.now();
         Instant cutoff = now.minus(refreshTokenExpiryDays, ChronoUnit.DAYS);

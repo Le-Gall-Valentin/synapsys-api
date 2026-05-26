@@ -7,7 +7,7 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
-import com.synapsys.api.infrastructure.ratelimit.RateLimitBucketStore;
+import com.synapsys.api.infrastructure.ratelimit.CaffeineRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
@@ -42,7 +42,7 @@ class AuthControllerIT {
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
-    @Autowired RateLimitBucketStore rateLimitBucketStore;
+    @Autowired CaffeineRateLimitBucketStore rateLimitBucketStore;
 
     MockMvc mockMvc;
     final ObjectMapper objectMapper = new ObjectMapper();

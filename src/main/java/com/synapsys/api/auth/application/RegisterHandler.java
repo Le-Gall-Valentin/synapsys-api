@@ -4,7 +4,7 @@ import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.service.RoleHierarchy;
 import com.synapsys.api.auth.domain.port.in.RegisterUseCase;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
-import com.synapsys.api.auth.domain.port.out.UserRepository;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +16,11 @@ public class RegisterHandler implements RegisterUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(RegisterHandler.class);
 
-    private final UserRepository userRepository;
+    private final UserCommandPort userCommandPort;
     private final PasswordHasherPort passwordHasher;
 
-    public RegisterHandler(UserRepository userRepository, PasswordHasherPort passwordHasher) {
-        this.userRepository = userRepository;
+    public RegisterHandler(UserCommandPort userCommandPort, PasswordHasherPort passwordHasher) {
+        this.userCommandPort = userCommandPort;
         this.passwordHasher = passwordHasher;
     }
 
@@ -31,7 +31,7 @@ public class RegisterHandler implements RegisterUseCase {
             throw new AuthException.InsufficientPermissions();
         }
         String passwordHash = passwordHasher.hash(command.password());
-        User created = userRepository.save(new CreateUserCommand(
+        User created = userCommandPort.save(new CreateUserCommand(
             command.username(), command.email(), passwordHash, command.role()
         ));
         log.info("User {} registered with role {} by caller {}", created.id(), created.role(), callerRole);
