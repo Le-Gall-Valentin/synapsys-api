@@ -9,10 +9,8 @@ import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -50,7 +48,7 @@ public class AuthController {
                                         HttpServletResponse response) {
         String rawRefreshToken = cookieService
             .extractFromRequest(request, CookieService.REFRESH_COOKIE)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+            .orElseThrow(AuthException.TokenNotFound::new);
         var tokens = refreshTokenUseCase.refresh(rawRefreshToken);
         response.addCookie(cookieService.buildAccessCookie(tokens.accessToken()));
         response.addCookie(cookieService.buildRefreshCookie(tokens.refreshToken()));

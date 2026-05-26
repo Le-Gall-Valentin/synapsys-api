@@ -1,22 +1,26 @@
 package com.synapsys.api.infrastructure.config;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
+@Validated
 @ConfigurationProperties(prefix = "synapsys")
 public record SynapsysProperties(
-    JwtProperties jwt,
+    @Valid JwtProperties jwt,
     RefreshTokenProperties refreshToken,
     CookieProperties cookie,
-    SeedProperties seed,
+    @Valid SeedProperties seed,
     CorsProperties cors,
     RateLimitProperties rateLimit
 ) {
 
     public record JwtProperties(
-        String secret,
+        @NotBlank String secret,
         @DefaultValue("15") int expiryMinutes
     ) {}
 
@@ -29,9 +33,9 @@ public record SynapsysProperties(
     ) {}
 
     public record SeedProperties(
-        String username,
-        String email,
-        String password
+        @NotBlank String username,
+        @NotBlank String email,
+        @NotBlank String password
     ) {}
 
     public record CorsProperties(
