@@ -11,6 +11,7 @@ export function ProfilePage() {
   )
   const { t } = useTranslation('profile')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
 
   if (!user) return null
 
@@ -18,8 +19,11 @@ export function ProfilePage() {
 
   async function handleLogout(): Promise<void> {
     setIsLoggingOut(true)
+    setLogoutError(null)
     try {
       await logout()
+    } catch {
+      setLogoutError(t('error.logout_failed'))
     } finally {
       setIsLoggingOut(false)
     }
@@ -48,8 +52,13 @@ export function ProfilePage() {
           </p>
         </div>
 
-        {/* Déconnexion */}
-        <Button onClick={() => { void handleLogout().catch(() => {}) }} isLoading={isLoggingOut} className="w-full">
+        {logoutError && (
+          <p className="mb-3 text-center text-sm text-red-500" role="alert">
+            {logoutError}
+          </p>
+        )}
+
+        <Button onClick={() => { void handleLogout() }} isLoading={isLoggingOut} className="w-full">
           <LogOut className="size-4" />
           {t('action.logout')}
         </Button>

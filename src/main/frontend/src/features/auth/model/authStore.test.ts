@@ -4,11 +4,15 @@ import type { IAuthApi } from './IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
 import { CredentialsError, NetworkError, ServerError } from './errors'
 
-vi.mock('@/shared/lib/sessionHint', () => ({
-  setSessionHint: vi.fn(),
-  clearSessionHint: vi.fn(),
-  hasSessionHint: vi.fn(),
-}))
+vi.mock('@/shared/lib', async (importActual) => {
+  const actual = await importActual<typeof import('@/shared/lib')>()
+  return {
+    ...actual,
+    setSessionHint: vi.fn(),
+    clearSessionHint: vi.fn(),
+    hasSessionHint: vi.fn(),
+  }
+})
 
 const mockedSetSessionHint = vi.mocked(setSessionHint)
 const mockedClearSessionHint = vi.mocked(clearSessionHint)
