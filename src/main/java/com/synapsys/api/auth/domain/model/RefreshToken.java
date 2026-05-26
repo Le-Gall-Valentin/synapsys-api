@@ -11,4 +11,12 @@ public record RefreshToken(
     boolean revoked,
     Instant createdAt,
     Instant lastUsedAt
-) {}
+) {
+    public boolean isExpired() {
+        return expiresAt.isBefore(Instant.now());
+    }
+
+    public boolean isRevoked() {
+        return revoked;
+    }
+}

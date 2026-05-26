@@ -5,6 +5,7 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.UserNotActive,
             AuthException.UserAlreadyInactive,
             AuthException.TokenExpired,
+            AuthException.TokenNotFound,
             AuthException.TokenRevoked,
             AuthException.UserNotFound,
             AuthException.UsernameAlreadyExists,
@@ -29,7 +30,11 @@ public abstract sealed class AuthException extends RuntimeException
     }
 
     public static final class TokenExpired extends AuthException {
-        public TokenExpired() { super("Token has expired or was not found"); }
+        public TokenExpired() { super("Token has expired"); }
+    }
+
+    public static final class TokenNotFound extends AuthException {
+        public TokenNotFound() { super("Token not found"); }
     }
 
     public static final class TokenRevoked extends AuthException {

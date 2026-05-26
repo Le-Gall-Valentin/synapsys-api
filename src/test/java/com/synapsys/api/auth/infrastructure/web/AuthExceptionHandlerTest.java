@@ -37,6 +37,13 @@ class AuthExceptionHandlerTest {
     }
 
     @Test
+    void handle_tokenNotFound_returns401() {
+        var response = handler.handle(new AuthException.TokenNotFound(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
     void handle_tokenRevoked_returns401() {
         var response = handler.handle(new AuthException.TokenRevoked(), request);
 

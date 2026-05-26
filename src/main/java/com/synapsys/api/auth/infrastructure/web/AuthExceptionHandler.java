@@ -37,6 +37,9 @@ public class AuthExceptionHandler {
             case AuthException.TokenExpired ex ->
                     response(401, ex, "Authentication required");
 
+            case AuthException.TokenNotFound ex ->
+                    response(401, ex, "Authentication required");
+
             case AuthException.TokenRevoked ex ->
                     response(401, ex, "Authentication required");
 

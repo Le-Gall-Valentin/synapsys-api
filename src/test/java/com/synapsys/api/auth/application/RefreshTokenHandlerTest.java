@@ -16,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import org.mockito.InOrder;
 
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenHandlerTest {
@@ -61,22 +62,23 @@ class RefreshTokenHandlerTest {
 
         assertThat(result.accessToken()).isEqualTo("new_jwt");
         assertThat(result.refreshToken()).isEqualTo("new_raw_refresh");
-        verify(refreshTokenRepository).tryMarkUsedAndRevoke(stored.id());
-        verify(refreshTokenPort).generate(activeUser, 30);
+        InOrder inOrder = inOrder(refreshTokenRepository, refreshTokenPort);
+        inOrder.verify(refreshTokenRepository).tryMarkUsedAndRevoke(stored.id());
+        inOrder.verify(refreshTokenPort).generate(activeUser, 30);
     }
 
     @Test
-    void refresh_nullToken_throwsTokenExpired() {
+    void refresh_nullToken_throwsTokenNotFound() {
         assertThatThrownBy(() -> handler.refresh(null))
-            .isInstanceOf(AuthException.TokenExpired.class);
+            .isInstanceOf(AuthException.TokenNotFound.class);
         verifyNoInteractions(refreshTokenRepository);
     }
 
     @Test
-    void refresh_unknownToken_throwsTokenExpired() {
+    void refresh_unknownToken_throwsTokenNotFound() {
         when(refreshTokenRepository.findByTokenHash(any())).thenReturn(Optional.empty());
         assertThatThrownBy(() -> handler.refresh("unknown"))
-            .isInstanceOf(AuthException.TokenExpired.class);
+            .isInstanceOf(AuthException.TokenNotFound.class);
     }
 
     @Test
@@ -107,8 +109,9 @@ class RefreshTokenHandlerTest {
     }
 
     @Test
-    void refresh_revokedAndExpiredToken_throwsTokenExpired() {
-        // Token expired naturally after TTL and was already revoked by prior rotation — not theft
+    void refresh_revokedAndExpiredToken_revokesAllAndThrowsTokenRevoked() {
+        // Revocation check takes priority: revokeAllForUser is always triggered on revoked tokens,
+        // even if the token has also expired, to detect potential token theft post-TTL.
         String raw = "expired-and-revoked";
         RefreshToken expiredRevoked = new RefreshToken(
             UUID.randomUUID(), activeUser.id(), TestHashUtils.sha256(raw),
@@ -117,8 +120,8 @@ class RefreshTokenHandlerTest {
         when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(expiredRevoked));
 
         assertThatThrownBy(() -> handler.refresh(raw))
-            .isInstanceOf(AuthException.TokenExpired.class);
-        verify(refreshTokenRepository, never()).revokeAllForUser(any());
+            .isInstanceOf(AuthException.TokenRevoked.class);
+        verify(refreshTokenRepository).revokeAllForUser(activeUser.id());
     }
 
     @Test

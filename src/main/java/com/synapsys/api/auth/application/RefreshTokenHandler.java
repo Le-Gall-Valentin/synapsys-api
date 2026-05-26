@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-
 @ApplicationService
 public class RefreshTokenHandler implements RefreshTokenUseCase {
 
@@ -40,21 +38,21 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
     @Transactional
     public AuthTokens refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
-            throw new AuthException.TokenExpired();
+            throw new AuthException.TokenNotFound();
         }
 
         String hash = tokenHashPort.hash(rawRefreshToken);
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
-            .orElseThrow(AuthException.TokenExpired::new);
+            .orElseThrow(AuthException.TokenNotFound::new);
 
-        if (token.expiresAt().isBefore(Instant.now())) {
-            throw new AuthException.TokenExpired();
-        }
-
-        if (token.revoked()) {
+        if (token.isRevoked()) {
             log.warn("Revoked token reuse detected for user: {} — revoking all tokens", token.userId());
             refreshTokenRepository.revokeAllForUser(token.userId());
             throw new AuthException.TokenRevoked();
+        }
+
+        if (token.isExpired()) {
+            throw new AuthException.TokenExpired();
         }
 
         User user = userRepository.findById(token.userId())
