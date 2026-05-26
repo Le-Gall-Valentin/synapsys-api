@@ -44,9 +44,9 @@ class AuthControllerIT {
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired CaffeineRateLimitBucketStore rateLimitBucketStore;
 
-    MockMvc mockMvc;
-    final ObjectMapper objectMapper = new ObjectMapper();
-    final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     @BeforeEach
     void setUp() {

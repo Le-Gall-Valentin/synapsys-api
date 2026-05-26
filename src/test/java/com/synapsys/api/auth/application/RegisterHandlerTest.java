@@ -103,6 +103,23 @@ class RegisterHandlerTest {
         )).isInstanceOf(AuthException.EmailAlreadyExists.class);
     }
 
+    @Test
+    void register_emailIsNormalized() {
+        when(passwordHasher.hash("password123")).thenReturn("hashed");
+        when(userCommandPort.save(any())).thenAnswer(inv -> {
+            CreateUserCommand cmd = inv.getArgument(0);
+            return new User(UUID.randomUUID(), cmd.username(), cmd.email(),
+                cmd.password(), cmd.role(), true, Instant.now());
+        });
+
+        User result = handler.register(
+            new RegisterCommand("alice", "ALICE@TEST.COM", "password123", Role.USER),
+            Role.SUPER_ADMIN
+        );
+
+        assertThat(result.email()).isEqualTo("alice@test.com");
+    }
+
     private RegisterCommand cmd(String username, Role role) {
         return new RegisterCommand(username, username + "@test.com", "pass", role);
     }

@@ -50,6 +50,12 @@ class CookieServiceTest {
     }
 
     @Test
+    void buildAccessCookie_hasSameSiteStrict() {
+        ResponseCookie cookie = cookieService.buildAccessCookie("token123");
+        assertThat(cookie.getSameSite()).isEqualTo("Strict");
+    }
+
+    @Test
     void buildClearCookies_setsMaxAgeZero() {
         List<ResponseCookie> cookies = cookieService.buildClearCookies();
 

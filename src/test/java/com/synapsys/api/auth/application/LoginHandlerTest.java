@@ -31,18 +31,25 @@ class LoginHandlerTest {
     @Mock RefreshTokenConfigPort tokenConfig;
 
     private LoginHandler handler;
+    private ListAppender<ILoggingEvent> logAppender;
 
     private final User activeUser = new User(
         UUID.randomUUID(), "user1", "user1@test.com",
         "hashed_pw", Role.USER, true, Instant.now()
     );
 
+    @BeforeEach
+    void setUpLogger() {
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LoginHandler.class))
+            .addAppender(logAppender);
+    }
+
     @AfterEach
-    void tearDown() {
-        // Retire l'appender pour éviter une fuite mémoire entre les tests
-        ch.qos.logback.classic.Logger loginLogger =
-            (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(LoginHandler.class);
-        loginLogger.detachAndStopAllAppenders();
+    void tearDownLogger() {
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LoginHandler.class))
+            .detachAppender(logAppender);
     }
 
     @BeforeEach
@@ -114,12 +121,11 @@ class LoginHandlerTest {
             activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(inactive));
         when(passwordHasher.matches("password", inactive.passwordHash())).thenReturn(true);
-        ListAppender<ILoggingEvent> logs = startLogCapture();
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("alice", "password")))
             .isInstanceOf(AuthException.UserNotActive.class);
 
-        boolean usernameLogged = logs.list.stream()
+        boolean usernameLogged = logAppender.list.stream()
             .anyMatch(e -> e.getFormattedMessage().contains("alice"));
         assertThat(usernameLogged).isFalse();
     }
@@ -131,12 +137,11 @@ class LoginHandlerTest {
                 activeUser.passwordHash(), activeUser.role(), true, activeUser.createdAt())
         ));
         when(passwordHasher.matches("wrong", activeUser.passwordHash())).thenReturn(false);
-        ListAppender<ILoggingEvent> logs = startLogCapture();
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("bob", "wrong")))
             .isInstanceOf(AuthException.InvalidCredentials.class);
 
-        boolean usernameLogged = logs.list.stream()
+        boolean usernameLogged = logAppender.list.stream()
             .anyMatch(e -> e.getFormattedMessage().contains("bob"));
         assertThat(usernameLogged).isFalse();
     }
@@ -165,12 +170,4 @@ class LoginHandlerTest {
             .isInstanceOf(AuthException.InvalidCredentials.class);
     }
 
-    private ListAppender<ILoggingEvent> startLogCapture() {
-        ch.qos.logback.classic.Logger logger =
-            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(LoginHandler.class);
-        ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
-        return appender;
-    }
 }

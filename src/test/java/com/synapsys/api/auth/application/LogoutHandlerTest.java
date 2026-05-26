@@ -60,4 +60,10 @@ class LogoutHandlerTest {
         assertThatNoException().isThrownBy(() -> handler.logout(null));
         verifyNoInteractions(refreshTokenRepository);
     }
+
+    @Test
+    void logout_blankToken_isIdempotent() {
+        assertThatNoException().isThrownBy(() -> handler.logout("   "));
+        verifyNoInteractions(refreshTokenRepository);
+    }
 }

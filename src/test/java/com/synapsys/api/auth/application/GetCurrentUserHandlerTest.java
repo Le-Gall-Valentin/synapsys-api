@@ -34,7 +34,7 @@ class GetCurrentUserHandlerTest {
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
 
         User result = handler.getCurrentUser(id);
-        assertThat(result.id()).isEqualTo(id);
+        assertThat(result).isEqualTo(user);
     }
 
     @Test
