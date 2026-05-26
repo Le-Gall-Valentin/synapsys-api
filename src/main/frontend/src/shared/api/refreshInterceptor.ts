@@ -1,7 +1,11 @@
 import type { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { triggerSessionExpired } from '@/shared/lib'
 
+let _resetSessionExpired: (() => void) | null = null
 
+export function notifyLoginSuccess(): void {
+  _resetSessionExpired?.()
+}
 
 interface QueueEntry {
   resolve: (value: unknown) => void
@@ -20,6 +24,7 @@ export function createRefreshInterceptorHandlers(
   let isRefreshing = false
   let failedQueue: QueueEntry[] = []
   let sessionExpiredTriggered = false
+  _resetSessionExpired = () => { sessionExpiredTriggered = false }
 
   function flushQueue(error: unknown): void {
     failedQueue.forEach(({ resolve, reject, config }) => {
@@ -33,10 +38,6 @@ export function createRefreshInterceptorHandlers(
   }
 
   function onFulfilled(response: AxiosResponse): AxiosResponse {
-    const url = response.config.url?.split('?')[0]
-    if (url?.endsWith('/auth/login')) {
-      sessionExpiredTriggered = false
-    }
     return response
   }
 

@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <ErrorFallback onReset={() => window.location.reload()} />
+      return <ErrorFallback onReset={() => this.setState({ hasError: false })} />
     }
     return this.props.children
   }

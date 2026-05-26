@@ -1,9 +1,9 @@
 import { Loader2 } from 'lucide-react'
 
-export function Spinner({ label = 'Loading' }: { label?: string } = {}) {
+export function Spinner({ label = 'Loading', fullscreen = true }: { label?: string; fullscreen?: boolean } = {}) {
   return (
     <div
-      className="flex min-h-screen items-center justify-center bg-bg-0"
+      className={`flex items-center justify-center bg-bg-0 ${fullscreen ? 'min-h-screen' : ''}`}
       role="status"
       aria-label={label}
     >

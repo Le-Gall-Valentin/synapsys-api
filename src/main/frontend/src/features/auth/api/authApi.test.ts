@@ -1,5 +1,6 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import axios from 'axios'
+import axios, { type AxiosError } from 'axios'
 import type { LoginCredentials } from '../model/types'
 import { authApi } from './authApi'
 import { client } from '@/shared/api'
@@ -15,6 +16,16 @@ vi.mock('@/shared/api', () => ({
 const mockedClient = client as unknown as {
   post: ReturnType<typeof vi.fn>
   get: ReturnType<typeof vi.fn>
+}
+
+function makeAxiosError(status: number, message = 'error', headers: Record<string, string> = {}): AxiosError {
+  return new axios.AxiosError(message, undefined, undefined, undefined, {
+    status,
+    data: {},
+    headers,
+    config: {} as never,
+    statusText: String(status),
+  })
 }
 
 describe('authApi', () => {
@@ -51,26 +62,17 @@ describe('authApi', () => {
   })
 
   it('login throws CredentialsError on 401', async () => {
-    const err = new axios.AxiosError('Unauthorized', undefined, undefined, undefined, {
-      status: 401, data: {}, headers: {}, config: {} as never, statusText: 'Unauthorized',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(401))
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(CredentialsError)
   })
 
   it('login throws ServerError on 500', async () => {
-    const err = new axios.AxiosError('Internal Server Error', undefined, undefined, undefined, {
-      status: 500, data: {}, headers: {}, config: {} as never, statusText: 'Internal Server Error',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(500))
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(ServerError)
   })
 
   it('login throws RateLimitError on 429', async () => {
-    const err = new axios.AxiosError('Too Many Requests', undefined, undefined, undefined, {
-      status: 429, data: {}, headers: {}, config: {} as never, statusText: 'Too Many Requests',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(429))
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(RateLimitError)
   })
 
@@ -80,18 +82,12 @@ describe('authApi', () => {
   })
 
   it('logout throws ServerError on 500', async () => {
-    const err = new axios.AxiosError('Internal Server Error', undefined, undefined, undefined, {
-      status: 500, data: {}, headers: {}, config: {} as never, statusText: 'Internal Server Error',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(500))
     await expect(authApi.logout()).rejects.toBeInstanceOf(ServerError)
   })
 
   it('logout succeeds silently on 4xx (token already gone)', async () => {
-    const err = new axios.AxiosError('Unauthorized', undefined, undefined, undefined, {
-      status: 401, data: {}, headers: {}, config: {} as never, statusText: 'Unauthorized',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(401))
     await expect(authApi.logout()).resolves.toBeUndefined()
   })
 
@@ -101,18 +97,12 @@ describe('authApi', () => {
   })
 
   it('getMe throws CredentialsError on 401', async () => {
-    const err = new axios.AxiosError('Unauthorized', undefined, undefined, undefined, {
-      status: 401, data: {}, headers: {}, config: {} as never, statusText: 'Unauthorized',
-    })
-    mockedClient.get.mockRejectedValue(err)
+    mockedClient.get.mockRejectedValue(makeAxiosError(401))
     await expect(authApi.getMe()).rejects.toBeInstanceOf(CredentialsError)
   })
 
   it('getMe throws ServerError on 500', async () => {
-    const err = new axios.AxiosError('Internal Server Error', undefined, undefined, undefined, {
-      status: 500, data: {}, headers: {}, config: {} as never, statusText: 'Internal Server Error',
-    })
-    mockedClient.get.mockRejectedValue(err)
+    mockedClient.get.mockRejectedValue(makeAxiosError(500))
     await expect(authApi.getMe()).rejects.toBeInstanceOf(ServerError)
   })
 
@@ -122,46 +112,31 @@ describe('authApi', () => {
   })
 
   it('login throws ServerError on 400 (validation error)', async () => {
-    const err = new axios.AxiosError('Bad Request', undefined, undefined, undefined, {
-      status: 400, data: {}, headers: {}, config: {} as never, statusText: 'Bad Request',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(400))
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(ServerError)
   })
 
   it('login throws ServerError on 403', async () => {
-    const err = new axios.AxiosError('Forbidden', undefined, undefined, undefined, {
-      status: 403, data: {}, headers: {}, config: {} as never, statusText: 'Forbidden',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(403))
     await expect(authApi.login({ username: 'u', password: 'p' })).rejects.toBeInstanceOf(ServerError)
   })
 
   it('login RateLimitError carries retryAfterSeconds from header', async () => {
-    const err = new axios.AxiosError('Too Many Requests', undefined, undefined, undefined, {
-      status: 429, data: {}, headers: { 'retry-after': '45' }, config: {} as never, statusText: 'Too Many Requests',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '45' }))
     const caught = await authApi.login({ username: 'u', password: 'p' }).catch((e) => e)
     expect(caught).toBeInstanceOf(RateLimitError)
     expect((caught as RateLimitError).retryAfterSeconds).toBe(45)
   })
 
   it('login RateLimitError has null retryAfterSeconds when header absent', async () => {
-    const err = new axios.AxiosError('Too Many Requests', undefined, undefined, undefined, {
-      status: 429, data: {}, headers: {}, config: {} as never, statusText: 'Too Many Requests',
-    })
-    mockedClient.post.mockRejectedValue(err)
+    mockedClient.post.mockRejectedValue(makeAxiosError(429))
     const caught = await authApi.login({ username: 'u', password: 'p' }).catch((e) => e)
     expect(caught).toBeInstanceOf(RateLimitError)
     expect((caught as RateLimitError).retryAfterSeconds).toBeNull()
   })
 
   it('getMe throws ServerError on 403 (should not trigger logout)', async () => {
-    const err = new axios.AxiosError('Forbidden', undefined, undefined, undefined, {
-      status: 403, data: {}, headers: {}, config: {} as never, statusText: 'Forbidden',
-    })
-    mockedClient.get.mockRejectedValue(err)
+    mockedClient.get.mockRejectedValue(makeAxiosError(403))
     await expect(authApi.getMe()).rejects.toBeInstanceOf(ServerError)
   })
 })

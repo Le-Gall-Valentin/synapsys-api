@@ -7,6 +7,10 @@ import { Button, Input } from '@/shared/ui'
 
 type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null
 
+const SUBMIT_BUTTON_BG = 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)'
+const SUBMIT_BUTTON_SHADOW =
+  '0 1px 0 rgba(255,255,255,0.2) inset, 0 6px 16px rgba(94,234,212,0.15)'
+
 const ERROR_I18N_KEYS = {
   credentials: 'error.credentials',
   network: 'error.network',
@@ -25,7 +29,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const isSubmittingRef = useRef(false)
 
-  async function handleSubmit(e: React.BaseSyntheticEvent): Promise<void> {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
     if (isSubmittingRef.current) return
     isSubmittingRef.current = true
@@ -108,10 +112,9 @@ export function LoginForm() {
         isLoading={isLoading}
         className="mt-2 w-full border-transparent py-3 font-semibold active:translate-y-px disabled:cursor-wait"
         style={{
-          background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)',
+          background: SUBMIT_BUTTON_BG,
           color: '#07211c',
-          boxShadow:
-            '0 1px 0 rgba(255,255,255,0.2) inset, 0 6px 16px rgba(94,234,212,0.15)',
+          boxShadow: SUBMIT_BUTTON_SHADOW,
         }}
       >
         {t('action.submit')}

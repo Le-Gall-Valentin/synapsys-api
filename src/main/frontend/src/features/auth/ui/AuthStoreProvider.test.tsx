@@ -8,6 +8,7 @@ vi.mock('@/shared/lib', () => ({
   setSessionHint: vi.fn(),
   clearSessionHint: vi.fn(),
   hasSessionHint: vi.fn(),
+  triggerSessionExpired: vi.fn(),
 }))
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))

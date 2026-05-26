@@ -36,6 +36,8 @@ export default tseslint.config(
         { type: 'features', pattern: ['src/features/*/**'], capture: ['feature'] },
         { type: 'pages',    pattern: ['src/pages/*/**'],    capture: ['page'] },
         { type: 'app',      pattern: ['src/app/**'] },
+        // Note: 'widgets' FSD layer intentionally omitted — project uses 'pages' and 'features' only.
+        // Add 'widgets' here if compound UI blocks spanning multiple features are introduced.
       ],
       'boundaries/ignore': ['src/main.tsx', 'src/vite-env.d.ts'],
     },

@@ -1,7 +1,9 @@
 // @vitest-environment node
+// Node environment required: tests axios behavior (no DOM needed),
+// and the jsdom env interferes with axios adapter selection.
 import axios, {AxiosError, type InternalAxiosRequestConfig} from 'axios'
 import {beforeEach, describe, expect, it, vi, type Mock} from 'vitest'
-import {createRefreshInterceptorHandlers} from './refreshInterceptor'
+import {createRefreshInterceptorHandlers, notifyLoginSuccess} from './refreshInterceptor'
 
 let mockOnSessionExpired: Mock<() => void>
 
@@ -207,15 +209,14 @@ describe('refreshInterceptor', () => {
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
-    instance.interceptors.response.use(onFulfilled, onRejected)
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     // First 401 — refresh fails — sessionExpiredTriggered = true
     await expect(onRejected(make401('/api/data1'))).rejects.toBeDefined()
     expect(mockOnSessionExpired).toHaveBeenCalledTimes(1)
 
-    // Simulate re-login (successful POST to /auth/login)
-    await instance.post('/auth/login')
+    // Simulate re-login via callback
+    notifyLoginSuccess()
 
     // Second 401 — sessionExpiredTriggered must have been reset — must trigger again
     await expect(onRejected(make401('/api/data2'))).rejects.toBeDefined()

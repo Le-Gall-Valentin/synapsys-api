@@ -13,4 +13,14 @@ describe('Spinner', () => {
     const el = container.querySelector('[role="status"]')
     expect(el?.getAttribute('aria-label')).toBe('Chargement...')
   })
+
+  it('includes min-h-screen class when fullscreen is true (default)', () => {
+    const { container } = render(<Spinner />)
+    expect(container.querySelector('[role="status"]')?.className).toContain('min-h-screen')
+  })
+
+  it('omits min-h-screen class when fullscreen is false', () => {
+    const { container } = render(<Spinner fullscreen={false} />)
+    expect(container.querySelector('[role="status"]')?.className).not.toContain('min-h-screen')
+  })
 })

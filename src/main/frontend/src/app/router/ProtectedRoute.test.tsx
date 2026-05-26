@@ -1,27 +1,18 @@
 import { render } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import { useAuth } from '@/features/auth'
+import { useAuthGuard } from './useAuthGuard'
 import { ProtectedRoute } from './ProtectedRoute'
 
-vi.mock('@/features/auth', () => ({ useAuth: vi.fn() }))
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
+vi.mock('./useAuthGuard')
 
-const mockUseAuth = vi.mocked(useAuth)
-
-const baseState = {
-  isInitializing: false,
-  user: null,
-  login: vi.fn(),
-  logout: vi.fn(),
-  initialize: vi.fn(),
-}
+const mockUseAuthGuard = vi.mocked(useAuthGuard)
 
 beforeEach(() => vi.clearAllMocks())
 
 describe('ProtectedRoute', () => {
   it('redirects and hides children when not authenticated', () => {
-    mockUseAuth.mockImplementation((selector) => selector({ ...baseState }))
+    mockUseAuthGuard.mockReturnValue({ isInitializing: false, isAuthenticated: false, t: (k: string) => k })
     const { queryByText } = render(
       <MemoryRouter>
         <ProtectedRoute><div>protected</div></ProtectedRoute>
@@ -31,9 +22,7 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders children when authenticated', () => {
-    mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'test', role: 'USER' as const } })
-    )
+    mockUseAuthGuard.mockReturnValue({ isInitializing: false, isAuthenticated: true, t: (k: string) => k })
     const { getByText } = render(
       <MemoryRouter>
         <ProtectedRoute><div>protected</div></ProtectedRoute>
@@ -43,7 +32,7 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders spinner while initializing instead of redirecting', () => {
-    mockUseAuth.mockImplementation((selector) => selector({ ...baseState, isInitializing: true }))
+    mockUseAuthGuard.mockReturnValue({ isInitializing: true, isAuthenticated: false, t: (k: string) => k })
     const { container } = render(
       <MemoryRouter>
         <ProtectedRoute><div>protected</div></ProtectedRoute>
