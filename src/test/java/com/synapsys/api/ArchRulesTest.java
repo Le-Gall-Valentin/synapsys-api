@@ -110,6 +110,36 @@ class ArchRulesTest {
     }
 
     @Test
+    void global_infrastructure_should_not_depend_on_auth_infrastructure() {
+        // SecurityConfig: injects JwtAuthenticationFilter — legitimate
+        // RateLimitMethodInterceptor (Bm-8-1) and AppConfig (Bm-8-2): pending fix in Phase 7
+        // Test classes are excluded — they may reference auth infrastructure for test setup
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.infrastructure..")
+            .and(DescribedPredicate.describe("excluding tests and temporarily exempt classes",
+                c -> !c.getSimpleName().endsWith("Test")
+                  && !c.getSimpleName().endsWith("IT")
+                  && !c.getSimpleName().equals("SecurityConfig")
+                  && !c.getSimpleName().equals("RateLimitMethodInterceptor")
+                  && !c.getSimpleName().equals("AppConfig")))
+            .should().dependOnClassesThat()
+            .resideInAPackage("com.synapsys.api.auth.infrastructure..")
+            .check(classes);
+    }
+
+    @Test
+    void outbound_adapters_should_implement_a_domain_port() {
+        classes()
+            .that().resideInAPackage("..infrastructure.persistence.adapter..")
+            .and().areAnnotatedWith(org.springframework.stereotype.Component.class)
+            .should().implement(DescribedPredicate.describe(
+                "a port in ..domain.port.out..",
+                iface -> iface.getPackageName().contains(".domain.port.out")
+            ))
+            .check(classes);
+    }
+
+    @Test
     void configuration_classes_should_not_implement_domain_ports() {
         // SynapsysProperties is a pure config POJO — it must not carry domain port responsibilities.
         // A dedicated adapter must implement domain ports instead.

@@ -65,4 +65,15 @@ class SeedHandlerTest {
             handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret")
         );
     }
+
+    @Test
+    void seedInitialSuperAdmin_emailAlreadyExists_completesNormally() {
+        when(userAdminPort.isEmpty()).thenReturn(true);
+        when(passwordHasher.hash("secret")).thenReturn("hashed");
+        doThrow(new AuthException.EmailAlreadyExists()).when(userRepository).save(any());
+
+        assertThatNoException().isThrownBy(() ->
+            handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret")
+        );
+    }
 }
