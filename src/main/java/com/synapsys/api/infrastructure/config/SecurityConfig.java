@@ -40,11 +40,15 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/", "/index.html", "/favicon.ico").permitAll()
+                .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
+                // SPA fallback: paths without a file extension are served as index.html
+                .requestMatchers(HttpMethod.GET, "/{path:[^.]*}", "/**/{path:[^.]*}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 .requestMatchers("/api/**").authenticated()
-                .anyRequest().permitAll()
+                .anyRequest().denyAll()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(ex -> ex

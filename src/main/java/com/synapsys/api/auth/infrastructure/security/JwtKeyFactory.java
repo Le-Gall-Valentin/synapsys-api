@@ -14,7 +14,7 @@ public final class JwtKeyFactory {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
             throw new IllegalStateException(
-                "synapsys.jwt.secret must be at least 32 characters long (got " + keyBytes.length + ")"
+                "synapsys.jwt.secret must be at least 32 bytes long (got " + keyBytes.length + ")"
             );
         }
         return Keys.hmacShaKeyFor(keyBytes);

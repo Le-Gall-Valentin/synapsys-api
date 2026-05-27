@@ -57,6 +57,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @RateLimiting(max = 10)
     public ResponseEntity<Void> logout(HttpServletRequest request,
                                        HttpServletResponse response) {
         String rawRefreshToken = cookieService

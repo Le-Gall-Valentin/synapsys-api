@@ -8,6 +8,7 @@ import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -65,10 +66,12 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
     }
 
     private AuthException resolveConstraintViolation(DataIntegrityViolationException e) {
-        if (e.getCause() != null && e.getCause().getMessage() != null) {
-            String msg = e.getCause().getMessage();
-            if (msg.contains("uq_users_email"))    return new AuthException.EmailAlreadyExists();
-            if (msg.contains("uq_users_username")) return new AuthException.UsernameAlreadyExists();
+        if (e.getCause() instanceof ConstraintViolationException cve) {
+            String constraint = cve.getConstraintName();
+            if (constraint != null) {
+                if (constraint.contains("uq_users_email"))    return new AuthException.EmailAlreadyExists();
+                if (constraint.contains("uq_users_username")) return new AuthException.UsernameAlreadyExists();
+            }
         }
         return new AuthException.DataIntegrityError();
     }
