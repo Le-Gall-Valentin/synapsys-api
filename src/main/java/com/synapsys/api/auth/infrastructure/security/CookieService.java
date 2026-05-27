@@ -3,8 +3,10 @@ package com.synapsys.api.auth.infrastructure.security;
 import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -16,20 +18,24 @@ public class CookieService {
     public static final String REFRESH_COOKIE = "refresh_token";
 
     private final boolean secure;
+    private final long accessMaxAgeSeconds;
+    private final long refreshMaxAgeSeconds;
 
     public CookieService(SynapsysProperties properties) {
         this.secure = properties.cookie().secure();
+        this.accessMaxAgeSeconds = properties.jwt().expiryMinutes() * 60L;
+        this.refreshMaxAgeSeconds = (long) properties.refreshToken().expiryDays() * 86_400L;
     }
 
-    public Cookie buildAccessCookie(String token, int maxAgeSeconds) {
-        return build(ACCESS_COOKIE, token, "/api", maxAgeSeconds);
+    public ResponseCookie buildAccessCookie(String token) {
+        return build(ACCESS_COOKIE, token, "/api", accessMaxAgeSeconds);
     }
 
-    public Cookie buildRefreshCookie(String token, int maxAgeSeconds) {
-        return build(REFRESH_COOKIE, token, "/api/auth", maxAgeSeconds);
+    public ResponseCookie buildRefreshCookie(String token) {
+        return build(REFRESH_COOKIE, token, "/api/auth", refreshMaxAgeSeconds);
     }
 
-    public List<Cookie> buildClearCookies() {
+    public List<ResponseCookie> buildClearCookies() {
         return List.of(
             build(ACCESS_COOKIE, "", "/api", 0),
             build(REFRESH_COOKIE, "", "/api/auth", 0)
@@ -45,13 +51,13 @@ public class CookieService {
             .findFirst();
     }
 
-    private Cookie build(String name, String value, String path, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(secure);
-        cookie.setPath(path);
-        cookie.setMaxAge(maxAge);
-        cookie.setAttribute("SameSite", "Strict");
-        return cookie;
+    private ResponseCookie build(String name, String value, String path, long maxAge) {
+        return ResponseCookie.from(name, value)
+            .httpOnly(true)
+            .secure(secure)
+            .path(path)
+            .maxAge(Duration.ofSeconds(maxAge))
+            .sameSite("Strict")
+            .build();
     }
 }

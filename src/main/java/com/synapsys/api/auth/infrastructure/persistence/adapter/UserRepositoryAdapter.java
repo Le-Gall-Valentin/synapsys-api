@@ -1,17 +1,24 @@
 package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.auth.domain.model.AuthException;
+import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
+import com.synapsys.api.auth.domain.port.out.UserAdminPort;
+import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.UUID;
 
+// Implements UserRepository (queries), UserCommandPort (mutations), and UserAdminPort (admin checks),
+// sharing a single JPA repository to avoid duplicating persistence logic across multiple adapters.
 @Component
-public class UserRepositoryAdapter implements UserRepository {
+public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort {
 
     private final UserJpaRepository jpa;
 
@@ -20,8 +27,18 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public boolean isEmpty() {
+        return jpa.count() == 0;
+    }
+
+    @Override
     public Optional<User> findByUsername(String username) {
         return jpa.findByUsername(username).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return jpa.findByEmail(email).map(this::toDomain);
     }
 
     @Override
@@ -30,18 +47,33 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public boolean existsAny() {
-        return jpa.count() > 0;
+    public void deactivate(UUID userId) {
+        jpa.deactivateById(userId);
     }
 
     @Override
-    public User save(String username, String email, String passwordHash, Role role) {
-        UserEntity entity = new UserEntity();
-        entity.setUsername(username);
-        entity.setEmail(email);
-        entity.setPasswordHash(passwordHash);
-        entity.setRole(role);
-        return toDomain(jpa.save(entity));
+    public User save(CreateUserCommand command) {
+        try {
+            UserEntity entity = new UserEntity();
+            entity.setUsername(command.username());
+            entity.setEmail(command.email());
+            entity.setPasswordHash(command.password());
+            entity.setRole(command.role());
+            return toDomain(jpa.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            throw resolveConstraintViolation(e);
+        }
+    }
+
+    private AuthException resolveConstraintViolation(DataIntegrityViolationException e) {
+        if (e.getCause() instanceof ConstraintViolationException cve) {
+            String constraint = cve.getConstraintName();
+            if (constraint != null) {
+                if (constraint.contains("uq_users_email"))    return new AuthException.EmailAlreadyExists();
+                if (constraint.contains("uq_users_username")) return new AuthException.UsernameAlreadyExists();
+            }
+        }
+        return new AuthException.DataIntegrityError();
     }
 
     private User toDomain(UserEntity e) {

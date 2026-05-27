@@ -1,0 +1,18 @@
+{
+  "brand": "SynapSys",
+  "hero": {
+    "headline_1": "Vos serveurs,",
+    "headline_2": "au bout d'un clic.",
+    "description": "Lancez, surveillez et historisez vos opérations sur vos serveurs distants depuis une interface unique et sécurisée."
+  },
+  "quote": "Comme une synapse transmet l'influx nerveux, SynapSys transmet vos ordres entre votre espace et vos machines, instantanément.",
+  "form": {
+    "title": "Bon retour",
+    "subtitle": "Connectez-vous pour accéder à votre espace."
+  },
+  "help": {
+    "no_account": "Pas encore de compte ?",
+    "contact_admin": "Contactez votre administrateur pour qu'il vous en crée un."
+  },
+  "footer": "© 2026 SynapSys"
+}

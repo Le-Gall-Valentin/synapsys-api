@@ -1,17 +1,21 @@
 package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
 import com.synapsys.api.auth.domain.model.RefreshToken;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenRepository;
+import com.synapsys.api.auth.domain.port.out.RefreshTokenRevocationPort;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
+public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, RefreshTokenRevocationPort, RefreshTokenMaintenancePort {
 
     private final RefreshTokenJpaRepository jpa;
 
@@ -20,31 +24,38 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public void save(RefreshToken token) {
-        RefreshTokenEntity entity = new RefreshTokenEntity();
-        entity.setUserId(token.userId());
-        entity.setTokenHash(token.tokenHash());
-        entity.setExpiresAt(token.expiresAt());
-        entity.setRevoked(token.revoked());
-        entity.setLastUsedAt(token.lastUsedAt());
-        jpa.save(entity);
+    public Optional<RefreshToken> findByTokenHash(String tokenHash) {
+        return jpa.findByTokenHash(tokenHash).map(this::toDomain);
     }
 
     @Override
-    public Optional<RefreshToken> findByTokenHash(String sha256Hash) {
-        return jpa.findByTokenHash(sha256Hash).map(this::toDomain);
+    public boolean tryMarkUsedAndRevoke(UUID tokenId) {
+        return jpa.markUsedAndRevokeIfNotRevokedById(tokenId, Instant.now()) > 0;
     }
 
     @Override
-    @Transactional
     public void revoke(UUID tokenId) {
         jpa.revokeById(tokenId);
     }
 
+    // REQUIRES_NEW: revocation must commit independently so tokens stay revoked
+    // even if the caller's outer transaction is rolled back (e.g., on reuse detection).
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllForUser(UUID userId) {
         jpa.revokeAllByUserId(userId);
+    }
+
+    @Override
+    public int deleteExpiredAndRevoked(Instant now, Instant cutoff) {
+        return jpa.deleteExpiredAndOldRevoked(now, cutoff);
+    }
+
+    @Override
+    public RefreshToken save(UUID userId, String tokenHash, Instant expiresAt) {
+        RefreshTokenEntity entity = new RefreshTokenEntity(userId, tokenHash, expiresAt);
+        RefreshTokenEntity saved = jpa.save(entity);
+        return toDomain(saved);
     }
 
     private RefreshToken toDomain(RefreshTokenEntity e) {

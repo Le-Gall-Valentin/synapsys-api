@@ -1,43 +1,31 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.domain.model.Role;
-import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
-import com.synapsys.api.auth.domain.port.out.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.synapsys.api.auth.domain.port.in.SeedUseCase;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 public class DataSeeder {
 
-    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
-
     private final SynapsysProperties properties;
-    private final UserRepository userRepository;
-    private final PasswordHasherPort passwordHasher;
+    private final SeedUseCase seedUseCase;
 
-    public DataSeeder(SynapsysProperties properties,
-                      UserRepository userRepository,
-                      PasswordHasherPort passwordHasher) {
+    public DataSeeder(SynapsysProperties properties, SeedUseCase seedUseCase) {
         this.properties = properties;
-        this.userRepository = userRepository;
-        this.passwordHasher = passwordHasher;
+        this.seedUseCase = seedUseCase;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void seed() {
         SynapsysProperties.SeedProperties seed = properties.seed();
-        if (seed == null || !seed.enabled() || userRepository.existsAny()) {
-            return;
+        if (seed == null || seed.password() == null || seed.password().isBlank()) {
+            throw new IllegalStateException(
+                "SYNAPSYS_SEED_PASSWORD must be set — the initial SUPER_ADMIN cannot be created without it"
+            );
         }
-        userRepository.save(
-            seed.username(),
-            seed.email(),
-            passwordHasher.hash(seed.password()),
-            Role.ADMIN
-        );
-        log.info("Default admin user '{}' created", seed.username());
+        seedUseCase.seedInitialSuperAdmin(seed.username(), seed.email().toLowerCase(Locale.ROOT), seed.password());
     }
 }

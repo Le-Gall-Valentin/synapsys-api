@@ -45,6 +45,9 @@ yarn-error.log*
 .pnp
 .pnp.js
 
+# Generated Vite build output (served by Spring Boot)
+src/main/resources/static/
+
 # ── OS ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
