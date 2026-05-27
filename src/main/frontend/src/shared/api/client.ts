@@ -16,4 +16,4 @@ export const client = axios.create({
   timeout: API_TIMEOUT_MS,
 })
 
-attachRefreshInterceptor(client)
+export const notifyLoginSuccess = attachRefreshInterceptor(client)

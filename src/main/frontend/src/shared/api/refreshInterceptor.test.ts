@@ -3,7 +3,7 @@
 // and the jsdom env interferes with axios adapter selection.
 import axios, {AxiosError, type InternalAxiosRequestConfig} from 'axios'
 import {beforeEach, describe, expect, it, vi, type Mock} from 'vitest'
-import {createRefreshInterceptorHandlers, notifyLoginSuccess} from './refreshInterceptor'
+import {createRefreshInterceptorHandlers} from './refreshInterceptor'
 
 let mockOnSessionExpired: Mock<() => void>
 
@@ -209,7 +209,7 @@ describe('refreshInterceptor', () => {
       return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
     }
 
-    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
+    const { onRejected, notifyLoginSuccess } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
 
     // First 401 — refresh fails — sessionExpiredTriggered = true
     await expect(onRejected(make401('/api/data1'))).rejects.toBeDefined()

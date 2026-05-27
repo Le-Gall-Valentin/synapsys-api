@@ -1,12 +1,6 @@
 import type { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { triggerSessionExpired } from '@/shared/lib'
 
-let _resetSessionExpired: (() => void) | null = null
-
-export function notifyLoginSuccess(): void {
-  _resetSessionExpired?.()
-}
-
 interface QueueEntry {
   resolve: (value: unknown) => void
   reject: (reason: unknown) => void
@@ -19,12 +13,15 @@ export function createRefreshInterceptorHandlers(
 ): {
   onFulfilled: (response: AxiosResponse) => AxiosResponse
   onRejected: (error: AxiosError) => Promise<unknown>
+  notifyLoginSuccess: () => void
 } {
-  // State local to this instance — no pollution between calls
   let isRefreshing = false
   let failedQueue: QueueEntry[] = []
   let sessionExpiredTriggered = false
-  _resetSessionExpired = () => { sessionExpiredTriggered = false }
+
+  function notifyLoginSuccess(): void {
+    sessionExpiredTriggered = false
+  }
 
   function flushQueue(error: unknown): void {
     failedQueue.forEach(({ resolve, reject, config }) => {
@@ -87,10 +84,11 @@ export function createRefreshInterceptorHandlers(
     }
   }
 
-  return { onFulfilled, onRejected }
+  return { onFulfilled, onRejected, notifyLoginSuccess }
 }
 
-export function attachRefreshInterceptor(client: AxiosInstance): void {
-  const { onFulfilled, onRejected } = createRefreshInterceptorHandlers(client, triggerSessionExpired)
+export function attachRefreshInterceptor(client: AxiosInstance): () => void {
+  const { onFulfilled, onRejected, notifyLoginSuccess } = createRefreshInterceptorHandlers(client, triggerSessionExpired)
   client.interceptors.response.use(onFulfilled, onRejected)
+  return notifyLoginSuccess
 }

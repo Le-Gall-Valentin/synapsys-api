@@ -1,2 +1,1 @@
-export { client } from './client'
-export { notifyLoginSuccess } from './refreshInterceptor'
+export { client, notifyLoginSuccess } from './client'
