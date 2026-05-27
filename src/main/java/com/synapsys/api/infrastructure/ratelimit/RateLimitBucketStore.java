@@ -14,5 +14,11 @@ public interface RateLimitBucketStore {
      */
     BucketResult tryConsume(String key, int max, int windowSeconds);
 
+    /**
+     * Non-consuming check: returns whether 1 token could be consumed without actually consuming it.
+     * Used for pre-flight checks before committing consumption across multiple rules.
+     */
+    BucketResult peekConsume(String key, int max, int windowSeconds);
+
     record BucketResult(boolean allowed, long remaining, long nanosToWaitForRefill) {}
 }

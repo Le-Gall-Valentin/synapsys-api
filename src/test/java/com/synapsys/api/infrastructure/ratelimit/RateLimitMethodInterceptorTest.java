@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +31,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class RateLimitMethodInterceptorTest {
 
     @Mock RateLimitBucketStore store;
@@ -50,6 +53,9 @@ class RateLimitMethodInterceptorTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request, response));
         SecurityContextHolder.clearContext();
+        // Default: peek and consume both allowed; individual tests override for the blocked path
+        when(store.peekConsume(anyString(), anyInt(), anyInt())).thenReturn(ALLOWED);
+        when(store.tryConsume(anyString(), anyInt(), anyInt())).thenReturn(ALLOWED);
     }
 
     @AfterEach
@@ -64,7 +70,6 @@ class RateLimitMethodInterceptorTest {
     void ipMode_allowed_proceedsAndSetsHeaders() throws Throwable {
         when(invocation.getMethod()).thenReturn(method("ipOnly"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
-        when(store.tryConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(ALLOWED);
         when(invocation.proceed()).thenReturn("ok");
 
         Object result = interceptor.invoke(invocation);
@@ -79,7 +84,7 @@ class RateLimitMethodInterceptorTest {
     void ipMode_blocked_throwsExceptionWithHeaders() throws Throwable {
         when(invocation.getMethod()).thenReturn(method("ipOnly"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
-        when(store.tryConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
+        when(store.peekConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
 
         assertThatThrownBy(() -> interceptor.invoke(invocation))
             .isInstanceOf(RateLimitExceededException.class)
@@ -90,13 +95,14 @@ class RateLimitMethodInterceptorTest {
                 assertThat(ex.getRetryAfterSeconds()).isPositive();
             });
         verify(invocation, never()).proceed();
+        verify(store, never()).tryConsume(anyString(), anyInt(), anyInt());
     }
 
     @Test
     void ipMode_blocked_setsRateLimitHeadersOnResponse() throws Throwable {
         when(invocation.getMethod()).thenReturn(method("ipOnly"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
-        when(store.tryConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
+        when(store.peekConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
 
         assertThatThrownBy(() -> interceptor.invoke(invocation))
             .isInstanceOf(RateLimitExceededException.class);
@@ -114,7 +120,6 @@ class RateLimitMethodInterceptorTest {
         setAuthenticatedUser(userId);
 
         when(invocation.getMethod()).thenReturn(method("userOnly"));
-        when(store.tryConsume(contains(":USER:" + userId), anyInt(), anyInt())).thenReturn(ALLOWED);
         when(invocation.proceed()).thenReturn(null);
 
         interceptor.invoke(invocation);
@@ -125,12 +130,12 @@ class RateLimitMethodInterceptorTest {
 
     @Test
     void userMode_notAuthenticated_skipsCheckAndProceeds() throws Throwable {
-        // No SecurityContext set — principal is absent
         when(invocation.getMethod()).thenReturn(method("userOnly"));
         when(invocation.proceed()).thenReturn(null);
 
         interceptor.invoke(invocation);
 
+        verify(store, never()).peekConsume(anyString(), anyInt(), anyInt());
         verify(store, never()).tryConsume(anyString(), anyInt(), anyInt());
     }
 
@@ -143,7 +148,6 @@ class RateLimitMethodInterceptorTest {
 
         when(invocation.getMethod()).thenReturn(method("ipAndUser"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
-        when(store.tryConsume(anyString(), anyInt(), anyInt())).thenReturn(ALLOWED);
         when(invocation.proceed()).thenReturn(null);
 
         interceptor.invoke(invocation);
@@ -153,16 +157,19 @@ class RateLimitMethodInterceptorTest {
     }
 
     @Test
-    void ipAndUserMode_ipBlocked_throws() throws Throwable {
+    void ipAndUserMode_ipBlocked_userTokenNotConsumed() throws Throwable {
         UUID userId = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         setAuthenticatedUser(userId);
 
         when(invocation.getMethod()).thenReturn(method("ipAndUser"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
-        when(store.tryConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
+        when(store.peekConsume(contains(":IP:1.2.3.4"), anyInt(), anyInt())).thenReturn(BLOCKED);
 
         assertThatThrownBy(() -> interceptor.invoke(invocation))
             .isInstanceOf(RateLimitExceededException.class);
+
+        // IP bucket blocks → neither IP nor USER tokens consumed
+        verify(store, never()).tryConsume(anyString(), anyInt(), anyInt());
     }
 
     // ── Multiple @RateLimiting annotations ───────────────────────────────
@@ -172,7 +179,6 @@ class RateLimitMethodInterceptorTest {
         when(invocation.getMethod()).thenReturn(method("multipleRules"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
         // First rule: 9 remaining; second rule (USER, no principal): skipped
-        when(store.tryConsume(anyString(), anyInt(), anyInt())).thenReturn(ALLOWED);
         when(invocation.proceed()).thenReturn(null);
 
         interceptor.invoke(invocation);
@@ -186,7 +192,6 @@ class RateLimitMethodInterceptorTest {
     void keyContainsEndpointClassName() throws Throwable {
         when(invocation.getMethod()).thenReturn(method("ipOnly"));
         when(ipResolver.resolve(any())).thenReturn("1.2.3.4");
-        when(store.tryConsume(anyString(), anyInt(), anyInt())).thenReturn(ALLOWED);
         when(invocation.proceed()).thenReturn(null);
 
         interceptor.invoke(invocation);

@@ -30,7 +30,7 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, Re
 
     @Override
     public boolean tryMarkUsedAndRevoke(UUID tokenId) {
-        return jpa.markUsedAndRevokeIfNotRevokedById(tokenId) > 0;
+        return jpa.markUsedAndRevokeIfNotRevokedById(tokenId, Instant.now()) > 0;
     }
 
     @Override

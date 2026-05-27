@@ -56,7 +56,8 @@ public class SecurityConfig {
                 .accessDeniedHandler(forbiddenAccessDeniedHandler)
             )
             .headers(headers -> headers
-                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")))
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; frame-ancestors 'none'; form-action 'self'")))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .build();

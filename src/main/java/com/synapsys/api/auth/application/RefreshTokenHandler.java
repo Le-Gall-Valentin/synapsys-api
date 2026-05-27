@@ -50,7 +50,11 @@ public class RefreshTokenHandler implements RefreshTokenUseCase {
 
         if (token.isRevoked()) {
             log.warn("Revoked token reuse detected for user: {} — revoking all tokens", token.userId());
-            revocationPort.revokeAllForUser(token.userId());
+            try {
+                revocationPort.revokeAllForUser(token.userId());
+            } catch (Exception e) {
+                log.error("Failed to revoke all tokens for user: {}", token.userId(), e);
+            }
             throw new AuthException.TokenRevoked();
         }
 

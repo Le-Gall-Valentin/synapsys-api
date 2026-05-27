@@ -79,16 +79,4 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
-    @Test
-    void doFilter_unexpectedException_chainProceedsWithNoAuthentication() throws Exception {
-        when(cookieService.extractFromRequest(request, CookieService.ACCESS_COOKIE))
-            .thenReturn(Optional.of("any.token"));
-        when(jwtValidationService.validateAndExtract("any.token"))
-            .thenThrow(new RuntimeException("unexpected"));
-
-        filter.doFilterInternal(request, response, chain);
-
-        verify(chain).doFilter(request, response);
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-    }
 }

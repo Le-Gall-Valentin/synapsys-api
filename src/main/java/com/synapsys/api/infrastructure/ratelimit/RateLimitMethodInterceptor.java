@@ -42,24 +42,33 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
         String endpoint = invocation.getMethod().getDeclaringClass().getSimpleName()
             + "." + invocation.getMethod().getName();
 
-        RateLimitHeaders worst = null;
+        record KeyEntry(String key, int max, int windowSeconds) {}
+        List<KeyEntry> allKeys = new ArrayList<>();
 
+        // Phase 1: peek all buckets — if any limit is exceeded, reject without consuming any token
+        long nowSeconds = System.currentTimeMillis() / 1000;
         for (RateLimiting rule : rules) {
-            List<String> keys = resolveKeys(rule.mode(), endpoint, ip, userId);
-            for (String key : keys) {
-                RateLimitBucketStore.BucketResult result = store.tryConsume(key, rule.max(), rule.windowSeconds());
-                RateLimitHeaders headers = RateLimitHeaders.from(result, rule.max(), System.currentTimeMillis() / 1000);
-                worst = worst == null ? headers : worst.worstCase(headers);
-
-                if (!result.allowed()) {
+            for (String key : resolveKeys(rule.mode(), endpoint, ip, userId)) {
+                RateLimitBucketStore.BucketResult peek = store.peekConsume(key, rule.max(), rule.windowSeconds());
+                if (!peek.allowed()) {
                     log.warn("Rate limit exceeded — key={} limit={} window={}s", key, rule.max(), rule.windowSeconds());
+                    RateLimitHeaders headers = RateLimitHeaders.from(peek, rule.max(), nowSeconds);
                     HttpServletResponse blockedResponse = currentResponse();
-                    blockedResponse.setHeader("X-RateLimit-Limit",     String.valueOf(worst.limit()));
+                    blockedResponse.setHeader("X-RateLimit-Limit",     String.valueOf(headers.limit()));
                     blockedResponse.setHeader("X-RateLimit-Remaining", "0");
-                    blockedResponse.setHeader("X-RateLimit-Reset",     String.valueOf(worst.resetEpochSeconds()));
-                    throw new RateLimitExceededException(worst);
+                    blockedResponse.setHeader("X-RateLimit-Reset",     String.valueOf(headers.resetEpochSeconds()));
+                    throw new RateLimitExceededException(headers);
                 }
+                allKeys.add(new KeyEntry(key, rule.max(), rule.windowSeconds()));
             }
+        }
+
+        // Phase 2: consume from all buckets (all passed the peek check)
+        RateLimitHeaders worst = null;
+        for (KeyEntry entry : allKeys) {
+            RateLimitBucketStore.BucketResult result = store.tryConsume(entry.key(), entry.max(), entry.windowSeconds());
+            RateLimitHeaders headers = RateLimitHeaders.from(result, entry.max(), nowSeconds);
+            worst = worst == null ? headers : worst.worstCase(headers);
         }
 
         if (worst != null) {
