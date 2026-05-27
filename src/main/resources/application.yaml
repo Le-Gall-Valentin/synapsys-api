@@ -4,6 +4,10 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+  data:
+    redis:
+      url: ${SYNAPSYS_REDIS_URL}
+
   datasource:
     url: ${SYNAPSYS_DB_URL}
     username: ${SYNAPSYS_DB_USER}
