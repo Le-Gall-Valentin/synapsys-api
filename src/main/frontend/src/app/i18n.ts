@@ -23,5 +23,8 @@ void i18n
       import.meta.hot.dispose(() => { i18n.off('languageChanged', onLanguageChanged) })
     }
   })
+  .catch((err: unknown) => {
+    if (import.meta.env.DEV) console.error('[i18n] init failed', err)
+  })
 
 export default i18n

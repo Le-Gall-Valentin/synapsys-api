@@ -15,7 +15,7 @@ export function ProfilePage() {
 
   if (!user) return null
 
-  const initials = [...user.username].slice(0, 2).join('').toUpperCase() || '?'
+  const initials = [...user.username.trim()].slice(0, 2).join('').toUpperCase() || '?'
 
   async function handleLogout(): Promise<void> {
     setIsLoggingOut(true)
@@ -53,7 +53,7 @@ export function ProfilePage() {
         </div>
 
         {logoutError && (
-          <p className="mb-3 text-center text-sm text-red-500" role="alert">
+          <p className="mb-3 text-center text-sm text-status-red" role="alert">
             {logoutError}
           </p>
         )}

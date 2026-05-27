@@ -1,5 +1,5 @@
-import { render, screen, waitFor, cleanup } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setSessionExpiredCallback, hasSessionHint } from '@/shared/lib'
 import { AuthStoreProvider } from './AuthStoreProvider'
 
@@ -28,7 +28,7 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-afterEach(cleanup)
+// cleanup is already registered globally in test-setup.ts
 
 describe('AuthStoreProvider', () => {
   it('renders Spinner while isInitializing', () => {
@@ -96,6 +96,29 @@ describe('AuthStoreProvider', () => {
     })
 
     expect(api.getMe).not.toHaveBeenCalled()
+  })
+
+  it('does not call logout when session expired fires after unmount', async () => {
+    const api = createApiMock()
+    mockedHasSessionHint.mockReturnValue(false)
+
+    let capturedCallback: (() => void) | null = null
+    mockedSetSessionExpiredCallback.mockImplementation((cb) => { capturedCallback = cb })
+
+    const { unmount } = render(
+      <AuthStoreProvider api={api}>
+        <div>content</div>
+      </AuthStoreProvider>,
+    )
+
+    await waitFor(() => { expect(capturedCallback).not.toBeNull() })
+    const staleCallback = capturedCallback!
+
+    unmount()
+
+    staleCallback()
+
+    expect(api.logout).not.toHaveBeenCalled()
   })
 
   it('calls api.getMe when there is a session hint', async () => {

@@ -19,4 +19,9 @@ describe('Button', () => {
     const srSpan = container.querySelector('.sr-only')
     expect(srSpan?.textContent).toBe('Submit')
   })
+
+  it('is disabled when isLoading is true', () => {
+    const { container } = render(<Button isLoading>Submit</Button>)
+    expect((container.querySelector('button') as HTMLButtonElement).disabled).toBe(true)
+  })
 })

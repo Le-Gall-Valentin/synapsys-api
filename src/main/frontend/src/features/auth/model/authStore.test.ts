@@ -137,10 +137,10 @@ describe('authStore', () => {
       const store = createAuthStore(api)
 
       // First call — will be aborted before getMe resolves
-      void store.getState().initialize(controller1.signal)
+      const initPromise1 = store.getState().initialize(controller1.signal)
       controller1.abort()
       resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
-      await Promise.resolve() // flush microtasks
+      await initPromise1 // wait for the aborted call to fully settle
 
       // Second call — must proceed and complete normally
       await store.getState().initialize(new AbortController().signal)

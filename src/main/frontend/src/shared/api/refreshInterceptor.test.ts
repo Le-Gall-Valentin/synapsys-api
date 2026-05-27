@@ -27,6 +27,15 @@ describe('refreshInterceptor', () => {
     mockOnSessionExpired = vi.fn()
   })
 
+  it('rejects immediately when error.config is undefined', async () => {
+    const instance = axios.create()
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
+    const error = new AxiosError('Network Error', 'ERR_NETWORK', undefined, null, undefined)
+
+    await expect(onRejected(error)).rejects.toBe(error)
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
+  })
+
   it('lets non-401 errors pass through untouched', async () => {
     const instance = axios.create()
     const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)

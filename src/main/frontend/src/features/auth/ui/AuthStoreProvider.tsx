@@ -21,13 +21,15 @@ export function AuthStoreProvider({ api, children }: Props) {
   const { t } = useTranslation('common')
 
   useEffect(() => {
+    let mounted = true
     const abortController = new AbortController()
     setSessionExpiredCallback(() => {
       const s = store.getState()
-      if (!s.isInitializing) void s.logout()
+      if (mounted && !s.isInitializing) void s.logout()
     })
     void store.getState().initialize(abortController.signal)
     return () => {
+      mounted = false
       abortController.abort()
       setSessionExpiredCallback(null)
     }
