@@ -72,4 +72,19 @@ describe('ProfilePage', () => {
     })
   })
 
+  it('calls logout once and shows no alert on successful logout', async () => {
+    const logout = vi.fn().mockResolvedValue(undefined)
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
+    )
+    const { getByRole, queryByRole } = render(<ProfilePage />)
+
+    fireEvent.click(getByRole('button'))
+
+    await waitFor(() => {
+      expect(logout).toHaveBeenCalledOnce()
+      expect(queryByRole('alert')).toBeNull()
+    })
+  })
+
 })

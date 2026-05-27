@@ -13,7 +13,7 @@ function ErrorFallback({ canRetry, onReset }: { canRetry: boolean; onReset: () =
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
-      <p className="text-sm text-fg-2">{t('error.unexpected')}</p>
+      <p role="alert" className="text-sm text-fg-2">{t('error.unexpected')}</p>
       {canRetry ? (
         <button
           ref={btnRef}

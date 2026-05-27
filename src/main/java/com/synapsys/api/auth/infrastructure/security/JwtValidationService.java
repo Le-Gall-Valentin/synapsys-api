@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.infrastructure.security;
 
 import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -13,9 +14,13 @@ import java.util.UUID;
 public class JwtValidationService {
 
     private final SecretKey key;
+    private final String issuer;
+    private final String audience;
 
-    public JwtValidationService(SecretKey jwtSecretKey) {
+    public JwtValidationService(SecretKey jwtSecretKey, SynapsysProperties properties) {
         this.key = jwtSecretKey;
+        this.issuer = properties.jwt().issuer();
+        this.audience = properties.jwt().audience();
     }
 
     public UserClaims validateAndExtract(String token) {
@@ -26,10 +31,10 @@ public class JwtValidationService {
                 .parseSignedClaims(token)
                 .getPayload();
 
-            if (!JwtService.ISSUER.equals(claims.getIssuer())) {
+            if (!issuer.equals(claims.getIssuer())) {
                 throw new JwtException("Invalid issuer");
             }
-            if (claims.getAudience() == null || !claims.getAudience().contains(JwtService.AUDIENCE)) {
+            if (claims.getAudience() == null || !claims.getAudience().contains(audience)) {
                 throw new JwtException("Invalid audience");
             }
             UUID userId = UUID.fromString(claims.getSubject());

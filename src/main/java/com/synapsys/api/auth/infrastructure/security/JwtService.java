@@ -15,21 +15,22 @@ public class JwtService implements AccessTokenPort {
 
     private final SecretKey key;
     private final int expiryMinutes;
+    private final String issuer;
+    private final String audience;
 
     public JwtService(SecretKey jwtSecretKey, SynapsysProperties properties) {
         this.key = jwtSecretKey;
         this.expiryMinutes = properties.jwt().expiryMinutes();
+        this.issuer = properties.jwt().issuer();
+        this.audience = properties.jwt().audience();
     }
-
-    static final String ISSUER = "synapsys-api";
-    static final String AUDIENCE = "synapsys-api";
 
     @Override
     public String generate(User user) {
         Instant now = Instant.now();
         return Jwts.builder()
-            .issuer(ISSUER)
-            .audience().add(AUDIENCE).and()
+            .issuer(issuer)
+            .audience().add(audience).and()
             .subject(user.id().toString())
             .claim("role", user.role().name())
             .issuedAt(Date.from(now))

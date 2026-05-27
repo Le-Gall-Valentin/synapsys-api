@@ -30,6 +30,7 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
     @Query("UPDATE RefreshTokenEntity t SET t.revoked = true WHERE t.userId = :userId")
     void revokeAllByUserId(UUID userId);
 
+    // Removes: (1) all expired tokens; (2) revoked tokens last used before cutoff; (3) revoked tokens never used but created before cutoff
     @Modifying
     @Transactional
     @Query("DELETE FROM RefreshTokenEntity t WHERE t.expiresAt < :now OR (t.revoked = true AND (t.lastUsedAt < :cutoff OR (t.lastUsedAt IS NULL AND t.createdAt < :cutoff)))")

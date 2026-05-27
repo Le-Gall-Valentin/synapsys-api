@@ -28,7 +28,7 @@ class JwtServiceTest {
     void setUp() {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
-            new SynapsysProperties.JwtProperties(SECRET, 15),
+            new SynapsysProperties.JwtProperties(SECRET, 15, "synapsys-api", "synapsys-api"),
             new SynapsysProperties.RefreshTokenProperties(30),
             new SynapsysProperties.CookieProperties(false),
             null,
@@ -36,7 +36,7 @@ class JwtServiceTest {
             new SynapsysProperties.RateLimitProperties(java.util.List.of())
         );
         jwtService = new JwtService(key, properties);
-        validationService = new JwtValidationService(key);
+        validationService = new JwtValidationService(key, properties);
     }
 
     @Test
@@ -101,7 +101,7 @@ class JwtServiceTest {
     void validateAndExtract_throwsOnExpiredToken() {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
-            new SynapsysProperties.JwtProperties(SECRET, -1),
+            new SynapsysProperties.JwtProperties(SECRET, -1, "synapsys-api", "synapsys-api"),
             new SynapsysProperties.RefreshTokenProperties(30),
             new SynapsysProperties.CookieProperties(false),
             null,
@@ -109,7 +109,7 @@ class JwtServiceTest {
             new SynapsysProperties.RateLimitProperties(java.util.List.of())
         );
         JwtService expiredJwtService = new JwtService(key, properties);
-        JwtValidationService expiredValidationService = new JwtValidationService(key);
+        JwtValidationService expiredValidationService = new JwtValidationService(key, properties);
         User user = new User(UUID.randomUUID(), "alice", "alice@test.com",
             "hash", Role.USER, true, Instant.now());
 
@@ -122,7 +122,15 @@ class JwtServiceTest {
 
     @Test
     void jwtValidationService_validateAndExtract_returnsCorrectClaims() {
-        JwtValidationService vs = new JwtValidationService(JwtKeyFactory.from(SECRET));
+        var props = new SynapsysProperties(
+            new SynapsysProperties.JwtProperties(SECRET, 15, "synapsys-api", "synapsys-api"),
+            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.CookieProperties(false),
+            null,
+            new SynapsysProperties.CorsProperties(java.util.List.of()),
+            new SynapsysProperties.RateLimitProperties(java.util.List.of())
+        );
+        JwtValidationService vs = new JwtValidationService(JwtKeyFactory.from(SECRET), props);
 
         UUID userId = UUID.randomUUID();
         User user = new User(userId, "alice", "alice@test.com", "hash", Role.ADMIN, true, Instant.now());

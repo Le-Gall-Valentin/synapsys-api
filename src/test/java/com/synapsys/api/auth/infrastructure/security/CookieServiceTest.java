@@ -19,7 +19,7 @@ class CookieServiceTest {
     @BeforeEach
     void setUp() {
         var properties = new SynapsysProperties(
-            new SynapsysProperties.JwtProperties("secret", 15),
+            new SynapsysProperties.JwtProperties("secret", 15, "synapsys-api", "synapsys-api"),
             new SynapsysProperties.RefreshTokenProperties(30),
             new SynapsysProperties.CookieProperties(false),
             null,

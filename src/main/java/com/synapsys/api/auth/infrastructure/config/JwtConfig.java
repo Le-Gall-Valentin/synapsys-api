@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import javax.crypto.SecretKey;
 
 @Configuration
-class JwtConfig {
+public class JwtConfig {
 
     @Bean
-    SecretKey jwtSecretKey(SynapsysProperties properties) {
+    public SecretKey jwtSecretKey(SynapsysProperties properties) {
         return JwtKeyFactory.from(properties.jwt().secret());
     }
 }

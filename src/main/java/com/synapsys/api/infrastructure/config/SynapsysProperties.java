@@ -21,7 +21,9 @@ public record SynapsysProperties(
 
     public record JwtProperties(
         @NotBlank String secret,
-        @DefaultValue("15") int expiryMinutes
+        @DefaultValue("15") int expiryMinutes,
+        @DefaultValue("synapsys-api") String issuer,
+        @DefaultValue("synapsys-api") String audience
     ) {}
 
     public record RefreshTokenProperties(
