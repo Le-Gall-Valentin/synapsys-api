@@ -1,18 +1,30 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-function ErrorFallback({ onReset }: { onReset: () => void }) {
+const MAX_RETRIES = 2
+
+function ErrorFallback({ canRetry, onReset }: { canRetry: boolean; onReset: () => void }) {
   const { t } = useTranslation('common')
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
       <p className="text-sm text-fg-2">{t('error.unexpected')}</p>
-      <button
-        type="button"
-        className="mt-4 text-xs text-accent underline"
-        onClick={onReset}
-      >
-        {t('error.retry')}
-      </button>
+      {canRetry ? (
+        <button
+          type="button"
+          className="mt-4 text-xs text-accent underline"
+          onClick={onReset}
+        >
+          {t('error.retry')}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="mt-4 text-xs text-accent underline"
+          onClick={() => window.location.reload()}
+        >
+          {t('error.reload')}
+        </button>
+      )}
     </main>
   )
 }
@@ -23,12 +35,13 @@ interface Props {
 
 interface State {
   hasError: boolean
+  retryCount: number
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false }
+  state: State = { hasError: false, retryCount: 0 }
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): Partial<State> {
     return { hasError: true }
   }
 
@@ -40,7 +53,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <ErrorFallback onReset={() => this.setState({ hasError: false })} />
+      return (
+        <ErrorFallback
+          canRetry={this.state.retryCount < MAX_RETRIES}
+          onReset={() => this.setState(s => ({ hasError: false, retryCount: s.retryCount + 1 }))}
+        />
+      )
     }
     return this.props.children
   }

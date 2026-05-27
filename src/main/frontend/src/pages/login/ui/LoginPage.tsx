@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { LoginForm } from '@/features/auth'
 import { LoginBrandPanel } from './LoginBrandPanel'
 
+const TITLE_ID = 'login-title'
+
 export function LoginPage() {
   const { t } = useTranslation('login')
 
@@ -14,13 +16,13 @@ export function LoginPage() {
       <main className="relative flex flex-col justify-center bg-bg-0 px-8 py-12 sm:px-11">
         <div className="mx-auto w-full max-w-[380px]">
           <div className="mb-8">
-            <h1 className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+            <h1 id={TITLE_ID} className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
               {t('form.title')}
             </h1>
             <p className="text-sm text-fg-2">{t('form.subtitle')}</p>
           </div>
 
-          <LoginForm />
+          <LoginForm labelId={TITLE_ID} />
 
           <p className="mt-7 text-center text-[13px] leading-relaxed text-fg-2">
             <span className="font-medium text-fg-1">{t('help.no_account')}</span>{' '}

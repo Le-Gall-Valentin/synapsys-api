@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
 import { useAuth } from '@/features/auth'
@@ -55,6 +55,21 @@ describe('ProfilePage', () => {
     const { container } = render(<ProfilePage />)
     const avatar = container.querySelector('[role="img"]')
     expect(avatar?.textContent).toBe('?')
+  })
+
+  it('renders logout error alert when logout fails', async () => {
+    const failingLogout = vi.fn().mockRejectedValue(new Error('Server error'))
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout: failingLogout })
+    )
+    const { getByRole } = render(<ProfilePage />)
+
+    fireEvent.click(getByRole('button'))
+
+    await waitFor(() => {
+      expect(getByRole('alert')).not.toBeNull()
+      expect(getByRole('alert').textContent).toBe('error.logout_failed')
+    })
   })
 
 })

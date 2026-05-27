@@ -16,7 +16,8 @@ export const authApi: IAuthApi = {
         if (status === 401) throw new CredentialsError()
         if (status === 429) {
           const retryAfter = error.response?.headers?.['retry-after']
-          const seconds = retryAfter ? (parseInt(retryAfter, 10) || null) : null
+          const parsed = retryAfter ? parseInt(retryAfter, 10) : NaN
+          const seconds = Number.isFinite(parsed) ? parsed : null
           throw new RateLimitError(seconds)
         }
         if (status !== undefined) throw new ServerError()

@@ -2,6 +2,7 @@
   "loading": "Chargement...",
   "error": {
     "unexpected": "Une erreur inattendue est survenue.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "reload": "Recharger la page"
   }
 }

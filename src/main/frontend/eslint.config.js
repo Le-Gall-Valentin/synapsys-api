@@ -42,6 +42,8 @@ export default tseslint.config(
       'boundaries/ignore': ['src/main.tsx', 'src/vite-env.d.ts'],
     },
     rules: {
+      'import/no-cycle': 'error',
+      'import/no-duplicates': 'error',
       'boundaries/element-types': ['error', {
         default: 'disallow',
         rules: [

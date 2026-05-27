@@ -5,6 +5,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../model/useAuth'
 import { Button, Input } from '@/shared/ui'
 
+interface LoginFormProps {
+  labelId?: string
+}
+
 type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null
 
 const SUBMIT_BUTTON_BG = 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)'
@@ -18,7 +22,7 @@ const ERROR_I18N_KEYS = {
   server: 'error.server',
 } as const satisfies Record<NonNullable<ErrorKind>, string>
 
-export function LoginForm() {
+export function LoginForm({ labelId }: LoginFormProps) {
   const login = useAuth((s) => s.login)
   const { t } = useTranslation('auth')
   const [username, setUsername] = useState('')
@@ -63,7 +67,7 @@ export function LoginForm() {
       : t(ERROR_I18N_KEYS[errorKind])
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} aria-labelledby={labelId} className="flex flex-col gap-4">
       {errorMessage && (
         <div
           role="alert"
