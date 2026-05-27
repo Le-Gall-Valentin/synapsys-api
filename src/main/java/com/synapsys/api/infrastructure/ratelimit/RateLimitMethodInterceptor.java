@@ -64,10 +64,20 @@ class RateLimitMethodInterceptor implements MethodInterceptor {
         }
 
         // Phase 2: consume from all buckets (all passed the peek check)
+        // A race between peek and consume can still yield allowed=false — guard against it.
         RateLimitHeaders worst = null;
         for (KeyEntry entry : allKeys) {
             RateLimitBucketStore.BucketResult result = store.tryConsume(entry.key(), entry.max(), entry.windowSeconds());
             RateLimitHeaders headers = RateLimitHeaders.from(result, entry.max(), nowSeconds);
+            if (!result.allowed()) {
+                log.warn("Rate limit exceeded (concurrent race) — key={} limit={} window={}s",
+                    entry.key(), entry.max(), entry.windowSeconds());
+                HttpServletResponse blockedResponse = currentResponse();
+                blockedResponse.setHeader("X-RateLimit-Limit",     String.valueOf(headers.limit()));
+                blockedResponse.setHeader("X-RateLimit-Remaining", "0");
+                blockedResponse.setHeader("X-RateLimit-Reset",     String.valueOf(headers.resetEpochSeconds()));
+                throw new RateLimitExceededException(headers);
+            }
             worst = worst == null ? headers : worst.worstCase(headers);
         }
 

@@ -10,7 +10,6 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }
 const mockUseAuth = vi.mocked(useAuth)
 
 beforeEach(() => vi.clearAllMocks())
-afterEach(cleanup)
 
 function setup(mockLogin: ReturnType<typeof vi.fn>) {
   const baseState = {

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { useAuthGuard } from './useAuthGuard'
 import { DefaultRedirect } from './DefaultRedirect'
 
@@ -39,5 +39,33 @@ describe('DefaultRedirect', () => {
       </MemoryRouter>
     )
     expect(container.querySelector('[role="status"]')).toBeNull()
+  })
+
+  it('navigates to /login when not authenticated', () => {
+    mockUseAuthGuard.mockReturnValue({ isInitializing: false, isAuthenticated: false, t: (k: string) => k })
+    const { getByText } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<DefaultRedirect />} />
+          <Route path="/login" element={<div>on-login</div>} />
+          <Route path="/profile" element={<div>on-profile</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+    expect(getByText('on-login')).toBeDefined()
+  })
+
+  it('navigates to /profile when authenticated', () => {
+    mockUseAuthGuard.mockReturnValue({ isInitializing: false, isAuthenticated: true, t: (k: string) => k })
+    const { getByText } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<DefaultRedirect />} />
+          <Route path="/login" element={<div>on-login</div>} />
+          <Route path="/profile" element={<div>on-profile</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+    expect(getByText('on-profile')).toBeDefined()
   })
 })

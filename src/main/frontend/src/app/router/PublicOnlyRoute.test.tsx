@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { useAuthGuard } from './useAuthGuard'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
 
@@ -40,5 +40,18 @@ describe('PublicOnlyRoute', () => {
     )
     expect(container.textContent).not.toContain('public')
     expect(container.querySelector('[role="status"]')).not.toBeNull()
+  })
+
+  it('navigates to /profile when authenticated', () => {
+    mockUseAuthGuard.mockReturnValue({ isInitializing: false, isAuthenticated: true, t: (k: string) => k })
+    const { getByText } = render(
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<PublicOnlyRoute><div>public</div></PublicOnlyRoute>} />
+          <Route path="/profile" element={<div>on-profile</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+    expect(getByText('on-profile')).toBeDefined()
   })
 })

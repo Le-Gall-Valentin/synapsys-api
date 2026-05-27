@@ -22,7 +22,7 @@ export function NetworkArtwork() {
       className="h-auto w-full network-artwork"
       aria-hidden="true"
     >
-      <style>{`@media (prefers-reduced-motion: reduce) { .network-artwork * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }`}</style>
+      <style>{`@media (prefers-reduced-motion: reduce) { .network-artwork * { animation: none !important; transition: none !important; } }`}</style>
       <g stroke="rgba(94,234,212,0.25)" strokeWidth="1" fill="none">
         {nodes.map((n) => (
           <line key={n.delay} x1="160" y1="120" x2={n.cx} y2={n.cy} />

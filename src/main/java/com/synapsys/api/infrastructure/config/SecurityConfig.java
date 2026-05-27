@@ -57,7 +57,7 @@ public class SecurityConfig {
             )
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(
-                    "default-src 'self'; frame-ancestors 'none'; form-action 'self'")))
+                    "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .build();

@@ -26,9 +26,13 @@ public class RefreshTokenPurgeScheduler {
 
     @Scheduled(cron = "${synapsys.refresh-token.purge-cron:0 0 3 * * *}")
     public void purgeExpiredTokens() {
-        Instant now = Instant.now();
-        Instant cutoff = now.minus(refreshTokenExpiryDays, ChronoUnit.DAYS);
-        int deleted = refreshTokenMaintenance.deleteExpiredAndRevoked(now, cutoff);
-        log.info("Purged {} expired/revoked refresh tokens", deleted);
+        try {
+            Instant now = Instant.now();
+            Instant cutoff = now.minus(refreshTokenExpiryDays, ChronoUnit.DAYS);
+            int deleted = refreshTokenMaintenance.deleteExpiredAndRevoked(now, cutoff);
+            log.info("Purged {} expired/revoked refresh tokens", deleted);
+        } catch (Exception e) {
+            log.error("Refresh token purge failed — will retry at next scheduled run", e);
+        }
     }
 }
