@@ -29,7 +29,7 @@ class JwtServiceTest {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, 15, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
@@ -98,11 +98,45 @@ class JwtServiceTest {
     }
 
     @Test
+    void validateAndExtract_throwsOnMissingSubjectClaim() {
+        SecretKey key = JwtKeyFactory.from(SECRET);
+        String tokenWithoutSubject = Jwts.builder()
+            .issuer("synapsys-api")
+            .audience().add("synapsys-api").and()
+            .claim("role", Role.USER.name())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 60_000))
+            .signWith(key)
+            .compact();
+
+        assertThatThrownBy(() -> validationService.validateAndExtract(tokenWithoutSubject))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid JWT token");
+    }
+
+    @Test
+    void validateAndExtract_throwsOnMissingRoleClaim() {
+        SecretKey key = JwtKeyFactory.from(SECRET);
+        String tokenWithoutRole = Jwts.builder()
+            .issuer("synapsys-api")
+            .audience().add("synapsys-api").and()
+            .subject(UUID.randomUUID().toString())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 60_000))
+            .signWith(key)
+            .compact();
+
+        assertThatThrownBy(() -> validationService.validateAndExtract(tokenWithoutRole))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid JWT token");
+    }
+
+    @Test
     void validateAndExtract_throwsOnExpiredToken() {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, -1, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
@@ -124,7 +158,7 @@ class JwtServiceTest {
     void jwtValidationService_validateAndExtract_returnsCorrectClaims() {
         var props = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, 15, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),

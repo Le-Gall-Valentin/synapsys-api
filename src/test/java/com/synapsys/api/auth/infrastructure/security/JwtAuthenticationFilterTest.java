@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,6 +78,17 @@ class JwtAuthenticationFilterTest {
 
         verify(chain).doFilter(request, response);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void doFilter_unexpectedRuntimeException_propagates() throws Exception {
+        when(cookieService.extractFromRequest(request, CookieService.ACCESS_COOKIE))
+            .thenReturn(Optional.of("any.token"));
+        when(jwtValidationService.validateAndExtract("any.token"))
+            .thenThrow(new NullPointerException("null claim"));
+
+        assertThatThrownBy(() -> filter.doFilterInternal(request, response, chain))
+            .isInstanceOf(NullPointerException.class);
     }
 
 }

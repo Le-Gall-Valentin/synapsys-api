@@ -7,7 +7,7 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
-import com.synapsys.api.infrastructure.ratelimit.CaffeineRateLimitBucketStore;
+import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -39,10 +40,15 @@ class AuthControllerIT {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
+    @Container
+    @ServiceConnection
+    @SuppressWarnings("resource")
+    static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
-    @Autowired CaffeineRateLimitBucketStore rateLimitBucketStore;
+    @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();

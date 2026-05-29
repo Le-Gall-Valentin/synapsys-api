@@ -1,8 +1,8 @@
 import { CredentialsError, RateLimitError, ServerError } from '../model/errors'
-import React, { useRef, useState } from 'react'
+import React, { useId, useRef, useState } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../model/useAuth'
+import { useAuth } from '../model/authStoreContext'
 import { Button, Input } from '@/shared/ui'
 
 interface LoginFormProps {
@@ -25,6 +25,7 @@ const ERROR_I18N_KEYS = {
 export function LoginForm({ labelId }: LoginFormProps) {
   const login = useAuth((s) => s.login)
   const { t } = useTranslation('auth')
+  const errorAlertId = useId()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -70,6 +71,7 @@ export function LoginForm({ labelId }: LoginFormProps) {
     <form onSubmit={handleSubmit} aria-labelledby={labelId} className="flex flex-col gap-4">
       {errorMessage && (
         <div
+          id={errorAlertId}
           role="alert"
           className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red"
         >
@@ -88,6 +90,8 @@ export function LoginForm({ labelId }: LoginFormProps) {
         required
         autoComplete="username"
         autoFocus
+        aria-invalid={errorKind !== null}
+        aria-describedby={errorKind !== null ? errorAlertId : undefined}
       />
 
       <Input
@@ -99,6 +103,11 @@ export function LoginForm({ labelId }: LoginFormProps) {
         placeholder={t('field.password_placeholder')}
         required
         autoComplete="current-password"
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
+        aria-invalid={errorKind !== null}
+        aria-describedby={errorKind !== null ? errorAlertId : undefined}
         suffix={
           <button
             type="button"

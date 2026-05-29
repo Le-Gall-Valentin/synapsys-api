@@ -230,5 +230,7 @@ describe('refreshInterceptor', () => {
     // Second 401 — sessionExpiredTriggered must have been reset — must trigger again
     await expect(onRejected(make401('/api/data2'))).rejects.toBeDefined()
     expect(mockOnSessionExpired).toHaveBeenCalledTimes(2)
+    // Each 401 triggers exactly one refresh attempt
+    expect(refreshCallCount).toBe(2)
   })
 })

@@ -1,6 +1,7 @@
-package com.synapsys.api.infrastructure.config;
+package com.synapsys.api.auth.infrastructure.config;
 
 import com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort;
+import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,5 +16,10 @@ public class RefreshTokenConfigAdapter implements RefreshTokenConfigPort {
     @Override
     public int refreshTokenExpiryDays() {
         return properties.refreshToken().expiryDays();
+    }
+
+    @Override
+    public String refreshTokenPurgeCron() {
+        return properties.refreshToken().purgeCron();
     }
 }
