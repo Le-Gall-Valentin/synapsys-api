@@ -4,7 +4,7 @@ import axios, { type AxiosError } from 'axios'
 import { totpApi } from './totpApi'
 import { client } from '@/shared/api'
 import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError } from '../model/errors'
-import { NetworkError, RateLimitError, ServerError } from '@/features/auth'
+import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 
 vi.mock('@/shared/api', () => ({
   client: {

@@ -1,5 +1,5 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { TotpVerifyStep } from './TotpVerifyStep'
 import type { ITotpApi } from '../api/ITotpApi'
 import { TotpCodeError, TotpChallengeExpiredError } from '../model/errors'

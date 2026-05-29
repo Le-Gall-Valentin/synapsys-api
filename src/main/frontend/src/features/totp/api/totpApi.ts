@@ -4,7 +4,7 @@ import type { User } from '@/entities/user'
 import type { ITotpApi } from './ITotpApi'
 import type { TotpSetupData } from '../model/types'
 import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError } from '../model/errors'
-import { NetworkError, ServerError, RateLimitError } from '@/features/auth'
+import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
 
 export const totpApi: ITotpApi = {
   async verify(code: string): Promise<User> {
