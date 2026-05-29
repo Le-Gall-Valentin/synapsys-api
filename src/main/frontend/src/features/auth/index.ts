@@ -1,4 +1,4 @@
-export { useAuth } from './model/useAuth'
+export { useAuth } from './model/authStoreContext'
 export type { IAuthApi } from './model/IAuthApi'
 export { LoginForm } from './ui/LoginForm'
 export { AuthStoreProvider } from './ui/AuthStoreProvider'
