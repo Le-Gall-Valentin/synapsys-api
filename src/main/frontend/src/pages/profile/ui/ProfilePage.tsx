@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { useAuth } from '@/features/auth'
 import { Button } from '@/shared/ui'
+
+const AVATAR_GRADIENT = 'linear-gradient(135deg, #5eead4, #818cf8)'
 
 export function ProfilePage() {
   const { user, logout } = useAuth(
@@ -12,12 +14,15 @@ export function ProfilePage() {
   const { t } = useTranslation('profile')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
+  const isLoggingOutRef = useRef(false)
 
   if (!user) return null
 
   const initials = [...user.username.trim()].slice(0, 2).join('').toUpperCase() || '?'
 
   async function handleLogout(): Promise<void> {
+    if (isLoggingOutRef.current) return
+    isLoggingOutRef.current = true
     setIsLoggingOut(true)
     setLogoutError(null)
     try {
@@ -25,6 +30,7 @@ export function ProfilePage() {
     } catch {
       setLogoutError(t('error.logout_failed'))
     } finally {
+      isLoggingOutRef.current = false
       setIsLoggingOut(false)
     }
   }
@@ -38,7 +44,7 @@ export function ProfilePage() {
             role="img"
             aria-label={t('avatar', { username: user.username })}
             className="grid size-16 place-items-center rounded-full text-xl font-bold text-bg-0"
-            style={{ background: 'linear-gradient(135deg, #5eead4, #818cf8)' }}
+            style={{ background: AVATAR_GRADIENT }}
           >
             {initials}
           </div>

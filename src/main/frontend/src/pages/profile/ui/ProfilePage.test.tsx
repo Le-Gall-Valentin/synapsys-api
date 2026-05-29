@@ -87,4 +87,21 @@ describe('ProfilePage', () => {
     })
   })
 
+  it('prevents double-submit — logout called only once on concurrent clicks', async () => {
+    let resolveLogout!: () => void
+    const pendingLogout = new Promise<void>((resolve) => { resolveLogout = resolve })
+    const logout = vi.fn().mockReturnValue(pendingLogout)
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
+    )
+    const { getByRole } = render(<ProfilePage />)
+    const btn = getByRole('button')
+
+    fireEvent.click(btn)
+    fireEvent.click(btn)
+
+    resolveLogout()
+    await waitFor(() => expect(logout).toHaveBeenCalledTimes(1))
+  })
+
 })
