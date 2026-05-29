@@ -4,12 +4,14 @@ import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.VerifyTotpChallengeUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-// Note: @Transactional omitted intentionally — there are no JPA mutations here.
-// Redis and JPA operations are not atomically coordinated; challenge invalidation
-// and code marking happen in Redis only, while token generation is stateless.
+// @Transactional is required here because RefreshTokenGenerator (RefreshTokenIssuerPort)
+// uses Propagation.MANDATORY and must run inside an existing transaction.
+// Redis operations (challenge store) are not part of this transaction and not rolled back
+// on JPA failure — this is an accepted trade-off documented in the architecture decisions.
 @ApplicationService
 public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
 
@@ -35,6 +37,7 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
     }
 
     @Override
+    @Transactional
     public LoginResult.Success verify(VerifyTotpChallengeCommand command) {
         UUID userId = challengeStore.resolveChallenge(command.challengeId())
             .orElseThrow(AuthException.TotpChallengeExpired::new);
