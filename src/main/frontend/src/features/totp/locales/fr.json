@@ -1,0 +1,35 @@
+{
+  "verify": {
+    "title": "Vérification en deux étapes",
+    "subtitle": "Bonjour {{username}}. Saisissez le code à 6 chiffres généré par votre application d'authentification.",
+    "submit": "Vérifier",
+    "back": "← Utiliser un autre compte",
+    "help": "Vous avez perdu votre appareil ? Demandez à un administrateur de réinitialiser votre double authentification.",
+    "error": {
+      "invalid_code": "Code invalide ou expiré.",
+      "challenge_expired": "Session expirée. Veuillez vous reconnecter.",
+      "incomplete": "Saisissez les 6 chiffres."
+    }
+  },
+  "enroll": {
+    "title": "Sécurisez votre compte",
+    "subtitle": "Bonjour {{username}}. Pour protéger votre accès, nous vous recommandons d'activer la double authentification.",
+    "why_title": "Pourquoi l'activer ?",
+    "why_text": "En plus de votre mot de passe, vous saisirez un code à 6 chiffres généré par votre téléphone à chaque connexion. Même si votre mot de passe fuite, votre compte reste protégé.",
+    "activate": "Activer la double authentification",
+    "skip": "Plus tard, continuer sans"
+  },
+  "setup": {
+    "title": "Configurer la 2FA",
+    "subtitle": "Scannez ce QR code avec Google Authenticator, 1Password, ou toute autre application TOTP.",
+    "manual_label": "Ou saisissez ce secret manuellement",
+    "submit": "Vérifier et activer",
+    "dismiss_login": "Ignorer pour cette fois",
+    "dismiss_profile": "Annuler",
+    "loading": "Chargement...",
+    "error": {
+      "invalid_code": "Saisissez le code à 6 chiffres affiché par votre application.",
+      "setup_failed": "Impossible de générer le QR code. Réessayez."
+    }
+  }
+}

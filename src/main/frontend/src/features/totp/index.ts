@@ -1,0 +1,4 @@
+export type { ITotpApi } from './api/ITotpApi'
+export type { TotpSetupData } from './model/types'
+export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError } from './model/errors'
+export { totpTranslations } from './locales'
