@@ -106,4 +106,29 @@ class RedisTotpChallengeStoreTest {
 
         assertThat(store.markCodeUsedIfAbsent(userId, "111111")).isFalse();
     }
+
+    @Test
+    void incrementFailedAttempts_firstAttempt_returns1_andSetsTtl() {
+        String challengeId = UUID.randomUUID().toString();
+        when(valueOps.increment("totp:attempts:" + challengeId)).thenReturn(1L);
+
+        int count = store.incrementFailedAttempts(challengeId);
+
+        assertThat(count).isEqualTo(1);
+        verify(redisTemplate).expire(
+            eq("totp:attempts:" + challengeId),
+            eq(Duration.ofMinutes(15))
+        );
+    }
+
+    @Test
+    void incrementFailedAttempts_subsequentAttempts_doNotResetTtl() {
+        String challengeId = UUID.randomUUID().toString();
+        when(valueOps.increment("totp:attempts:" + challengeId)).thenReturn(3L);
+
+        int count = store.incrementFailedAttempts(challengeId);
+
+        assertThat(count).isEqualTo(3);
+        verify(redisTemplate, never()).expire(any(), any(Duration.class));
+    }
 }

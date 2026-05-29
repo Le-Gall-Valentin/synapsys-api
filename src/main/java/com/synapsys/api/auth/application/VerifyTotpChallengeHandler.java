@@ -15,6 +15,8 @@ import java.util.UUID;
 @ApplicationService
 public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
 
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+
     private final TotpChallengeStorePort challengeStore;
     private final TotpCodeValidatorPort codeValidator;
     private final UserRepository userRepository;
@@ -52,6 +54,11 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
         // Validate cryptographically first — wrong code must NOT consume the anti-replay slot,
         // so the user can retry with the next TOTP window's code.
         if (!codeValidator.isValid(user.totpSecret(), command.code())) {
+            int attempts = challengeStore.incrementFailedAttempts(command.challengeId());
+            if (attempts >= MAX_FAILED_ATTEMPTS) {
+                challengeStore.invalidateChallenge(command.challengeId());
+                throw new AuthException.TotpChallengeExpired();
+            }
             throw new AuthException.TotpCodeInvalid();
         }
 

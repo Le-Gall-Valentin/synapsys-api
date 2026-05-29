@@ -118,4 +118,43 @@ class VerifyTotpChallengeHandlerTest {
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
             .isInstanceOf(AuthException.UserNotActive.class);
     }
+
+    @Test
+    void verify_invalidCode_incrementsAttempts() {
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(1);
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verify(challengeStore).incrementFailedAttempts("challenge-id");
+    }
+
+    @Test
+    void verify_invalidCode_atMaxAttempts_throwsTotpChallengeExpiredAndInvalidates() {
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(5);
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
+            .isInstanceOf(AuthException.TotpChallengeExpired.class);
+
+        verify(challengeStore).invalidateChallenge("challenge-id");
+    }
+
+    @Test
+    void verify_invalidCode_belowMaxAttempts_doesNotInvalidateChallenge() {
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(4);
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verify(challengeStore, never()).invalidateChallenge(any());
+    }
 }

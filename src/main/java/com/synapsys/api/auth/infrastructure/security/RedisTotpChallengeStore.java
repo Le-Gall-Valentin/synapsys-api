@@ -49,4 +49,15 @@ public class RedisTotpChallengeStore implements TotpChallengeStorePort {
             .setIfAbsent(USED_CODE_PREFIX + userId + ":" + code, "1", ANTI_REPLAY_TTL);
         return Boolean.TRUE.equals(set);
     }
+
+    @Override
+    public int incrementFailedAttempts(String challengeId) {
+        String key = "totp:attempts:" + challengeId;
+        Long count = redisTemplate.opsForValue().increment(key);
+        long attempts = count != null ? count : 1L;
+        if (attempts == 1) {
+            redisTemplate.expire(key, CHALLENGE_TTL);
+        }
+        return (int) attempts;
+    }
 }

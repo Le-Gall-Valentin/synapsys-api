@@ -14,4 +14,11 @@ public interface TotpChallengeStorePort {
      * TTL covers the full cryptographic validity window to prevent late replays.
      */
     boolean markCodeUsedIfAbsent(UUID userId, String code);
+
+    /**
+     * Increments the failed-attempt counter for a challenge and returns the new count.
+     * TTL is set only on the first increment (matches challenge TTL).
+     * Callers must invalidate the challenge when the count reaches the configured maximum.
+     */
+    int incrementFailedAttempts(String challengeId);
 }
