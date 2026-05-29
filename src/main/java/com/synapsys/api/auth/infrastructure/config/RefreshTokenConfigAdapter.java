@@ -17,4 +17,9 @@ public class RefreshTokenConfigAdapter implements RefreshTokenConfigPort {
     public int refreshTokenExpiryDays() {
         return properties.refreshToken().expiryDays();
     }
+
+    @Override
+    public String refreshTokenPurgeCron() {
+        return properties.refreshToken().purgeCron();
+    }
 }

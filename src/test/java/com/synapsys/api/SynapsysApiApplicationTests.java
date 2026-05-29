@@ -20,8 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
     "synapsys.seed.email=smoke-admin@test.local",
     "synapsys.seed.password=smoke-test-seed-password",
     "synapsys.cors.allowed-origins=",
-    "spring.jpa.hibernate.ddl-auto=none",
-    "spring.data.redis.url=redis://localhost:6379"
+    "spring.jpa.hibernate.ddl-auto=none"
 })
 class SynapsysApiApplicationTests {
 

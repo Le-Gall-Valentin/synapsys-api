@@ -4,27 +4,35 @@ import com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort;
 import com.synapsys.api.auth.domain.port.out.RefreshTokenMaintenancePort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.CronTask;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 @Component
-public class RefreshTokenPurgeScheduler {
+public class RefreshTokenPurgeScheduler implements SchedulingConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenPurgeScheduler.class);
 
     private final RefreshTokenMaintenancePort refreshTokenMaintenance;
     private final int refreshTokenExpiryDays;
+    private final String purgeCron;
 
     public RefreshTokenPurgeScheduler(RefreshTokenMaintenancePort refreshTokenMaintenance,
                                       RefreshTokenConfigPort tokenConfig) {
         this.refreshTokenMaintenance = refreshTokenMaintenance;
         this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
+        this.purgeCron = tokenConfig.refreshTokenPurgeCron();
     }
 
-    @Scheduled(cron = "${synapsys.refresh-token.purge-cron:0 0 3 * * *}")
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.addCronTask(new CronTask(this::purgeExpiredTokens, purgeCron));
+    }
+
     public void purgeExpiredTokens() {
         try {
             Instant now = Instant.now();

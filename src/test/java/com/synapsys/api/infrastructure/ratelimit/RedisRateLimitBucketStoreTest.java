@@ -3,7 +3,6 @@ package com.synapsys.api.infrastructure.ratelimit;
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
@@ -36,6 +35,7 @@ class RedisRateLimitBucketStoreTest {
     private static LettuceConnectionFactory springFactory;
     private static LettuceBasedProxyManager<String> proxyManager;
     private static StringRedisTemplate redisTemplate;
+    private static StatefulRedisConnection<String, byte[]> lettuceConnection;
 
     private RedisRateLimitBucketStore store;
 
@@ -46,8 +46,7 @@ class RedisRateLimitBucketStoreTest {
         redisTemplate = new StringRedisTemplate(springFactory);
 
         RedisClient lettuceClient = (RedisClient) springFactory.getNativeClient();
-        StatefulRedisConnection<String, byte[]> lettuceConnection =
-            lettuceClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
+        lettuceConnection = lettuceClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
         proxyManager = LettuceBasedProxyManager.builderFor(lettuceConnection)
             .withExpirationStrategy(
                 ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofSeconds(1)))
@@ -56,6 +55,7 @@ class RedisRateLimitBucketStoreTest {
 
     @AfterAll
     static void tearDownAll() {
+        lettuceConnection.close();
         springFactory.destroy();
     }
 
@@ -121,6 +121,17 @@ class RedisRateLimitBucketStoreTest {
         }
         store.clearAll();
         assertThat(store.tryConsume("AuthController.login:IP:6.6.6.6", 10, 60).allowed()).isTrue();
+    }
+
+    @Test
+    void clearAll_doesNotDeleteNonRateLimitKeys() {
+        redisTemplate.opsForValue().set("other:some-session-key", "some-value");
+        store.tryConsume("AuthController.login:IP:7.7.7.7", 10, 60);
+
+        store.clearAll();
+
+        assertThat(redisTemplate.hasKey("other:some-session-key")).isTrue();
+        assertThat(store.tryConsume("AuthController.login:IP:7.7.7.7", 10, 60).allowed()).isTrue();
     }
 
     @Test

@@ -7,12 +7,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.config.CronTask;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 import java.time.Duration;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,9 +26,13 @@ class RefreshTokenPurgeSchedulerTest {
     RefreshTokenMaintenancePort refreshTokenRepository;
 
     private static final int EXPIRY_DAYS = 30;
+    private static final String PURGE_CRON = "0 0 3 * * *";
 
     private RefreshTokenPurgeScheduler scheduler() {
-        RefreshTokenConfigPort tokenConfig = () -> EXPIRY_DAYS;
+        RefreshTokenConfigPort tokenConfig = new RefreshTokenConfigPort() {
+            @Override public int refreshTokenExpiryDays() { return EXPIRY_DAYS; }
+            @Override public String refreshTokenPurgeCron() { return PURGE_CRON; }
+        };
         return new RefreshTokenPurgeScheduler(refreshTokenRepository, tokenConfig);
     }
 
@@ -36,6 +43,23 @@ class RefreshTokenPurgeSchedulerTest {
         scheduler().purgeExpiredTokens();
 
         verify(refreshTokenRepository).deleteExpiredAndRevoked(any(Instant.class), any(Instant.class));
+    }
+
+    @Test
+    void configureTasks_registersCronTaskUsingCronFromConfigPort() {
+        var customCron = "0 0 4 * * *";
+        RefreshTokenConfigPort tokenConfig = new RefreshTokenConfigPort() {
+            @Override public int refreshTokenExpiryDays() { return EXPIRY_DAYS; }
+            @Override public String refreshTokenPurgeCron() { return customCron; }
+        };
+        var scheduler = new RefreshTokenPurgeScheduler(refreshTokenRepository, tokenConfig);
+        var registrar = mock(ScheduledTaskRegistrar.class);
+        var captor = ArgumentCaptor.forClass(CronTask.class);
+
+        scheduler.configureTasks(registrar);
+
+        verify(registrar).addCronTask(captor.capture());
+        assertThat(captor.getValue().getExpression()).isEqualTo(customCron);
     }
 
     @Test
