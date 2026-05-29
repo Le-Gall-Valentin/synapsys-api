@@ -41,7 +41,7 @@ describe('ProfilePage', () => {
 
   it('renders username and role when user is present', () => {
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const } })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false } })
     )
     const { getByText } = render(<ProfilePage />)
     expect(getByText('alice')).toBeDefined()
@@ -50,7 +50,7 @@ describe('ProfilePage', () => {
 
   it('renders fallback initials when username is empty', () => {
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: '', role: 'USER' as const } })
+      selector({ ...baseState, user: { id: '1', username: '', role: 'USER' as const, totpEnabled: false } })
     )
     const { container } = render(<ProfilePage />)
     const avatar = container.querySelector('[role="img"]')
@@ -60,7 +60,7 @@ describe('ProfilePage', () => {
   it('renders logout error alert when logout fails', async () => {
     const failingLogout = vi.fn().mockRejectedValue(new Error('Server error'))
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout: failingLogout })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false }, logout: failingLogout })
     )
     const { getByRole } = render(<ProfilePage />)
 
@@ -75,7 +75,7 @@ describe('ProfilePage', () => {
   it('calls logout once and shows no alert on successful logout', async () => {
     const logout = vi.fn().mockResolvedValue(undefined)
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false }, logout })
     )
     const { getByRole, queryByRole } = render(<ProfilePage />)
 
@@ -92,7 +92,7 @@ describe('ProfilePage', () => {
     const pendingLogout = new Promise<void>((resolve) => { resolveLogout = resolve })
     const logout = vi.fn().mockReturnValue(pendingLogout)
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false }, logout })
     )
     const { getByRole } = render(<ProfilePage />)
     const btn = getByRole('button')

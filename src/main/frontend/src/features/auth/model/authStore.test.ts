@@ -39,6 +39,7 @@ describe('authStore', () => {
       id: '1',
       username: 'user',
       role: 'USER',
+      totpEnabled: false,
     })
     const store = createAuthStore(api)
 
@@ -55,6 +56,7 @@ describe('authStore', () => {
       id: '1',
       username: 'user',
       role: 'USER',
+      totpEnabled: false,
     })
     vi.mocked(api.logout).mockRejectedValue(new Error('network'))
     const store = createAuthStore(api)
@@ -82,7 +84,7 @@ describe('authStore', () => {
     it('calls getMe and hydrates user when session hint is set', async () => {
       const api = createApiMock()
       mockedHasSessionHint.mockReturnValue(true)
-      vi.mocked(api.getMe).mockResolvedValue({ id: '1', username: 'admin', role: 'ADMIN' })
+      vi.mocked(api.getMe).mockResolvedValue({ id: '1', username: 'admin', role: 'ADMIN', totpEnabled: false })
       const store = createAuthStore(api)
 
       await store.getState().initialize()
@@ -127,19 +129,19 @@ describe('authStore', () => {
       const controller1 = new AbortController()
       mockedHasSessionHint.mockReturnValue(true)
 
-      let resolveGetMe!: (value: { id: string; username: string; role: 'USER' }) => void
+      let resolveGetMe!: (value: { id: string; username: string; role: 'USER'; totpEnabled: boolean }) => void
       vi.mocked(api.getMe)
         .mockImplementationOnce(
           () => new Promise((resolve) => { resolveGetMe = resolve as typeof resolveGetMe })
         )
-        .mockResolvedValueOnce({ id: '2', username: 'alice', role: 'USER' })
+        .mockResolvedValueOnce({ id: '2', username: 'alice', role: 'USER', totpEnabled: false })
 
       const store = createAuthStore(api)
 
       // First call — will be aborted before getMe resolves
       const initPromise1 = store.getState().initialize(controller1.signal)
       controller1.abort()
-      resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
+      resolveGetMe({ id: '1', username: 'alice', role: 'USER', totpEnabled: false })
       await initPromise1 // wait for the aborted call to fully settle
 
       // Second call — must proceed and complete normally
@@ -153,7 +155,7 @@ describe('authStore', () => {
       const api = createApiMock()
       const abortController = new AbortController()
 
-      let resolveGetMe!: (value: { id: string; username: string; role: 'USER' }) => void
+      let resolveGetMe!: (value: { id: string; username: string; role: 'USER'; totpEnabled: boolean }) => void
       vi.mocked(api.getMe).mockImplementation(
         () => new Promise((resolve) => { resolveGetMe = resolve as typeof resolveGetMe })
       )
@@ -164,7 +166,7 @@ describe('authStore', () => {
 
       // Abort before getMe resolves
       abortController.abort()
-      resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
+      resolveGetMe({ id: '1', username: 'alice', role: 'USER', totpEnabled: false })
       await initPromise
 
       // isInitializing stays true because we never set it to false (aborted)
