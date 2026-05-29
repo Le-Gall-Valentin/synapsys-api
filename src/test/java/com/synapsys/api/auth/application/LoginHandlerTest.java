@@ -35,7 +35,8 @@ class LoginHandlerTest {
 
     private final User activeUser = new User(
         UUID.randomUUID(), "user1", "user1@test.com",
-        "hashed_pw", Role.USER, true, Instant.now()
+        "hashed_pw", Role.USER, true, Instant.now(),
+        null, false
     );
 
     @BeforeEach
@@ -69,9 +70,11 @@ class LoginHandlerTest {
 
         LoginResult result = handler.login(new LoginCommand("user1", "password"));
 
-        assertThat(result.tokens().accessToken()).isEqualTo("jwt_access");
-        assertThat(result.tokens().refreshToken()).isEqualTo("raw_refresh");
-        assertThat(result.user()).isEqualTo(activeUser);
+        assertThat(result).isInstanceOf(LoginResult.Success.class);
+        LoginResult.Success success = (LoginResult.Success) result;
+        assertThat(success.tokens().accessToken()).isEqualTo("jwt_access");
+        assertThat(success.tokens().refreshToken()).isEqualTo("raw_refresh");
+        assertThat(success.user()).isEqualTo(activeUser);
         verify(refreshTokenPort).generate(activeUser, 30);
     }
 
@@ -107,7 +110,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_throwsUserNotActive() {
         User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt(), null, false);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordHasher.matches("password", inactive.passwordHash())).thenReturn(true);
 
@@ -118,7 +121,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_doesNotLogUsername() {
         User inactive = new User(activeUser.id(), "alice", activeUser.email(),
-            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt(), null, false);
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(inactive));
         when(passwordHasher.matches("password", inactive.passwordHash())).thenReturn(true);
 
@@ -134,7 +137,7 @@ class LoginHandlerTest {
     void login_wrongPassword_doesNotLogUsername() {
         when(userRepository.findByUsername("bob")).thenReturn(Optional.of(
             new User(activeUser.id(), "bob", activeUser.email(),
-                activeUser.passwordHash(), activeUser.role(), true, activeUser.createdAt())
+                activeUser.passwordHash(), activeUser.role(), true, activeUser.createdAt(), null, false)
         ));
         when(passwordHasher.matches("wrong", activeUser.passwordHash())).thenReturn(false);
 
@@ -149,7 +152,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_correctPassword_throwsUserNotActive() {
         User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt(), null, false);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordHasher.matches("correctpassword", inactive.passwordHash())).thenReturn(true);
 
@@ -162,7 +165,7 @@ class LoginHandlerTest {
         // Password is checked before isActive to prevent account status info disclosure.
         // An attacker who doesn't know the password must not learn the account exists and is inactive.
         User inactive = new User(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt());
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt(), null, false);
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordHasher.matches("wrongpassword", inactive.passwordHash())).thenReturn(false);
 

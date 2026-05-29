@@ -61,6 +61,18 @@ public class AuthExceptionHandler {
                         "An unexpected error occurred. Please try again later."
                 );
             }
+
+            case AuthException.TotpCodeInvalid ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthException.TotpChallengeExpired ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthException.TotpAlreadyEnabled ex ->
+                    response(409, ex, ex.getMessage());
+
+            case AuthException.TotpNotEnabled ex ->
+                    response(409, ex, ex.getMessage());
         };
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(

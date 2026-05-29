@@ -126,10 +126,10 @@ class DeactivateUserHandlerTest {
     }
 
     private User user(UUID id, Role role) {
-        return new User(id, "user-" + id, id + "@test.com", "hashed", role, true, Instant.now());
+        return new User(id, "user-" + id, id + "@test.com", "hashed", role, true, Instant.now(), null, false);
     }
 
     private User inactiveUser(UUID id, Role role) {
-        return new User(id, "user-" + id, id + "@test.com", "hashed", role, false, Instant.now());
+        return new User(id, "user-" + id, id + "@test.com", "hashed", role, false, Instant.now(), null, false);
     }
 }

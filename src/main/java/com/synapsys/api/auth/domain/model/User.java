@@ -10,5 +10,7 @@ public record User(
     String passwordHash,
     Role role,
     boolean isActive,
-    Instant createdAt
+    Instant createdAt,
+    String totpSecret,
+    boolean totpEnabled
 ) {}

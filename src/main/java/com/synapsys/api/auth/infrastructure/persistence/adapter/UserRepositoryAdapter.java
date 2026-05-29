@@ -78,6 +78,7 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
 
     private User toDomain(UserEntity e) {
         return new User(e.getId(), e.getUsername(), e.getEmail(),
-            e.getPasswordHash(), e.getRole(), e.isActive(), e.getCreatedAt());
+            e.getPasswordHash(), e.getRole(), e.isActive(), e.getCreatedAt(),
+            e.getTotpSecret(), e.isTotpEnabled());
     }
 }

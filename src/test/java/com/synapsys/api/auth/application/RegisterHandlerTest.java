@@ -109,7 +109,7 @@ class RegisterHandlerTest {
         when(userCommandPort.save(any())).thenAnswer(inv -> {
             CreateUserCommand cmd = inv.getArgument(0);
             return new User(UUID.randomUUID(), cmd.username(), cmd.email(),
-                cmd.password(), cmd.role(), true, Instant.now());
+                cmd.password(), cmd.role(), true, Instant.now(), null, false);
         });
 
         User result = handler.register(
@@ -125,6 +125,6 @@ class RegisterHandlerTest {
     }
 
     private User user(String username, Role role) {
-        return new User(UUID.randomUUID(), username, username + "@test.com", "hashed", role, true, Instant.now());
+        return new User(UUID.randomUUID(), username, username + "@test.com", "hashed", role, true, Instant.now(), null, false);
     }
 }

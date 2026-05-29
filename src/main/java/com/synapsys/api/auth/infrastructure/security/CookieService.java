@@ -16,6 +16,9 @@ public class CookieService {
 
     public static final String ACCESS_COOKIE = "access_token";
     public static final String REFRESH_COOKIE = "refresh_token";
+    public static final String TOTP_CHALLENGE_COOKIE = "totp_challenge";
+
+    private static final long TOTP_CHALLENGE_MAX_AGE_SECONDS = 15 * 60L;
 
     private final boolean secure;
     private final long accessMaxAgeSeconds;
@@ -33,6 +36,14 @@ public class CookieService {
 
     public ResponseCookie buildRefreshCookie(String token) {
         return build(REFRESH_COOKIE, token, "/api/auth", refreshMaxAgeSeconds);
+    }
+
+    public ResponseCookie buildChallengeCookie(String challengeId) {
+        return build(TOTP_CHALLENGE_COOKIE, challengeId, "/api/auth/2fa", TOTP_CHALLENGE_MAX_AGE_SECONDS);
+    }
+
+    public ResponseCookie buildClearChallengeCookie() {
+        return build(TOTP_CHALLENGE_COOKIE, "", "/api/auth/2fa", 0);
     }
 
     public List<ResponseCookie> buildClearCookies() {

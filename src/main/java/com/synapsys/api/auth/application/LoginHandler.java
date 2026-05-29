@@ -63,6 +63,6 @@ public class LoginHandler implements LoginUseCase {
             accessTokenPort.generate(user),
             refreshTokenPort.generate(user, refreshTokenExpiryDays)
         );
-        return new LoginResult(tokens, user);
+        return new LoginResult.Success(tokens, user);
     }
 }

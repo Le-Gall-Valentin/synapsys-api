@@ -42,7 +42,7 @@ class JwtServiceTest {
     @Test
     void generate_returnsNonBlankToken() {
         User user = new User(UUID.randomUUID(), "alice", "alice@test.com",
-            "hash", Role.USER, true, Instant.now());
+            "hash", Role.USER, true, Instant.now(), null, false);
 
         String token = jwtService.generate(user);
 
@@ -53,7 +53,7 @@ class JwtServiceTest {
     void validateAndExtract_returnsCorrectClaims() {
         UUID userId = UUID.randomUUID();
         User user = new User(userId, "alice", "alice@test.com",
-            "hash", Role.ADMIN, true, Instant.now());
+            "hash", Role.ADMIN, true, Instant.now(), null, false);
 
         String token = jwtService.generate(user);
         UserClaims claims = validationService.validateAndExtract(token);
@@ -71,7 +71,7 @@ class JwtServiceTest {
     @Test
     void validateAndExtract_throwsOnTamperedToken() {
         User user = new User(UUID.randomUUID(), "alice", "alice@test.com",
-            "hash", Role.USER, true, Instant.now());
+            "hash", Role.USER, true, Instant.now(), null, false);
         String token = jwtService.generate(user) + "tampered";
 
         assertThatThrownBy(() -> validationService.validateAndExtract(token))
@@ -145,7 +145,7 @@ class JwtServiceTest {
         JwtService expiredJwtService = new JwtService(key, properties);
         JwtValidationService expiredValidationService = new JwtValidationService(key, properties);
         User user = new User(UUID.randomUUID(), "alice", "alice@test.com",
-            "hash", Role.USER, true, Instant.now());
+            "hash", Role.USER, true, Instant.now(), null, false);
 
         String token = expiredJwtService.generate(user);
 
@@ -167,7 +167,7 @@ class JwtServiceTest {
         JwtValidationService vs = new JwtValidationService(JwtKeyFactory.from(SECRET), props);
 
         UUID userId = UUID.randomUUID();
-        User user = new User(userId, "alice", "alice@test.com", "hash", Role.ADMIN, true, Instant.now());
+        User user = new User(userId, "alice", "alice@test.com", "hash", Role.ADMIN, true, Instant.now(), null, false);
         String token = jwtService.generate(user);
 
         UserClaims claims = vs.validateAndExtract(token);
