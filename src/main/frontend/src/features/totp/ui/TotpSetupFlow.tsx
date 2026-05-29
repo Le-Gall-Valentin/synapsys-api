@@ -23,19 +23,18 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const isSubmittingRef = useRef(false)
-  // React StrictMode calls effects twice — guard ensures setup() is called only once,
-  // preventing a race condition where two concurrent requests store different secrets
-  // while the QR code shows the one that lost the race.
+  // Ref persists across StrictMode's simulated unmount/remount — prevents two concurrent
+  // setup() calls that would store different secrets while the QR shows the wrong one.
   const setupCalledRef = useRef(false)
 
   useEffect(() => {
     if (setupCalledRef.current) return
     setupCalledRef.current = true
-    let cancelled = false
+    // No cancellation needed: the guard ensures exactly one call is ever made,
+    // so the response is always safe to apply regardless of cleanup timing.
     api.setup()
-      .then(data => { if (!cancelled) setSetupData(data) })
-      .catch(() => { if (!cancelled) setSetupError(true) })
-    return () => { cancelled = true }
+      .then(data => setSetupData(data))
+      .catch(() => setSetupError(true))
   }, [api])
 
   const groupedSecret = setupData?.secret.match(/.{1,4}/g)?.join(' ') ?? ''
