@@ -42,12 +42,14 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/", "/index.html", "/favicon.ico").permitAll()
                 .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
-                // SPA fallback: paths without a file extension are served as index.html
-                .requestMatchers(HttpMethod.GET, "/{path:[^.]*}", "/**/{path:[^.]*}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                // /api/** must be evaluated before the SPA fallback so extensionless
+                // paths like /api/users/me are never matched by the GET wildcard.
                 .requestMatchers("/api/**").authenticated()
+                // SPA fallback: extensionless GET paths are served as index.html
+                .requestMatchers(HttpMethod.GET, "/{path:[^.]*}", "/**/{path:[^.]*}").permitAll()
                 .anyRequest().denyAll()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

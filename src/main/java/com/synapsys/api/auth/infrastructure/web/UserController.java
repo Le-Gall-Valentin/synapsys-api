@@ -5,6 +5,7 @@ import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.auth.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.UserInfoResponse;
+import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +39,7 @@ public class UserController {
     }
 
     @PostMapping
+    @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
                                                      @AuthenticationPrincipal CustomUserDetails caller) {
@@ -50,6 +52,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id,
                                            @AuthenticationPrincipal CustomUserDetails caller) {

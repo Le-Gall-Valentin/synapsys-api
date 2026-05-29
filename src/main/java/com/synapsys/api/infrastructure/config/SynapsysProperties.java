@@ -27,7 +27,8 @@ public record SynapsysProperties(
     ) {}
 
     public record RefreshTokenProperties(
-        @DefaultValue("30") int expiryDays
+        @DefaultValue("30") int expiryDays,
+        @DefaultValue("0 0 3 * * *") String purgeCron
     ) {}
 
     public record CookieProperties(

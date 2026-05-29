@@ -37,7 +37,7 @@ class DataSeederTest {
     private SynapsysProperties properties(String password) {
         return new SynapsysProperties(
             new SynapsysProperties.JwtProperties("test-secret-key-at-least-32-chars", 15, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             new SynapsysProperties.SeedProperties("user", "user@test.com", password),
             new SynapsysProperties.CorsProperties(List.of()),

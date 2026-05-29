@@ -29,7 +29,7 @@ class JwtServiceTest {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, 15, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
@@ -136,7 +136,7 @@ class JwtServiceTest {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, -1, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
@@ -158,7 +158,7 @@ class JwtServiceTest {
     void jwtValidationService_validateAndExtract_returnsCorrectClaims() {
         var props = new SynapsysProperties(
             new SynapsysProperties.JwtProperties(SECRET, 15, "synapsys-api", "synapsys-api"),
-            new SynapsysProperties.RefreshTokenProperties(30),
+            new SynapsysProperties.RefreshTokenProperties(30, "0 0 3 * * *"),
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),

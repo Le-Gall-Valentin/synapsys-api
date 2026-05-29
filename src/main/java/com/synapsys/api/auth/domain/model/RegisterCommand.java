@@ -10,7 +10,10 @@ public record RegisterCommand(
     Role role
 ) {
     public RegisterCommand {
+        Objects.requireNonNull(username, "username must not be null");
         Objects.requireNonNull(email, "email must not be null");
+        Objects.requireNonNull(password, "password must not be null");
+        Objects.requireNonNull(role, "role must not be null");
         email = email.toLowerCase(Locale.ROOT);
     }
 }

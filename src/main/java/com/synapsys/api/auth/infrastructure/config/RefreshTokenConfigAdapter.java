@@ -1,6 +1,7 @@
-package com.synapsys.api.infrastructure.config;
+package com.synapsys.api.auth.infrastructure.config;
 
 import com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort;
+import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.springframework.stereotype.Component;
 
 @Component
