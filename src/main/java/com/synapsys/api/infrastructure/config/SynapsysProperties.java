@@ -2,6 +2,7 @@ package com.synapsys.api.infrastructure.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +22,7 @@ public record SynapsysProperties(
 
     public record JwtProperties(
         @NotBlank String secret,
-        @DefaultValue("15") int expiryMinutes,
+        @Positive @DefaultValue("15") int expiryMinutes,
         @DefaultValue("synapsys-api") String issuer,
         @DefaultValue("synapsys-api") String audience
     ) {}

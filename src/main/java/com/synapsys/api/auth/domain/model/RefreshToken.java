@@ -1,5 +1,6 @@
 package com.synapsys.api.auth.domain.model;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,7 +14,11 @@ public record RefreshToken(
     Instant lastUsedAt
 ) {
     public boolean isExpired() {
-        return expiresAt.isBefore(Instant.now());
+        return isExpired(Clock.systemUTC());
+    }
+
+    public boolean isExpired(Clock clock) {
+        return expiresAt.isBefore(Instant.now(clock));
     }
 
     public boolean isRevoked() {
