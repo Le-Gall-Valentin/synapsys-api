@@ -41,6 +41,14 @@ describe('TotpSetupFlow', () => {
     expect(getByRole('status')).toBeTruthy()
   })
 
+  it('calls api.setup() exactly once on mount', async () => {
+    const setup = vi.fn().mockResolvedValue(SETUP_DATA)
+    const api = makeApi({ setup })
+    const { findByTestId } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
+    await findByTestId('qr-code')
+    expect(setup).toHaveBeenCalledTimes(1)
+  })
+
   it('shows error when setup fails', async () => {
     const api = makeApi({ setup: vi.fn().mockRejectedValue(new Error('network error')) })
     const { findByRole } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
