@@ -3,7 +3,7 @@ import type { IAuthApi } from './IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
 import { notifyLoginSuccess } from '@/shared/api'
 import type { User } from '@/entities/user'
-import type { LoginCredentials } from './types'
+import type { LoginCredentials, LoginOutcome } from './types'
 import { CredentialsError } from './errors'
 
 export interface AuthState {
@@ -12,9 +12,10 @@ export interface AuthState {
 }
 
 export interface AuthActions {
-  login: (credentials: LoginCredentials) => Promise<void>
+  login: (credentials: LoginCredentials) => Promise<LoginOutcome>
   logout: () => Promise<void>
   initialize: (signal?: AbortSignal) => Promise<void>
+  finalizeLogin: (user: User) => void
 }
 
 export function createAuthStore(api: IAuthApi) {
@@ -24,8 +25,22 @@ export function createAuthStore(api: IAuthApi) {
     user: null,
     isInitializing: true,
 
-    async login(credentials: LoginCredentials): Promise<void> {
-      const user = await api.login(credentials)
+    async login(credentials: LoginCredentials): Promise<LoginOutcome> {
+      const result = await api.login(credentials)
+      if (result.type === 'totp_required') {
+        return { kind: 'totp_required' }
+      }
+      const { user } = result
+      if (!user.totpEnabled) {
+        return { kind: 'enrollment_proposed', user }
+      }
+      notifyLoginSuccess()
+      setSessionHint()
+      set({ user })
+      return { kind: 'authenticated' }
+    },
+
+    finalizeLogin(user: User): void {
       notifyLoginSuccess()
       setSessionHint()
       set({ user })

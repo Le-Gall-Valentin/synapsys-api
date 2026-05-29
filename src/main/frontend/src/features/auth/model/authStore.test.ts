@@ -36,27 +36,60 @@ describe('authStore', () => {
   it('login sets authenticated state and session hint', async () => {
     const api = createApiMock()
     vi.mocked(api.login).mockResolvedValue({
-      id: '1',
-      username: 'user',
-      role: 'USER',
-      totpEnabled: false,
+      type: 'success',
+      user: { id: '1', username: 'user', role: 'USER', totpEnabled: true },
     })
     const store = createAuthStore(api)
 
-    await store.getState().login({ username: 'user', password: 'secret' })
+    const outcome = await store.getState().login({ username: 'user', password: 'secret' })
 
     expect(api.login).toHaveBeenCalledWith({ username: 'user', password: 'secret' })
     expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
     expect(store.getState().user?.username).toBe('user')
+    expect(outcome).toEqual({ kind: 'authenticated' })
+  })
+
+  it('login returns totp_required and does not set user when server returns totpRequired', async () => {
+    const api = createApiMock()
+    vi.mocked(api.login).mockResolvedValue({ type: 'totp_required' })
+    const store = createAuthStore(api)
+
+    const outcome = await store.getState().login({ username: 'user', password: 'secret' })
+
+    expect(outcome).toEqual({ kind: 'totp_required' })
+    expect(mockedSetSessionHint).not.toHaveBeenCalled()
+    expect(store.getState().user).toBeNull()
+  })
+
+  it('login returns enrollment_proposed and does not set user when user has totpEnabled false', async () => {
+    const user = { id: '1', username: 'user', role: 'USER' as const, totpEnabled: false }
+    const api = createApiMock()
+    vi.mocked(api.login).mockResolvedValue({ type: 'success', user })
+    const store = createAuthStore(api)
+
+    const outcome = await store.getState().login({ username: 'user', password: 'secret' })
+
+    expect(outcome).toEqual({ kind: 'enrollment_proposed', user })
+    expect(mockedSetSessionHint).not.toHaveBeenCalled()
+    expect(store.getState().user).toBeNull()
+  })
+
+  it('finalizeLogin sets user and session hint', () => {
+    const api = createApiMock()
+    const store = createAuthStore(api)
+    const user = { id: '1', username: 'user', role: 'USER' as const, totpEnabled: true }
+
+    store.getState().finalizeLogin(user)
+
+    expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
+    expect(store.getState().user).toEqual(user)
   })
 
   it('logout clears auth state even when API fails', async () => {
     const api = createApiMock()
     vi.mocked(api.login).mockResolvedValue({
-      id: '1',
-      username: 'user',
-      role: 'USER',
-      totpEnabled: false,
+      type: 'success',
+      user: { id: '1', username: 'user', role: 'USER', totpEnabled: true },
     })
     vi.mocked(api.logout).mockRejectedValue(new Error('network'))
     const store = createAuthStore(api)

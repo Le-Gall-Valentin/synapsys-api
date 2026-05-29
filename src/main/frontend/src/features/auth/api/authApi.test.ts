@@ -39,9 +39,22 @@ describe('authApi', () => {
     const user = { id: '1', username: 'user', role: 'USER', totpEnabled: false }
     mockedClient.post.mockResolvedValue({ data: user })
 
-    await expect(authApi.login(credentials)).resolves.toEqual(user)
+    await expect(authApi.login(credentials)).resolves.toEqual({ type: 'success', user })
     expect(mockedClient.post).toHaveBeenCalledWith('/auth/login', credentials)
     expect(mockedClient.get).not.toHaveBeenCalled()
+  })
+
+  it('login returns { type: totp_required } when server responds with totpRequired:true', async () => {
+    mockedClient.post.mockResolvedValue({ data: { totpRequired: true } })
+    const result = await authApi.login({ username: 'u', password: 'p' })
+    expect(result).toEqual({ type: 'totp_required' })
+  })
+
+  it('login returns { type: success, user } on normal 200', async () => {
+    const user = { id: '1', username: 'user', role: 'USER', totpEnabled: false }
+    mockedClient.post.mockResolvedValue({ data: user })
+    const result = await authApi.login({ username: 'u', password: 'p' })
+    expect(result).toEqual({ type: 'success', user })
   })
 
   it('logout calls logout endpoint', async () => {
