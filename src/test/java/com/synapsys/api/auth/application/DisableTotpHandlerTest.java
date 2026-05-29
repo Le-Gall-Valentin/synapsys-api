@@ -21,6 +21,7 @@ class DisableTotpHandlerTest {
 
     @Mock UserRepository userRepository;
     @Mock UserTotpPort userTotpPort;
+    @Mock TotpCodeValidatorPort codeValidator;
 
     private DisableTotpHandler handler;
 
@@ -32,16 +33,28 @@ class DisableTotpHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new DisableTotpHandler(userRepository, userTotpPort);
+        handler = new DisableTotpHandler(userRepository, userTotpPort, codeValidator);
     }
 
     @Test
-    void disable_totpEnabled_disablesIt() {
+    void disable_validCode_disablesIt() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(enabledUser));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
 
-        assertThatNoException().isThrownBy(() -> handler.disable(new DisableTotpCommand(userId)));
+        assertThatNoException().isThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")));
 
         verify(userTotpPort).disableTotp(userId);
+    }
+
+    @Test
+    void disable_invalidCode_throwsTotpCodeInvalid() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(enabledUser));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "000000")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verifyNoInteractions(userTotpPort);
     }
 
     @Test
@@ -50,17 +63,17 @@ class DisableTotpHandlerTest {
             Role.USER, true, Instant.now(), null, false);
         when(userRepository.findById(userId)).thenReturn(Optional.of(notEnabled));
 
-        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId)))
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
             .isInstanceOf(AuthException.TotpNotEnabled.class);
 
-        verifyNoInteractions(userTotpPort);
+        verifyNoInteractions(userTotpPort, codeValidator);
     }
 
     @Test
     void disable_userNotFound_throws() {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId)))
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
             .isInstanceOf(AuthException.UserNotFound.class);
     }
 }

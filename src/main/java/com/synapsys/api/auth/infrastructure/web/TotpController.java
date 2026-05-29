@@ -78,8 +78,9 @@ public class TotpController {
     @DeleteMapping
     @RateLimiting(max = 5)
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> disable(@AuthenticationPrincipal CustomUserDetails caller) {
-        disableUseCase.disable(new DisableTotpCommand(caller.getUserId()));
+    public ResponseEntity<Void> disable(@Valid @RequestBody TotpCodeRequest request,
+                                        @AuthenticationPrincipal CustomUserDetails caller) {
+        disableUseCase.disable(new DisableTotpCommand(caller.getUserId(), request.code()));
         return ResponseEntity.noContent().build();
     }
 }
