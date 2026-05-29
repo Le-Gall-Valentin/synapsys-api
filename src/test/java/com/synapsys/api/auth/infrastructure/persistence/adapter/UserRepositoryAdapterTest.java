@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +43,27 @@ class UserRepositoryAdapterTest {
         Optional<User> result = adapter.findByEmail("unknown@test.com");
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void saveTotpSecret_delegatesToJpa() {
+        UUID id = UUID.randomUUID();
+        adapter.saveTotpSecret(id, "SECRETBASE32==");
+        verify(jpa).saveTotpSecretById(id, "SECRETBASE32==");
+    }
+
+    @Test
+    void enableTotp_delegatesToJpa() {
+        UUID id = UUID.randomUUID();
+        adapter.enableTotp(id);
+        verify(jpa).enableTotpById(id);
+    }
+
+    @Test
+    void disableTotp_delegatesToJpa() {
+        UUID id = UUID.randomUUID();
+        adapter.disableTotp(id);
+        verify(jpa).disableTotpById(id);
     }
 
     private UserEntity buildEntity(String username, String email) {

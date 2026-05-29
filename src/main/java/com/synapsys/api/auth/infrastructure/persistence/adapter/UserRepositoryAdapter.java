@@ -6,6 +6,7 @@ import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserAdminPort;
 import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
+import com.synapsys.api.auth.domain.port.out.UserTotpPort;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import org.hibernate.exception.ConstraintViolationException;
@@ -18,7 +19,7 @@ import java.util.UUID;
 // Implements UserRepository (queries), UserCommandPort (mutations), and UserAdminPort (admin checks),
 // sharing a single JPA repository to avoid duplicating persistence logic across multiple adapters.
 @Component
-public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort {
+public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort, UserTotpPort {
 
     private final UserJpaRepository jpa;
 
@@ -74,6 +75,21 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
             }
         }
         return new AuthException.DataIntegrityError();
+    }
+
+    @Override
+    public void saveTotpSecret(UUID userId, String secret) {
+        jpa.saveTotpSecretById(userId, secret);
+    }
+
+    @Override
+    public void enableTotp(UUID userId) {
+        jpa.enableTotpById(userId);
+    }
+
+    @Override
+    public void disableTotp(UUID userId) {
+        jpa.disableTotpById(userId);
     }
 
     private User toDomain(UserEntity e) {
