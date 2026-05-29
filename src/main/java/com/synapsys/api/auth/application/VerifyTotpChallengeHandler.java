@@ -4,10 +4,12 @@ import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.VerifyTotpChallengeUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+// Note: @Transactional omitted intentionally — there are no JPA mutations here.
+// Redis and JPA operations are not atomically coordinated; challenge invalidation
+// and code marking happen in Redis only, while token generation is stateless.
 @ApplicationService
 public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
 
@@ -33,7 +35,6 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
     }
 
     @Override
-    @Transactional
     public LoginResult.Success verify(VerifyTotpChallengeCommand command) {
         UUID userId = challengeStore.resolveChallenge(command.challengeId())
             .orElseThrow(AuthException.TotpChallengeExpired::new);
@@ -45,15 +46,17 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
             throw new AuthException.UserNotActive();
         }
 
-        if (challengeStore.isCodeAlreadyUsed(userId, command.code())) {
-            throw new AuthException.TotpCodeInvalid();
-        }
-
+        // Validate cryptographically first — wrong code must NOT consume the anti-replay slot,
+        // so the user can retry with the next TOTP window's code.
         if (!codeValidator.isValid(user.totpSecret(), command.code())) {
             throw new AuthException.TotpCodeInvalid();
         }
 
-        challengeStore.markCodeUsed(userId, command.code());
+        // Atomic SETNX: consume the code, reject if already consumed (concurrent replay).
+        if (!challengeStore.markCodeUsedIfAbsent(userId, command.code())) {
+            throw new AuthException.TotpCodeInvalid();
+        }
+
         challengeStore.invalidateChallenge(command.challengeId());
 
         AuthTokens tokens = new AuthTokens(

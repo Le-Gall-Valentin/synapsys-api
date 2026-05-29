@@ -74,27 +74,36 @@ class RedisTotpChallengeStoreTest {
     }
 
     @Test
-    void isCodeAlreadyUsed_existingKey_returnsTrue() {
-        when(valueOps.get("totp:used:" + userId + ":123456")).thenReturn("1");
-
-        assertThat(store.isCodeAlreadyUsed(userId, "123456")).isTrue();
-    }
-
-    @Test
-    void isCodeAlreadyUsed_missingKey_returnsFalse() {
-        when(valueOps.get("totp:used:" + userId + ":123456")).thenReturn(null);
-
-        assertThat(store.isCodeAlreadyUsed(userId, "123456")).isFalse();
-    }
-
-    @Test
-    void markCodeUsed_storesKeyWithAntiReplayTtl() {
-        store.markCodeUsed(userId, "654321");
-
-        verify(valueOps).set(
+    void markCodeUsedIfAbsent_newCode_returnsTrue_andStoresWithTtl() {
+        when(valueOps.setIfAbsent(
             eq("totp:used:" + userId + ":654321"),
             eq("1"),
-            eq(Duration.ofSeconds(90))
+            eq(Duration.ofSeconds(120))
+        )).thenReturn(Boolean.TRUE);
+
+        assertThat(store.markCodeUsedIfAbsent(userId, "654321")).isTrue();
+        verify(valueOps).setIfAbsent(
+            eq("totp:used:" + userId + ":654321"),
+            eq("1"),
+            eq(Duration.ofSeconds(120))
         );
+    }
+
+    @Test
+    void markCodeUsedIfAbsent_replayedCode_returnsFalse() {
+        when(valueOps.setIfAbsent(
+            eq("totp:used:" + userId + ":123456"),
+            eq("1"),
+            eq(Duration.ofSeconds(120))
+        )).thenReturn(Boolean.FALSE);
+
+        assertThat(store.markCodeUsedIfAbsent(userId, "123456")).isFalse();
+    }
+
+    @Test
+    void markCodeUsedIfAbsent_nullReturnFromRedis_returnsFalse() {
+        when(valueOps.setIfAbsent(any(), any(), any(Duration.class))).thenReturn(null);
+
+        assertThat(store.markCodeUsedIfAbsent(userId, "111111")).isFalse();
     }
 }

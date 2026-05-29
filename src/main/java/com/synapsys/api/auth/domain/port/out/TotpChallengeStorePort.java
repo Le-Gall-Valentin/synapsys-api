@@ -7,6 +7,11 @@ public interface TotpChallengeStorePort {
     String createChallenge(UUID userId);
     Optional<UUID> resolveChallenge(String challengeId);
     void invalidateChallenge(String challengeId);
-    boolean isCodeAlreadyUsed(UUID userId, String code);
-    void markCodeUsed(UUID userId, String code);
+
+    /**
+     * Atomically marks a TOTP code as used for the given user (Redis SETNX).
+     * Returns true if the code was freshly consumed, false if it was already used (replay).
+     * TTL covers the full cryptographic validity window to prevent late replays.
+     */
+    boolean markCodeUsedIfAbsent(UUID userId, String code);
 }

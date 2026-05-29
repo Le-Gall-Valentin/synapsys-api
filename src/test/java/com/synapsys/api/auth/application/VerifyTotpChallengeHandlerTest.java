@@ -48,8 +48,8 @@ class VerifyTotpChallengeHandlerTest {
     void verify_validChallenge_validCode_returnsSuccess() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(challengeStore.isCodeAlreadyUsed(userId, "123456")).thenReturn(false);
         when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
         when(accessTokenPort.generate(user)).thenReturn("jwt-token");
         when(refreshTokenPort.generate(eq(user), anyInt())).thenReturn("refresh-token");
 
@@ -64,15 +64,15 @@ class VerifyTotpChallengeHandlerTest {
     void verify_validChallenge_validCode_invalidatesChallenge() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(challengeStore.isCodeAlreadyUsed(userId, "123456")).thenReturn(false);
         when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
         when(accessTokenPort.generate(any())).thenReturn("jwt");
         when(refreshTokenPort.generate(any(), anyInt())).thenReturn("refresh");
 
         handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456"));
 
         verify(challengeStore).invalidateChallenge("challenge-id");
-        verify(challengeStore).markCodeUsed(userId, "123456");
+        verify(challengeStore).markCodeUsedIfAbsent(userId, "123456");
     }
 
     @Test
@@ -84,26 +84,28 @@ class VerifyTotpChallengeHandlerTest {
     }
 
     @Test
-    void verify_invalidCode_throwsTotpCodeInvalid() {
+    void verify_invalidCode_throwsTotpCodeInvalid_withoutConsumingCode() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(challengeStore.isCodeAlreadyUsed(userId, "000000")).thenReturn(false);
         when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
             .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        // Wrong code must NOT be marked as used — user can retry with next window's code
+        verify(challengeStore, never()).markCodeUsedIfAbsent(any(), any());
     }
 
     @Test
     void verify_replayedCode_throwsTotpCodeInvalid() {
+        // Valid code but SETNX returns false → another request already consumed it
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(challengeStore.isCodeAlreadyUsed(userId, "123456")).thenReturn(true);
+        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(false);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
             .isInstanceOf(AuthException.TotpCodeInvalid.class);
-
-        verifyNoInteractions(codeValidator);
     }
 
     @Test
