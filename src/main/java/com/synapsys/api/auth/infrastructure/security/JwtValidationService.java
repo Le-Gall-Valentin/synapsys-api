@@ -37,8 +37,13 @@ public class JwtValidationService {
             if (claims.getAudience() == null || !claims.getAudience().contains(audience)) {
                 throw new JwtException("Invalid audience");
             }
-            UUID userId = UUID.fromString(claims.getSubject());
-            Role role = Role.valueOf(claims.get("role", String.class));
+            String subject = claims.getSubject();
+            if (subject == null) throw new JwtException("Missing subject claim");
+            UUID userId = UUID.fromString(subject);
+
+            String roleStr = claims.get("role", String.class);
+            if (roleStr == null) throw new JwtException("Missing role claim");
+            Role role = Role.valueOf(roleStr);
             return new UserClaims(userId, role);
         } catch (JwtException | IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid JWT token", e);

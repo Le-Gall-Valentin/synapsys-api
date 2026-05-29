@@ -98,6 +98,40 @@ class JwtServiceTest {
     }
 
     @Test
+    void validateAndExtract_throwsOnMissingSubjectClaim() {
+        SecretKey key = JwtKeyFactory.from(SECRET);
+        String tokenWithoutSubject = Jwts.builder()
+            .issuer("synapsys-api")
+            .audience().add("synapsys-api").and()
+            .claim("role", Role.USER.name())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 60_000))
+            .signWith(key)
+            .compact();
+
+        assertThatThrownBy(() -> validationService.validateAndExtract(tokenWithoutSubject))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid JWT token");
+    }
+
+    @Test
+    void validateAndExtract_throwsOnMissingRoleClaim() {
+        SecretKey key = JwtKeyFactory.from(SECRET);
+        String tokenWithoutRole = Jwts.builder()
+            .issuer("synapsys-api")
+            .audience().add("synapsys-api").and()
+            .subject(UUID.randomUUID().toString())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 60_000))
+            .signWith(key)
+            .compact();
+
+        assertThatThrownBy(() -> validationService.validateAndExtract(tokenWithoutRole))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Invalid JWT token");
+    }
+
+    @Test
     void validateAndExtract_throwsOnExpiredToken() {
         SecretKey key = JwtKeyFactory.from(SECRET);
         var properties = new SynapsysProperties(
