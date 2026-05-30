@@ -37,9 +37,10 @@ class SetupTotpHandlerTest {
     }
 
     @Test
-    void setup_generatesSecretAndStoresIt() {
+    void setup_generatesSecretAndStoresIt_whenNoSecretExists() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(secretGenerator.generateSecret()).thenReturn("NEWBASE32SECRET=");
+        when(userTotpPort.saveTotpSecretIfAbsent(userId, "NEWBASE32SECRET=")).thenReturn(true);
         when(secretGenerator.buildOtpauthUri("NEWBASE32SECRET=", "user1@test.com"))
             .thenReturn("otpauth://totp/...");
 
@@ -47,7 +48,49 @@ class SetupTotpHandlerTest {
 
         assertThat(result.secret()).isEqualTo("NEWBASE32SECRET=");
         assertThat(result.otpauthUri()).isEqualTo("otpauth://totp/...");
-        verify(userTotpPort).saveTotpSecret(userId, "NEWBASE32SECRET=");
+        verify(userTotpPort).saveTotpSecretIfAbsent(userId, "NEWBASE32SECRET=");
+    }
+
+    @Test
+    void setup_concurrentRequest_returnsExistingSecret() {
+        // Another concurrent request already saved a secret (saveTotpSecretIfAbsent returns false).
+        // This request must return the secret already in DB so both clients get the same QR code.
+        User userAfterConcurrentWrite = new User(
+            userId, "user1", "user1@test.com", "hash",
+            Role.USER, true, Instant.now(), "WINNER_SECRET====", false
+        );
+        when(userRepository.findById(userId))
+            .thenReturn(Optional.of(user))                      // first read: no secret
+            .thenReturn(Optional.of(userAfterConcurrentWrite)); // reload after race lost
+        when(secretGenerator.generateSecret()).thenReturn("LOSER_SECRET=====");
+        when(userTotpPort.saveTotpSecretIfAbsent(userId, "LOSER_SECRET=====")).thenReturn(false);
+        when(secretGenerator.buildOtpauthUri("WINNER_SECRET====", "user1@test.com"))
+            .thenReturn("otpauth://totp/winner");
+
+        TotpSetupResult result = handler.setup(new SetupTotpCommand(userId));
+
+        assertThat(result.secret()).isEqualTo("WINNER_SECRET====");
+        assertThat(result.otpauthUri()).isEqualTo("otpauth://totp/winner");
+    }
+
+    @Test
+    void setup_withPendingSecret_returnsExistingSecret() {
+        // setup() called again while totpEnabled=false and a previous secret exists.
+        // Idempotent: return the existing secret rather than generating a new one,
+        // preventing the user from scanning a stale QR if they had already started setup.
+        User pendingUser = new User(userId, "user1", "user1@test.com", "hash",
+            Role.USER, true, Instant.now(), "PENDINGSECRET===", false);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+        when(secretGenerator.generateSecret()).thenReturn("NEWSECRET=======");
+        when(userTotpPort.saveTotpSecretIfAbsent(userId, "NEWSECRET=======")).thenReturn(false);
+        // Reload: still has the pending secret (no concurrent write here, just DB already had one)
+        when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+        when(secretGenerator.buildOtpauthUri("PENDINGSECRET===", "user1@test.com"))
+            .thenReturn("otpauth://totp/pending");
+
+        TotpSetupResult result = handler.setup(new SetupTotpCommand(userId));
+
+        assertThat(result.secret()).isEqualTo("PENDINGSECRET===");
     }
 
     @Test
@@ -68,22 +111,5 @@ class SetupTotpHandlerTest {
 
         assertThatThrownBy(() -> handler.setup(new SetupTotpCommand(userId)))
             .isInstanceOf(AuthException.UserNotFound.class);
-    }
-
-    @Test
-    void setup_withPendingSecret_overwritesItWithNewSecret() {
-        // setup() called again while totpEnabled=false but a previous secret exists.
-        // This is intentional: the old QR code is silently invalidated.
-        User pendingUser = new User(userId, "user1", "user1@test.com", "hash",
-            Role.USER, true, Instant.now(), "OLDSECRETBASE32=", false);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
-        when(secretGenerator.generateSecret()).thenReturn("NEWSECRETBASE32=");
-        when(secretGenerator.buildOtpauthUri("NEWSECRETBASE32=", "user1@test.com"))
-            .thenReturn("otpauth://totp/new");
-
-        TotpSetupResult result = handler.setup(new SetupTotpCommand(userId));
-
-        assertThat(result.secret()).isEqualTo("NEWSECRETBASE32=");
-        verify(userTotpPort).saveTotpSecret(userId, "NEWSECRETBASE32=");
     }
 }

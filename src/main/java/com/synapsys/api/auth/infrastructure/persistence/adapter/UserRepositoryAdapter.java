@@ -88,6 +88,11 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
     }
 
     @Override
+    public boolean saveTotpSecretIfAbsent(UUID userId, String secret) {
+        return jpa.saveTotpSecretIfAbsent(userId, encryptor.encrypt(secret)) > 0;
+    }
+
+    @Override
     public void enableTotp(UUID userId) {
         jpa.enableTotpById(userId);
     }

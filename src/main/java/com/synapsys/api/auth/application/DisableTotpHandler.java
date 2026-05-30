@@ -31,6 +31,12 @@ public class DisableTotpHandler implements DisableTotpUseCase {
             throw new AuthException.TotpNotEnabled();
         }
 
+        // Data inconsistency guard: totpEnabled=true with no secret is unreachable in normal flow.
+        // Treat as invalid code — no NPE, no leakage of internal state.
+        if (user.totpSecret() == null) {
+            throw new AuthException.TotpCodeInvalid();
+        }
+
         if (!codeValidator.isValid(user.totpSecret(), command.code())) {
             throw new AuthException.TotpCodeInvalid();
         }

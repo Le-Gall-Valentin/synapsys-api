@@ -109,6 +109,20 @@ class VerifyTotpChallengeHandlerTest {
     }
 
     @Test
+    void verify_nullSecret_throwsTotpCodeInvalid_withoutNpe() {
+        // totpEnabled=true but secret null: data inconsistency — must not reach isValid()
+        User noSecret = new User(userId, "user1", "user1@test.com", "hash",
+            Role.USER, true, Instant.now(), null, true);
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(noSecret));
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verifyNoInteractions(codeValidator);
+    }
+
+    @Test
     void verify_inactiveUser_throwsUserNotActive() {
         User inactive = new User(userId, "user1", "user1@test.com", "hash",
             Role.USER, false, Instant.now(), "SECRET", true);

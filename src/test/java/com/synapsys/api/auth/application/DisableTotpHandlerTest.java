@@ -37,6 +37,19 @@ class DisableTotpHandlerTest {
     }
 
     @Test
+    void disable_nullSecret_throwsTotpCodeInvalid_withoutNpe() {
+        // totpEnabled=true but secret null: data inconsistency — must not call isValid()
+        User noSecret = new User(userId, "user1", "user1@test.com", "hash",
+            Role.USER, true, Instant.now(), null, true);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(noSecret));
+
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verifyNoInteractions(codeValidator);
+    }
+
+    @Test
     void disable_validCode_disablesIt() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(enabledUser));
         when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);

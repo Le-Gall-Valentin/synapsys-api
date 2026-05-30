@@ -26,6 +26,11 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
 
     @Modifying(clearAutomatically = true)
     @Transactional
+    @Query("UPDATE UserEntity u SET u.totpSecret = :secret WHERE u.id = :id AND u.totpSecret IS NULL")
+    int saveTotpSecretIfAbsent(@Param("id") UUID id, @Param("secret") String secret);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
     @Query("UPDATE UserEntity u SET u.totpEnabled = true WHERE u.id = :id")
     void enableTotpById(@Param("id") UUID id);
 

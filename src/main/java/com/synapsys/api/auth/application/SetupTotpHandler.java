@@ -6,8 +6,6 @@ import com.synapsys.api.auth.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @ApplicationService
 public class SetupTotpHandler implements SetupTotpUseCase {
 
@@ -33,9 +31,19 @@ public class SetupTotpHandler implements SetupTotpUseCase {
             throw new AuthException.TotpAlreadyEnabled();
         }
 
-        String secret = secretGenerator.generateSecret();
-        userTotpPort.saveTotpSecret(command.userId(), secret);
-        String uri = secretGenerator.buildOtpauthUri(secret, user.email());
-        return new TotpSetupResult(secret, uri);
+        String candidate = secretGenerator.generateSecret();
+        boolean saved = userTotpPort.saveTotpSecretIfAbsent(command.userId(), candidate);
+
+        if (!saved) {
+            // A concurrent request already saved a secret. Reload and return
+            // the winning secret so both callers converge on the same QR code.
+            User refreshed = userRepository.findById(command.userId())
+                .orElseThrow(AuthException.UserNotFound::new);
+            String existing = refreshed.totpSecret();
+            if (existing == null) throw new AuthException.TotpNotEnabled();
+            return new TotpSetupResult(existing, secretGenerator.buildOtpauthUri(existing, refreshed.email()));
+        }
+
+        return new TotpSetupResult(candidate, secretGenerator.buildOtpauthUri(candidate, user.email()));
     }
 }

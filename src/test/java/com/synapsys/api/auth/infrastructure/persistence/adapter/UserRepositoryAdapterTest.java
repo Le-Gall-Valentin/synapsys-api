@@ -87,6 +87,29 @@ class UserRepositoryAdapterTest {
     }
 
     @Test
+    void saveTotpSecretIfAbsent_encryptsAndReturnsTrue_whenRowUpdated() {
+        UUID id = UUID.randomUUID();
+        when(encryptor.encrypt("PLAIN_SECRET====")).thenReturn("enc-value");
+        when(jpa.saveTotpSecretIfAbsent(id, "enc-value")).thenReturn(1);
+
+        boolean result = adapter.saveTotpSecretIfAbsent(id, "PLAIN_SECRET====");
+
+        assertThat(result).isTrue();
+        verify(jpa).saveTotpSecretIfAbsent(id, "enc-value");
+    }
+
+    @Test
+    void saveTotpSecretIfAbsent_returnsFalse_whenNoRowUpdated() {
+        UUID id = UUID.randomUUID();
+        when(encryptor.encrypt("PLAIN_SECRET====")).thenReturn("enc-value");
+        when(jpa.saveTotpSecretIfAbsent(id, "enc-value")).thenReturn(0);
+
+        boolean result = adapter.saveTotpSecretIfAbsent(id, "PLAIN_SECRET====");
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
     void enableTotp_delegatesToJpa() {
         UUID id = UUID.randomUUID();
         adapter.enableTotp(id);

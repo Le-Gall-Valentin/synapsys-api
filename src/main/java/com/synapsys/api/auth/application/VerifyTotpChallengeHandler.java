@@ -51,6 +51,12 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
             throw new AuthException.UserNotActive();
         }
 
+        // Data inconsistency guard: totpEnabled=true with no secret is unreachable in normal flow
+        // (encryption failure or direct DB manipulation). Treat as invalid code — no NPE, no leakage.
+        if (user.totpSecret() == null) {
+            throw new AuthException.TotpCodeInvalid();
+        }
+
         // Validate cryptographically first — wrong code must NOT consume the anti-replay slot,
         // so the user can retry with the next TOTP window's code.
         if (!codeValidator.isValid(user.totpSecret(), command.code())) {
