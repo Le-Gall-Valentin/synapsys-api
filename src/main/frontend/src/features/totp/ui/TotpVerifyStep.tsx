@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import { TotpChallengeExpiredError } from '../model/errors'
+import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 import type { ITotpApi } from '../api/ITotpApi'
 import type { User } from '@/entities/user'
 
@@ -21,7 +22,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const isSubmittingRef = useRef(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
     if (code.length < 6) { setErrorKey('verify.error.incomplete'); return }
     if (isSubmittingRef.current) return
@@ -34,6 +35,12 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
     } catch (error) {
       if (error instanceof TotpChallengeExpiredError) {
         setErrorKey('verify.error.challenge_expired')
+      } else if (error instanceof RateLimitError) {
+        setErrorKey('verify.error.rate_limit')
+      } else if (error instanceof NetworkError) {
+        setErrorKey('verify.error.network')
+      } else if (error instanceof ServerError) {
+        setErrorKey('verify.error.server')
       } else {
         setErrorKey('verify.error.invalid_code')
         setCode('')

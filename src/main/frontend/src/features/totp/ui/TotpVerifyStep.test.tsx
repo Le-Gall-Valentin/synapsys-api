@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { TotpVerifyStep } from './TotpVerifyStep'
 import type { ITotpApi } from '../api/ITotpApi'
 import { TotpCodeError, TotpChallengeExpiredError } from '../model/errors'
+import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -182,5 +183,41 @@ describe('TotpVerifyStep', () => {
 
     fireEvent.click(getByText('verify.back'))
     expect(onBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows rate_limit error on RateLimitError', async () => {
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new RateLimitError()) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+    await waitFor(() => expect(getByText('verify.error.rate_limit')).toBeTruthy())
+  })
+
+  it('shows network error on NetworkError', async () => {
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new NetworkError()) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+    await waitFor(() => expect(getByText('verify.error.network')).toBeTruthy())
+  })
+
+  it('shows server error on ServerError', async () => {
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new ServerError()) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+    await waitFor(() => expect(getByText('verify.error.server')).toBeTruthy())
   })
 })

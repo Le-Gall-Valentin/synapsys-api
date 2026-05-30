@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Button, Spinner } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import { TotpCodeError } from '../model/errors'
+import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 import type { ITotpApi } from '../api/ITotpApi'
 import type { TotpSetupData } from '../model/types'
 
@@ -52,8 +53,15 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
       if (error instanceof TotpCodeError) {
         setErrorKey('setup.error.invalid_code')
         setCode('')
+      } else if (error instanceof RateLimitError) {
+        setErrorKey('setup.error.rate_limit')
+      } else if (error instanceof NetworkError) {
+        setErrorKey('setup.error.network')
+      } else if (error instanceof ServerError) {
+        setErrorKey('setup.error.server')
       } else {
         setErrorKey('setup.error.invalid_code')
+        setCode('')
       }
     } finally {
       isSubmittingRef.current = false

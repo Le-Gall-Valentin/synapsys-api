@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { TotpSetupFlow } from './TotpSetupFlow'
 import type { ITotpApi } from '../api/ITotpApi'
 import { TotpCodeError } from '../model/errors'
+import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 
 vi.mock('qrcode.react', () => {
   const QRCodeSVG = (props: { value: string }) => <div data-testid="qr-code" data-value={props.value} />
@@ -155,5 +156,50 @@ describe('TotpSetupFlow', () => {
     )
     await findByTestId('qr-code')
     expect(getByText('Custom label')).toBeTruthy()
+  })
+
+  it('shows rate_limit error on RateLimitError from confirm', async () => {
+    const api = makeApi({ confirm: vi.fn().mockRejectedValue(new RateLimitError()) })
+    const { findByTestId, container, getByRole, findByRole } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+    const inputs = container.querySelectorAll('input[inputmode="numeric"]')
+    '123456'.split('').forEach((d, i) => fireEvent.change(inputs[i]!, { target: { value: d } }))
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /setup\.submit/i }).closest('form')!)
+    })
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('setup.error.rate_limit')
+  })
+
+  it('shows network error on NetworkError from confirm', async () => {
+    const api = makeApi({ confirm: vi.fn().mockRejectedValue(new NetworkError()) })
+    const { findByTestId, container, getByRole, findByRole } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+    const inputs = container.querySelectorAll('input[inputmode="numeric"]')
+    '654321'.split('').forEach((d, i) => fireEvent.change(inputs[i]!, { target: { value: d } }))
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /setup\.submit/i }).closest('form')!)
+    })
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('setup.error.network')
+  })
+
+  it('shows server error on ServerError from confirm', async () => {
+    const api = makeApi({ confirm: vi.fn().mockRejectedValue(new ServerError()) })
+    const { findByTestId, container, getByRole, findByRole } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+    const inputs = container.querySelectorAll('input[inputmode="numeric"]')
+    '111111'.split('').forEach((d, i) => fireEvent.change(inputs[i]!, { target: { value: d } }))
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /setup\.submit/i }).closest('form')!)
+    })
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('setup.error.server')
   })
 })
