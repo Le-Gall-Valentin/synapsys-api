@@ -50,6 +50,13 @@ describe('TotpSetupFlow', () => {
     expect(setup).toHaveBeenCalledTimes(1)
   })
 
+  it('shows error when setup returns empty secret', async () => {
+    const api = makeApi({ setup: vi.fn().mockResolvedValue({ otpauthUri: 'otpauth://...', secret: '' }) })
+    const { findByRole } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('setup.error.setup_failed')
+  })
+
   it('shows error when setup fails', async () => {
     const api = makeApi({ setup: vi.fn().mockRejectedValue(new Error('network error')) })
     const { findByRole } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
