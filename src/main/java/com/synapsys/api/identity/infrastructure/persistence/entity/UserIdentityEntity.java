@@ -1,8 +1,7 @@
-package com.synapsys.api.auth.infrastructure.persistence.entity;
+package com.synapsys.api.identity.infrastructure.persistence.entity;
 
 import com.synapsys.api.shared.model.Role;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +18,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class UserEntity {
+public class UserIdentityEntity {
 
     @Id
     @UuidGenerator
@@ -31,25 +30,14 @@ public class UserEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
 
-    @Setter(AccessLevel.NONE)
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
-    @Setter(AccessLevel.NONE)
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
-
-    @Column(name = "totp_secret")
-    private String totpSecret;
-
-    @Column(name = "totp_enabled", nullable = false)
-    private boolean totpEnabled = false;
 }

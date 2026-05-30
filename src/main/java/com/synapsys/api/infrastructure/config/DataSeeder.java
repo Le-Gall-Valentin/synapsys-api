@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.domain.port.in.SeedUseCase;
+import com.synapsys.api.identity.application.port.in.SeedUseCase;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

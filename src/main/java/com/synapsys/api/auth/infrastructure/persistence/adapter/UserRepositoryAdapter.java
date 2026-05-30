@@ -1,11 +1,8 @@
 package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
 import com.synapsys.api.auth.domain.model.AuthException;
-import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
-import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.port.out.UserAdminPort;
-import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
@@ -18,10 +15,10 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
-// Implements UserRepository (queries), UserCommandPort (mutations), and UserAdminPort (admin checks),
+// Implements UserRepository (queries) and UserAdminPort (admin checks),
 // sharing a single JPA repository to avoid duplicating persistence logic across multiple adapters.
 @Component
-public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort {
+public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
 
     private final UserJpaRepository jpa;
     private final TextEncryptor encryptor;
@@ -50,25 +47,6 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
     @Override
     public Optional<User> findById(UUID id) {
         return jpa.findById(id).map(this::toDomain);
-    }
-
-    @Override
-    public void deactivate(UUID userId) {
-        jpa.deactivateById(userId);
-    }
-
-    @Override
-    public User save(CreateUserCommand command) {
-        try {
-            UserEntity entity = new UserEntity();
-            entity.setUsername(command.username());
-            entity.setEmail(command.email());
-            entity.setPasswordHash(command.password());
-            entity.setRole(command.role());
-            return toDomain(jpa.saveAndFlush(entity));
-        } catch (DataIntegrityViolationException e) {
-            throw resolveConstraintViolation(e);
-        }
     }
 
     private AuthException resolveConstraintViolation(DataIntegrityViolationException e) {

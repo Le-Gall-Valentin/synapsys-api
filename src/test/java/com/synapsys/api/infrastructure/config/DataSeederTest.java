@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.domain.port.in.SeedUseCase;
+import com.synapsys.api.identity.application.port.in.SeedUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
