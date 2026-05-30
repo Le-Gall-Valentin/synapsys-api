@@ -26,16 +26,16 @@ public class TotpController {
     private final SetupTotpUseCase setupUseCase;
     private final ConfirmTotpUseCase confirmUseCase;
     private final DisableTotpUseCase disableUseCase;
-    private final GetTotpStatusUseCase getTotpStatusUseCase;
+    private final GetTotpStatusUseCase statusUseCase;
 
     public TotpController(SetupTotpUseCase setupUseCase,
                           ConfirmTotpUseCase confirmUseCase,
                           DisableTotpUseCase disableUseCase,
-                          GetTotpStatusUseCase getTotpStatusUseCase) {
+                          GetTotpStatusUseCase statusUseCase) {
         this.setupUseCase = setupUseCase;
         this.confirmUseCase = confirmUseCase;
         this.disableUseCase = disableUseCase;
-        this.getTotpStatusUseCase = getTotpStatusUseCase;
+        this.statusUseCase = statusUseCase;
     }
 
     @PostMapping("/setup")
@@ -68,7 +68,7 @@ public class TotpController {
     @RateLimiting(max = 30)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TotpStatusResponse> status(@AuthenticationPrincipal CustomUserDetails caller) {
-        boolean enabled = getTotpStatusUseCase.isTotpEnabled(caller.getUserId());
+        boolean enabled = statusUseCase.isTotpEnabled(caller.getUserId());
         return ResponseEntity.ok(new TotpStatusResponse(enabled));
     }
 }
