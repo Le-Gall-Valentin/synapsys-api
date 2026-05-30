@@ -14,6 +14,17 @@ const particles = [
   { x1: 280, y1: 170, delay: '2.1s' },
 ] as const
 
+const SVG_STYLES = `
+  @media (prefers-reduced-motion: reduce) { .network-artwork * { animation: none !important; transition: none !important; } }
+  .na-edges { stroke: var(--brand-node-stroke); stroke-width: 1; fill: none; }
+  .na-pulse { fill: var(--brand-node-glow-sm); }
+  .na-dot { fill: var(--brand-node-fill); }
+  .na-hub-halo { fill: var(--brand-node-glow-lg); }
+  .na-hub-core { fill: var(--brand-node-fill); }
+  .na-hub-label { fill: var(--brand-hub-text); font-size: 14px; font-weight: 700; font-family: ui-monospace, monospace; }
+  .na-particle { fill: var(--brand-node-fill); }
+`
+
 export function NetworkArtwork() {
   return (
     <svg
@@ -22,8 +33,8 @@ export function NetworkArtwork() {
       className="h-auto w-full network-artwork"
       aria-hidden="true"
     >
-      <style>{`@media (prefers-reduced-motion: reduce) { .network-artwork * { animation: none !important; transition: none !important; } }`}</style>
-      <g stroke="rgba(94,234,212,0.25)" strokeWidth="1" fill="none">
+      <style>{SVG_STYLES}</style>
+      <g className="na-edges">
         {nodes.map((n) => (
           <line key={n.delay} x1="160" y1="120" x2={n.cx} y2={n.cy} />
         ))}
@@ -31,31 +42,23 @@ export function NetworkArtwork() {
       <g>
         {nodes.map((n) => (
           <g key={n.delay}>
-            <circle cx={n.cx} cy={n.cy} r="14" fill="rgba(94,234,212,0.08)">
+            <circle cx={n.cx} cy={n.cy} r="14" className="na-pulse">
               <animate attributeName="r" values="12;18;12" dur="3s" begin={n.delay} repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" begin={n.delay} repeatCount="indefinite" />
             </circle>
-            <circle cx={n.cx} cy={n.cy} r="5" fill="#5eead4">
+            <circle cx={n.cx} cy={n.cy} r="5" className="na-dot">
               <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" begin={n.delay} repeatCount="indefinite" />
             </circle>
           </g>
         ))}
       </g>
-      <circle cx="160" cy="120" r="22" fill="rgba(94,234,212,0.15)" />
-      <circle cx="160" cy="120" r="14" fill="#5eead4" />
-      <text
-        x="160"
-        y="126"
-        textAnchor="middle"
-        fontSize="14"
-        fontWeight="700"
-        fill="#0a0b0d"
-        fontFamily="ui-monospace, monospace"
-      >
+      <circle cx="160" cy="120" r="22" className="na-hub-halo" />
+      <circle cx="160" cy="120" r="14" className="na-hub-core" />
+      <text x="160" y="126" textAnchor="middle" className="na-hub-label">
         S
       </text>
       {particles.map((p) => (
-        <circle key={p.delay} r="2.5" fill="#5eead4">
+        <circle key={p.delay} r="2.5" className="na-particle">
           <animate attributeName="cx" values={`${p.x1};160`} dur="2.8s" begin={p.delay} repeatCount="indefinite" />
           <animate attributeName="cy" values={`${p.y1};120`} dur="2.8s" begin={p.delay} repeatCount="indefinite" />
           <animate attributeName="opacity" values="0;1;0" dur="2.8s" begin={p.delay} repeatCount="indefinite" />

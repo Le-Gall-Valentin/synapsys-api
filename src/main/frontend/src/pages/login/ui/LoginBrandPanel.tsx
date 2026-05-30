@@ -2,22 +2,22 @@ import { useTranslation } from 'react-i18next'
 import { NetworkArtwork } from './NetworkArtwork'
 
 const BRAND_PANEL_BG =
-  'radial-gradient(900px 600px at 20% 20%, rgba(94,234,212,0.10), transparent 60%), radial-gradient(700px 600px at 80% 80%, rgba(129,140,248,0.08), transparent 60%), linear-gradient(145deg, #0c1014 0%, #0a0b0d 100%)'
+  'radial-gradient(900px 600px at 20% 20%, var(--brand-accent-glow-1), transparent 60%), radial-gradient(700px 600px at 80% 80%, var(--brand-accent-glow-2), transparent 60%), linear-gradient(145deg, var(--brand-panel-from) 0%, var(--brand-panel-to) 100%)'
 
 const GRID_BG_IMAGE =
-  'linear-gradient(rgba(94,234,212,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(94,234,212,0.04) 1px, transparent 1px)'
+  'linear-gradient(var(--brand-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--brand-grid-line) 1px, transparent 1px)'
 
 const GRID_MASK =
   'radial-gradient(ellipse 80% 60% at 50% 50%, #000 30%, transparent 80%)'
 
-const BRAND_ICON_BG = 'linear-gradient(135deg, #5eead4, #38bdf8)'
+const BRAND_ICON_BG = 'linear-gradient(135deg, var(--brand-icon-from), var(--brand-icon-to))'
 
 const BRAND_ICON_SHADOW =
-  '0 1px 0 rgba(255,255,255,0.15) inset, 0 2px 6px rgba(94,234,212,0.18)'
+  '0 1px 0 rgba(255,255,255,0.15) inset, 0 2px 6px var(--brand-icon-glow)'
 
-const HERO_TEXT_BG = 'linear-gradient(135deg, #ffffff 0%, #b6bbc5 100%)'
+const HERO_TEXT_BG = 'linear-gradient(135deg, var(--brand-hero-text-from) 0%, var(--brand-hero-text-to) 100%)'
 
-const QUOTE_BG = 'rgba(255,255,255,0.02)'
+const QUOTE_BG = 'var(--brand-quote-bg)'
 
 export function LoginBrandPanel() {
   const { t } = useTranslation('login')
