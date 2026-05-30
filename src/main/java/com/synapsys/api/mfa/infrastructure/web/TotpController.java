@@ -4,6 +4,7 @@ import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import com.synapsys.api.mfa.application.port.in.ConfirmTotpUseCase;
 import com.synapsys.api.mfa.application.port.in.DisableTotpUseCase;
+import com.synapsys.api.mfa.application.port.in.GetTotpStatusUseCase;
 import com.synapsys.api.mfa.application.port.in.SetupTotpUseCase;
 import com.synapsys.api.mfa.application.dto.ConfirmTotpCommand;
 import com.synapsys.api.mfa.application.dto.DisableTotpCommand;
@@ -11,6 +12,7 @@ import com.synapsys.api.mfa.application.dto.SetupTotpCommand;
 import com.synapsys.api.mfa.domain.model.TotpSetupResult;
 import com.synapsys.api.mfa.infrastructure.web.dto.TotpCodeRequest;
 import com.synapsys.api.mfa.infrastructure.web.dto.TotpSetupResponse;
+import com.synapsys.api.mfa.infrastructure.web.dto.TotpStatusResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,13 +26,16 @@ public class TotpController {
     private final SetupTotpUseCase setupUseCase;
     private final ConfirmTotpUseCase confirmUseCase;
     private final DisableTotpUseCase disableUseCase;
+    private final GetTotpStatusUseCase getTotpStatusUseCase;
 
     public TotpController(SetupTotpUseCase setupUseCase,
                           ConfirmTotpUseCase confirmUseCase,
-                          DisableTotpUseCase disableUseCase) {
+                          DisableTotpUseCase disableUseCase,
+                          GetTotpStatusUseCase getTotpStatusUseCase) {
         this.setupUseCase = setupUseCase;
         this.confirmUseCase = confirmUseCase;
         this.disableUseCase = disableUseCase;
+        this.getTotpStatusUseCase = getTotpStatusUseCase;
     }
 
     @PostMapping("/setup")
@@ -57,5 +62,13 @@ public class TotpController {
                                         @AuthenticationPrincipal CustomUserDetails caller) {
         disableUseCase.disable(new DisableTotpCommand(caller.getUserId(), request.code()));
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/status")
+    @RateLimiting(max = 30)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TotpStatusResponse> status(@AuthenticationPrincipal CustomUserDetails caller) {
+        boolean enabled = getTotpStatusUseCase.isTotpEnabled(caller.getUserId());
+        return ResponseEntity.ok(new TotpStatusResponse(enabled));
     }
 }
