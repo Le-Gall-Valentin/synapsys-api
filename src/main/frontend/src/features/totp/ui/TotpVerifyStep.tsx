@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, Check, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/shared/ui'
+import { Button, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
@@ -69,7 +69,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
   return (
     <div>
       <div className="mb-8">
-        <h2 id={headingId} className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+        <h2 id={headingId} className="mb-2 text-[24px] lg:text-[28px] font-semibold tracking-tight text-fg-0">
           {t('verify.title')}
         </h2>
         <p className="text-sm text-fg-2">
@@ -102,7 +102,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
           type="submit"
           isLoading={isLoading}
           className="mt-2 w-full border-transparent py-3 font-semibold active:translate-y-px disabled:cursor-wait"
-          style={{ background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)', color: '#07211c' }}
+          style={CTA_BUTTON_STYLE}
         >
           <Check className="size-3.5" />
           {t('verify.submit')}

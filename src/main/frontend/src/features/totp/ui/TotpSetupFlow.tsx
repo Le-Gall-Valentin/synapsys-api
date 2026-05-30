@@ -2,7 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
-import { Button, Spinner } from '@/shared/ui'
+import { Button, Spinner, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpCodeError } from '../model/errors'
@@ -94,7 +94,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   return (
     <div>
       <div className="mb-8">
-        <h2 id={headingId} className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+        <h2 id={headingId} className="mb-2 text-[24px] lg:text-[28px] font-semibold tracking-tight text-fg-0">
           {t('setup.title')}
         </h2>
         <p className="text-sm text-fg-2">{t('setup.subtitle')}</p>
@@ -108,7 +108,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
           <div className="text-[10px] uppercase tracking-[0.08em] text-fg-3 font-semibold mb-1.5">
             {t('setup.manual_label')}
           </div>
-          <div className="text-[13px] text-fg-0 bg-bg-3 border border-border rounded p-2 break-all leading-relaxed font-mono">
+          <div className="text-[13px] text-fg-0 bg-bg-3 border border-border rounded p-2 break-words leading-relaxed font-mono">
             {groupedSecret}
           </div>
         </div>
@@ -139,7 +139,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
           type="submit"
           isLoading={isLoading}
           className="mt-2 w-full border-transparent py-3 font-semibold active:translate-y-px disabled:cursor-wait"
-          style={{ background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)', color: '#07211c' }}
+          style={CTA_BUTTON_STYLE}
         >
           <Check className="size-3.5" />
           {t('setup.submit')}

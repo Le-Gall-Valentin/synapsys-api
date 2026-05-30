@@ -56,11 +56,20 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[1fr_1fr] lg:grid-cols-[1.1fr_1fr]">
       <LoginBrandPanel />
 
       <main className="relative flex flex-col justify-center bg-bg-0 px-8 py-12 sm:px-11">
         <div className="mx-auto w-full max-w-95">
+          <div className="mb-8 flex items-center gap-2.5 md:hidden">
+            <div
+              className="grid size-8 shrink-0 place-items-center rounded-lg font-mono text-sm font-bold text-bg-0"
+              style={{ background: 'linear-gradient(135deg, var(--brand-icon-from), var(--brand-icon-to))' }}
+            >
+              S
+            </div>
+            <span className="text-[15px] font-semibold tracking-tight text-fg-0">SynapSys</span>
+          </div>
 
           {step === 'credentials' && (
             <>

@@ -25,7 +25,7 @@ export function LoginBrandPanel() {
   return (
     <div
       aria-hidden="true"
-      className="relative hidden flex-col overflow-hidden border-r border-border lg:flex"
+      className="relative hidden flex-col overflow-hidden border-r border-border md:flex"
       style={{ background: BRAND_PANEL_BG }}
     >
       {/* Grille décorative */}
@@ -56,7 +56,7 @@ export function LoginBrandPanel() {
         {/* Hero */}
         <div className="mt-16">
           <p
-            className="mb-4 text-[34px] font-semibold leading-[1.1] tracking-tight"
+            className="mb-4 text-[26px] lg:text-[34px] font-semibold leading-[1.1] tracking-tight"
             style={{
               background: HERO_TEXT_BG,
               WebkitBackgroundClip: 'text',
