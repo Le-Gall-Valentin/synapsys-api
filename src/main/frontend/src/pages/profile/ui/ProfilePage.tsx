@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAuth } from '@/features/auth'
 import { Button } from '@/shared/ui'
 
-const AVATAR_GRADIENT = 'linear-gradient(135deg, #5eead4, #818cf8)'
+const AVATAR_GRADIENT = 'linear-gradient(135deg, var(--brand-icon-from), var(--brand-icon-to))'
 
 export function ProfilePage() {
   const { user, logout } = useAuth(
@@ -36,7 +36,18 @@ export function ProfilePage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-bg-0 px-4">
+    <main className="flex min-h-screen flex-col bg-bg-0 px-4">
+      <header className="flex items-center gap-2.5 py-5">
+        <div
+          className="grid size-8 shrink-0 place-items-center rounded-lg font-mono text-sm font-bold text-bg-0"
+          style={{ background: AVATAR_GRADIENT }}
+        >
+          S
+        </div>
+        <span className="text-[15px] font-semibold tracking-tight text-fg-0">SynapSys</span>
+      </header>
+
+      <div className="flex flex-1 items-center justify-center">
       <div className="w-full max-w-sm rounded-xl border border-border bg-bg-1 p-8">
         {/* Avatar */}
         <div className="mb-6 flex justify-center">
@@ -68,6 +79,7 @@ export function ProfilePage() {
           <LogOut className="size-4" />
           {t('action.logout')}
         </Button>
+      </div>
       </div>
     </main>
   )
