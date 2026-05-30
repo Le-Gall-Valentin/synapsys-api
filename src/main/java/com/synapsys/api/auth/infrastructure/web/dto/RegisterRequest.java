@@ -1,7 +1,6 @@
 package com.synapsys.api.auth.infrastructure.web.dto;
 
-// Role is imported from the domain model intentionally: the registration contract mirrors the domain's role taxonomy.
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.shared.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,9 +1,10 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.port.in.ResetUserTotpUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
-import com.synapsys.api.auth.domain.service.RoleHierarchy;
+import com.synapsys.api.shared.service.RoleHierarchy;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.transaction.annotation.Transactional;
 

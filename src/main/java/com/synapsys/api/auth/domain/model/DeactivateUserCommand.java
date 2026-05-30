@@ -1,5 +1,6 @@
 package com.synapsys.api.auth.domain.model;
 
+import com.synapsys.api.shared.model.Role;
 import java.util.UUID;
 
 public record DeactivateUserCommand(

@@ -1,5 +1,6 @@
 package com.synapsys.api.auth.domain.model;
 
+import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

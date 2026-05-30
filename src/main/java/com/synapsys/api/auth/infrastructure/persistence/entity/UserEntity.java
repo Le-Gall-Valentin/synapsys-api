@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.persistence.entity;
 
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.shared.model.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

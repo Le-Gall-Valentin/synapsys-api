@@ -2,6 +2,7 @@ package com.synapsys.api.auth.application;
 
 import com.synapsys.api.TestHashUtils;
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.port.out.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

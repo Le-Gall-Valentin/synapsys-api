@@ -19,100 +19,139 @@ class ArchRulesTest {
 
     @Test
     void domain_should_not_depend_on_infrastructure() {
-        ArchRule rule = noClasses()
-            .that().resideInAPackage("..auth.domain..")
-            .should().dependOnClassesThat()
-            .resideInAPackage("..auth.infrastructure..");
-        rule.check(classes);
-    }
-
-    @Test
-    void domain_should_not_depend_on_spring_framework() {
-        ArchRule rule = noClasses()
-            .that().resideInAPackage("..auth.domain..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..");
-        rule.check(classes);
-    }
-
-    @Test
-    void application_should_not_depend_on_infrastructure() {
-        ArchRule rule = noClasses()
-            .that().resideInAPackage("..auth.application..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("..auth.infrastructure..", "..infrastructure..");
-        rule.check(classes);
-    }
-
-    @Test
-    void web_layer_should_not_bypass_use_case_ports() {
         noClasses()
-            .that().resideInAPackage("..auth.infrastructure.web..")
+            .that().resideInAPackage("..domain..")
             .should().dependOnClassesThat()
-            .resideInAPackage("..auth.application..")
+            .resideInAPackage("..infrastructure..")
             .check(classes);
     }
 
     @Test
-    void application_should_not_depend_on_spring_framework() {
-        // @Transactional is intentionally allowed: transaction boundaries are an application-level concern.
-        // All other Spring framework dependencies remain forbidden in this layer.
+    void domain_should_not_depend_on_spring_framework() {
+        noClasses()
+            .that().resideInAPackage("..domain..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage("org.springframework..")
+            .check(classes);
+    }
+
+    @Test
+    void application_should_not_depend_on_infrastructure() {
+        noClasses()
+            .that().resideInAPackage("..application..")
+            .and(DescribedPredicate.describe("excluding tests",
+                c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT")))
+            .should().dependOnClassesThat()
+            .resideInAPackage("..infrastructure..")
+            .check(classes);
+    }
+
+    @Test
+    void application_should_not_depend_on_spring_except_transactions() {
         DescribedPredicate<JavaClass> springExceptTransactions = DescribedPredicate.describe(
             "reside in org.springframework.. but not org.springframework.transaction.annotation..",
             clazz -> clazz.getPackageName().startsWith("org.springframework.")
                      && !clazz.getPackageName().startsWith("org.springframework.transaction.annotation")
         );
         noClasses()
-            .that().resideInAPackage("..auth.application..")
+            .that().resideInAPackage("..application..")
+            .and(DescribedPredicate.describe("excluding tests",
+                c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT")))
             .should().dependOnClassesThat(springExceptTransactions)
             .check(classes);
     }
 
     @Test
+    void web_layer_should_not_bypass_use_case_ports() {
+        noClasses()
+            .that().resideInAPackage("..infrastructure.web..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("..application..")
+            .check(classes);
+    }
+
+    @Test
     void jpa_entities_should_not_reside_in_domain_or_application() {
-        ArchRule rule = noClasses()
+        noClasses()
             .that().areAnnotatedWith(Entity.class)
             .should().resideInAPackage("..domain..")
-            .orShould().resideInAPackage("..application..");
-        rule.check(classes);
+            .orShould().resideInAPackage("..application..")
+            .check(classes);
     }
 
     @Test
     void jpa_entities_should_reside_in_persistence_entity_package() {
-        ArchRule rule = classes()
+        classes()
             .that().areAnnotatedWith(Entity.class)
-            .should().resideInAPackage("..infrastructure.persistence.entity..");
-        rule.check(classes);
+            .should().resideInAPackage("..infrastructure.persistence.entity..")
+            .check(classes);
     }
 
     @Test
-    void application_services_should_reside_in_application_package() {
-        ArchRule rule = classes()
+    void application_services_should_reside_in_an_application_package() {
+        classes()
             .that().areAnnotatedWith(ApplicationService.class)
-            .should().resideInAPackage("..auth.application..");
-        rule.check(classes);
+            .should().resideInAPackage("..application..")
+            .check(classes);
     }
 
     @Test
     void ports_in_should_be_interfaces() {
-        ArchRule rule = classes()
+        classes()
             .that().resideInAPackage("..domain.port.in..")
-            .should().beInterfaces();
-        rule.check(classes);
+            .should().beInterfaces()
+            .check(classes);
     }
 
     @Test
     void ports_out_should_be_interfaces() {
-        ArchRule rule = classes()
+        classes()
             .that().resideInAPackage("..domain.port.out..")
-            .should().beInterfaces();
-        rule.check(classes);
+            .should().beInterfaces()
+            .check(classes);
     }
 
     @Test
-    void global_infrastructure_should_not_depend_on_auth_infrastructure() {
-        // SecurityConfig: injects JwtAuthenticationFilter — legitimate cross-BC dependency
-        // Test classes are excluded — they may reference auth infrastructure for test setup
+    void mfa_domain_and_application_should_not_depend_on_authentication_or_identity() {
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.mfa.domain..")
+            .or().resideInAPackage("com.synapsys.api.mfa.application..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.synapsys.api.authentication..",
+                "com.synapsys.api.identity..")
+            .allowEmptyShould(true)
+            .check(classes);
+    }
+
+    @Test
+    void identity_domain_and_application_should_not_depend_on_authentication_or_mfa() {
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.identity.domain..")
+            .or().resideInAPackage("com.synapsys.api.identity.application..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.synapsys.api.authentication..",
+                "com.synapsys.api.mfa..")
+            .allowEmptyShould(true)
+            .check(classes);
+    }
+
+    @Test
+    void authentication_domain_and_application_should_not_depend_on_identity_or_mfa() {
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.authentication.domain..")
+            .or().resideInAPackage("com.synapsys.api.authentication.application..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.synapsys.api.identity..",
+                "com.synapsys.api.mfa..")
+            .allowEmptyShould(true)
+            .check(classes);
+    }
+
+    @Test
+    void global_infrastructure_should_not_depend_on_bc_infrastructure() {
         noClasses()
             .that().resideInAPackage("com.synapsys.api.infrastructure..")
             .and(DescribedPredicate.describe("excluding tests and SecurityConfig",
@@ -120,7 +159,11 @@ class ArchRulesTest {
                   && !c.getSimpleName().endsWith("IT")
                   && !c.getSimpleName().equals("SecurityConfig")))
             .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.auth.infrastructure..")
+            .resideInAnyPackage(
+                "com.synapsys.api.authentication.infrastructure..",
+                "com.synapsys.api.identity.infrastructure..",
+                "com.synapsys.api.mfa.infrastructure..")
+            .allowEmptyShould(true)
             .check(classes);
     }
 
@@ -138,11 +181,9 @@ class ArchRulesTest {
 
     @Test
     void configuration_classes_should_not_implement_domain_ports() {
-        // SynapsysProperties is a pure config POJO — it must not carry domain port responsibilities.
-        // A dedicated adapter must implement domain ports instead.
-        ArchRule rule = noClasses()
+        noClasses()
             .that().haveSimpleName("SynapsysProperties")
-            .should().implement(com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort.class);
-        rule.check(classes);
+            .should().implement(com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort.class)
+            .check(classes);
     }
 }

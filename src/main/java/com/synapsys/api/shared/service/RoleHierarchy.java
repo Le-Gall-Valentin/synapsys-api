@@ -1,6 +1,6 @@
-package com.synapsys.api.auth.domain.service;
+package com.synapsys.api.shared.service;
 
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.shared.model.Role;
 
 public final class RoleHierarchy {
     private RoleHierarchy() {}

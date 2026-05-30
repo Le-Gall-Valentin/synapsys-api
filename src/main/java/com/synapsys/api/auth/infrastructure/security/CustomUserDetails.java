@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.security;
 
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.shared.security.RateLimitPrincipal;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

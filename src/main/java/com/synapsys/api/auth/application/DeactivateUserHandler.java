@@ -6,7 +6,7 @@ import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.in.DeactivateUserUseCase;
 import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
-import com.synapsys.api.auth.domain.service.RoleHierarchy;
+import com.synapsys.api.shared.service.RoleHierarchy;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,6 @@
 package com.synapsys.api.auth.infrastructure.persistence.repository;
 
-import com.synapsys.api.auth.domain.model.Role;
+import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.IntegrationTestConfig;
