@@ -17,7 +17,7 @@ export function Input({ label, suffix, className = '', ...props }: InputProps) {
       <div className="relative">
         <input
           id={id}
-          className={`w-full rounded-lg border border-border bg-bg-1 px-3.5 py-3 text-sm text-fg-0 outline-none placeholder:text-fg-3 transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_rgba(94,234,212,0.12)] ${suffix ? 'pr-11' : ''} ${className}`}
+          className={`w-full rounded-lg border border-border bg-bg-1 px-3.5 py-3 text-sm text-fg-0 outline-none placeholder:text-fg-3 transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_var(--color-accent-ring)] ${suffix ? 'pr-11' : ''} ${className}`}
           {...props}
         />
         {suffix && (

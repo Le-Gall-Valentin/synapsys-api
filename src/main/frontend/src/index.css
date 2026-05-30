@@ -1,29 +1,80 @@
 @import "tailwindcss";
 
+/* ── Light theme (default) ─────────────────────────────────────── */
 @theme {
-  --color-bg-0: #0a0b0d;
-  --color-bg-1: #0f1115;
-  --color-bg-2: #14171c;
-  --color-bg-3: #1b1f26;
-  --color-bg-4: #232831;
-  --color-border: #262b34;
-  --color-border-2: #2f3540;
-  --color-fg-0: #e6e8ec;
-  --color-fg-1: #b6bbc5;
-  --color-fg-2: #7a8190;
-  --color-fg-3: #4a5160;
-  --color-accent: #5eead4;
-  --color-accent-dim: #0d2a26;
-  --color-status-green: #4ade80;
-  --color-status-green-dim: #1a3324;
-  --color-status-red: #f87171;
-  --color-status-red-dim: #3a1d1d;
-  --color-status-orange: #fb923c;
-  --color-status-orange-dim: #3a2516;
-  --color-status-blue: #60a5fa;
-  --color-status-blue-dim: #16263d;
+  --color-bg-0: #ffffff;
+  --color-bg-1: #f7f8fa;
+  --color-bg-2: #f0f2f5;
+  --color-bg-3: #e8ebf0;
+  --color-bg-4: #dde1e8;
+  --color-border: #e2e5eb;
+  --color-border-2: #cbd0da;
+  --color-fg-0: #111318;
+  --color-fg-1: #3a4050;
+  --color-fg-2: #6b7280;
+  --color-fg-3: #9ca3af;
+  --color-accent: #0d9488;
+  --color-accent-dim: #f0fdfa;
+  --color-status-green: #15803d;
+  --color-status-green-dim: #f0fdf4;
+  --color-status-red: #dc2626;
+  --color-status-red-dim: #fef2f2;
+  --color-status-orange: #c2410c;
+  --color-status-orange-dim: #fff7ed;
+  --color-status-blue: #1d4ed8;
+  --color-status-blue-dim: #eff6ff;
   --font-family-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+/* Variables not needed as utility classes (brand panel, ring) */
+:root {
+  --color-accent-ring: rgba(13, 148, 136, 0.15);
+  --brand-panel-from: #e8f5f3;
+  --brand-panel-to: #f7f8fa;
+  --brand-accent-glow-1: rgba(13, 148, 136, 0.10);
+  --brand-accent-glow-2: rgba(99, 102, 241, 0.06);
+  --brand-grid-line: rgba(13, 148, 136, 0.05);
+  --brand-quote-bg: rgba(0, 0, 0, 0.04);
+  --brand-hero-text-from: #111318;
+  --brand-hero-text-to: #3a4050;
+}
+
+/* ── Dark theme override ────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-0: #0a0b0d;
+    --color-bg-1: #0f1115;
+    --color-bg-2: #14171c;
+    --color-bg-3: #1b1f26;
+    --color-bg-4: #232831;
+    --color-border: #262b34;
+    --color-border-2: #2f3540;
+    --color-fg-0: #e6e8ec;
+    --color-fg-1: #b6bbc5;
+    --color-fg-2: #7a8190;
+    --color-fg-3: #4a5160;
+    --color-accent: #5eead4;
+    --color-accent-dim: #0d2a26;
+    --color-status-green: #4ade80;
+    --color-status-green-dim: #1a3324;
+    --color-status-red: #f87171;
+    --color-status-red-dim: #3a1d1d;
+    --color-status-orange: #fb923c;
+    --color-status-orange-dim: #3a2516;
+    --color-status-blue: #60a5fa;
+    --color-status-blue-dim: #16263d;
+
+    --color-accent-ring: rgba(94, 234, 212, 0.12);
+    --brand-panel-from: #0c1014;
+    --brand-panel-to: #0a0b0d;
+    --brand-accent-glow-1: rgba(94, 234, 212, 0.10);
+    --brand-accent-glow-2: rgba(129, 140, 248, 0.08);
+    --brand-grid-line: rgba(94, 234, 212, 0.04);
+    --brand-quote-bg: rgba(255, 255, 255, 0.02);
+    --brand-hero-text-from: #ffffff;
+    --brand-hero-text-to: #b6bbc5;
+  }
 }
 
 *,
