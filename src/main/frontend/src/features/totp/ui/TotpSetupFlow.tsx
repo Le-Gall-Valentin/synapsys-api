@@ -40,7 +40,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
     setupCalledRef.current = true
     api.setup()
       .then(data => {
-        if (!data.secret) { setSetupError(true); return }
+        if (!data.secret?.trim()) { setSetupError(true); return }
         setSetupData(data)
       })
       .catch(() => setSetupError(true))

@@ -15,6 +15,9 @@ export const totpApi: ITotpApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) {
+          // Backend ProblemDetail title distinguishes challenge expiry from wrong code.
+          // 'TotpChallengeExpired' is set in AuthExceptionHandler for TotpChallengeExpired exception.
+          // Any other 401 title (or absent title) maps to a wrong code.
           const title = error.response?.data?.title as string | undefined
           if (title === 'TotpChallengeExpired') throw new TotpChallengeExpiredError()
           throw new TotpCodeError()
