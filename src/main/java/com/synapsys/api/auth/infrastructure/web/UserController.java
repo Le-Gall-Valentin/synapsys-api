@@ -35,6 +35,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @RateLimiting(max = 60)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserInfoResponse> me(@AuthenticationPrincipal CustomUserDetails caller) {
         User user = getCurrentUserUseCase.getCurrentUser(caller.getUserId());

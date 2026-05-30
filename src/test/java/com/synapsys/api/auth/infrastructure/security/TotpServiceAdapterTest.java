@@ -1,5 +1,7 @@
 package com.synapsys.api.auth.infrastructure.security;
 
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.code.HashingAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,5 +50,17 @@ class TotpServiceAdapterTest {
         String secret = adapter.generateSecret();
 
         assertThat(adapter.isValid(secret, "000000")).isFalse();
+    }
+
+    @Test
+    void isValid_currentWindowCode_returnsTrue() throws Exception {
+        String secret = "JBSWY3DPEHPK3PXP";
+        // Generate a valid code for the current time window using the same SHA-256 algorithm.
+        // Generating and validating in the same process avoids clock-drift issues.
+        DefaultCodeGenerator generator = new DefaultCodeGenerator(HashingAlgorithm.SHA256, 6);
+        long counter = Math.floorDiv(System.currentTimeMillis() / 1000L, 30);
+        String validCode = generator.generate(secret, counter);
+
+        assertThat(adapter.isValid(secret, validCode)).isTrue();
     }
 }

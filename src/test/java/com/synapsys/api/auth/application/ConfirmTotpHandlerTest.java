@@ -72,6 +72,14 @@ class ConfirmTotpHandlerTest {
     }
 
     @Test
+    void confirm_userNotFound_throws() {
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
+            .isInstanceOf(AuthException.UserNotFound.class);
+    }
+
+    @Test
     void confirm_setupNeverStarted_throwsTotpSetupNotStarted() {
         // setup() was never called — secret is null, but totpEnabled is also false.
         // This is a precondition failure, not a "TOTP not enabled" state.

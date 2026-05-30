@@ -69,4 +69,21 @@ class SetupTotpHandlerTest {
         assertThatThrownBy(() -> handler.setup(new SetupTotpCommand(userId)))
             .isInstanceOf(AuthException.UserNotFound.class);
     }
+
+    @Test
+    void setup_withPendingSecret_overwritesItWithNewSecret() {
+        // setup() called again while totpEnabled=false but a previous secret exists.
+        // This is intentional: the old QR code is silently invalidated.
+        User pendingUser = new User(userId, "user1", "user1@test.com", "hash",
+            Role.USER, true, Instant.now(), "OLDSECRETBASE32=", false);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+        when(secretGenerator.generateSecret()).thenReturn("NEWSECRETBASE32=");
+        when(secretGenerator.buildOtpauthUri("NEWSECRETBASE32=", "user1@test.com"))
+            .thenReturn("otpauth://totp/new");
+
+        TotpSetupResult result = handler.setup(new SetupTotpCommand(userId));
+
+        assertThat(result.secret()).isEqualTo("NEWSECRETBASE32=");
+        verify(userTotpPort).saveTotpSecret(userId, "NEWSECRETBASE32=");
+    }
 }
