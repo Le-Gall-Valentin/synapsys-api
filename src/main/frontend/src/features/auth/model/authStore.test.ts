@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from './authStore'
 import type { IAuthApi } from './IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
+import { notifyLoginSuccess } from '@/shared/api'
 import { CredentialsError, NetworkError, ServerError } from './errors'
 
 vi.mock('@/shared/lib', async (importActual) => {
@@ -14,9 +15,15 @@ vi.mock('@/shared/lib', async (importActual) => {
   }
 })
 
+vi.mock('@/shared/api', () => ({
+  notifyLoginSuccess: vi.fn(),
+  client: { post: vi.fn(), get: vi.fn() },
+}))
+
 const mockedSetSessionHint = vi.mocked(setSessionHint)
 const mockedClearSessionHint = vi.mocked(clearSessionHint)
 const mockedHasSessionHint = vi.mocked(hasSessionHint)
+const mockedNotifyLoginSuccess = vi.mocked(notifyLoginSuccess)
 
 function createApiMock(): IAuthApi {
   return {
@@ -31,30 +38,69 @@ describe('authStore', () => {
     mockedSetSessionHint.mockReset()
     mockedClearSessionHint.mockReset()
     mockedHasSessionHint.mockReset()
+    mockedNotifyLoginSuccess.mockReset()
   })
 
   it('login sets authenticated state and session hint', async () => {
     const api = createApiMock()
     vi.mocked(api.login).mockResolvedValue({
-      id: '1',
-      username: 'user',
-      role: 'USER',
+      type: 'success',
+      user: { id: '1', username: 'user', role: 'USER', totpEnabled: true },
     })
     const store = createAuthStore(api)
 
-    await store.getState().login({ username: 'user', password: 'secret' })
+    const outcome = await store.getState().login({ username: 'user', password: 'secret' })
 
     expect(api.login).toHaveBeenCalledWith({ username: 'user', password: 'secret' })
     expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
     expect(store.getState().user?.username).toBe('user')
+    expect(outcome).toEqual({ kind: 'authenticated' })
+  })
+
+  it('login returns totp_required with username and does not set user', async () => {
+    const api = createApiMock()
+    vi.mocked(api.login).mockResolvedValue({ type: 'totp_required' })
+    const store = createAuthStore(api)
+
+    const outcome = await store.getState().login({ username: 'alice', password: 'secret' })
+
+    expect(outcome).toEqual({ kind: 'totp_required', username: 'alice' })
+    expect(mockedSetSessionHint).not.toHaveBeenCalled()
+    expect(mockedNotifyLoginSuccess).not.toHaveBeenCalled()
+    expect(store.getState().user).toBeNull()
+  })
+
+  it('login returns enrollment_proposed and calls notifyLoginSuccess (F-M3)', async () => {
+    const user = { id: '1', username: 'user', role: 'USER' as const, totpEnabled: false }
+    const api = createApiMock()
+    vi.mocked(api.login).mockResolvedValue({ type: 'success', user })
+    const store = createAuthStore(api)
+
+    const outcome = await store.getState().login({ username: 'user', password: 'secret' })
+
+    expect(outcome).toEqual({ kind: 'enrollment_proposed', user })
+    // Credentials verified — refresh interceptor must be notified even though user is not set yet
+    expect(mockedNotifyLoginSuccess).toHaveBeenCalledTimes(1)
+    expect(mockedSetSessionHint).not.toHaveBeenCalled()
+    expect(store.getState().user).toBeNull()
+  })
+
+  it('finalizeLogin sets user and session hint', () => {
+    const api = createApiMock()
+    const store = createAuthStore(api)
+    const user = { id: '1', username: 'user', role: 'USER' as const, totpEnabled: true }
+
+    store.getState().finalizeLogin(user)
+
+    expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
+    expect(store.getState().user).toEqual(user)
   })
 
   it('logout clears auth state even when API fails', async () => {
     const api = createApiMock()
     vi.mocked(api.login).mockResolvedValue({
-      id: '1',
-      username: 'user',
-      role: 'USER',
+      type: 'success',
+      user: { id: '1', username: 'user', role: 'USER', totpEnabled: true },
     })
     vi.mocked(api.logout).mockRejectedValue(new Error('network'))
     const store = createAuthStore(api)
@@ -82,7 +128,7 @@ describe('authStore', () => {
     it('calls getMe and hydrates user when session hint is set', async () => {
       const api = createApiMock()
       mockedHasSessionHint.mockReturnValue(true)
-      vi.mocked(api.getMe).mockResolvedValue({ id: '1', username: 'admin', role: 'ADMIN' })
+      vi.mocked(api.getMe).mockResolvedValue({ id: '1', username: 'admin', role: 'ADMIN', totpEnabled: false })
       const store = createAuthStore(api)
 
       await store.getState().initialize()
@@ -127,19 +173,19 @@ describe('authStore', () => {
       const controller1 = new AbortController()
       mockedHasSessionHint.mockReturnValue(true)
 
-      let resolveGetMe!: (value: { id: string; username: string; role: 'USER' }) => void
+      let resolveGetMe!: (value: { id: string; username: string; role: 'USER'; totpEnabled: boolean }) => void
       vi.mocked(api.getMe)
         .mockImplementationOnce(
           () => new Promise((resolve) => { resolveGetMe = resolve as typeof resolveGetMe })
         )
-        .mockResolvedValueOnce({ id: '2', username: 'alice', role: 'USER' })
+        .mockResolvedValueOnce({ id: '2', username: 'alice', role: 'USER', totpEnabled: false })
 
       const store = createAuthStore(api)
 
       // First call — will be aborted before getMe resolves
       const initPromise1 = store.getState().initialize(controller1.signal)
       controller1.abort()
-      resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
+      resolveGetMe({ id: '1', username: 'alice', role: 'USER', totpEnabled: false })
       await initPromise1 // wait for the aborted call to fully settle
 
       // Second call — must proceed and complete normally
@@ -153,7 +199,7 @@ describe('authStore', () => {
       const api = createApiMock()
       const abortController = new AbortController()
 
-      let resolveGetMe!: (value: { id: string; username: string; role: 'USER' }) => void
+      let resolveGetMe!: (value: { id: string; username: string; role: 'USER'; totpEnabled: boolean }) => void
       vi.mocked(api.getMe).mockImplementation(
         () => new Promise((resolve) => { resolveGetMe = resolve as typeof resolveGetMe })
       )
@@ -164,7 +210,7 @@ describe('authStore', () => {
 
       // Abort before getMe resolves
       abortController.abort()
-      resolveGetMe({ id: '1', username: 'alice', role: 'USER' })
+      resolveGetMe({ id: '1', username: 'alice', role: 'USER', totpEnabled: false })
       await initPromise
 
       // isInitializing stays true because we never set it to false (aborted)

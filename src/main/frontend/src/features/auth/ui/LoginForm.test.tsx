@@ -11,21 +11,22 @@ const mockUseAuth = vi.mocked(useAuth)
 
 beforeEach(() => vi.clearAllMocks())
 
-function setup(mockLogin: ReturnType<typeof vi.fn>) {
+function setup(mockLogin: ReturnType<typeof vi.fn>, props: { onLoginOutcome?: (outcome: unknown) => void } = {}) {
   const baseState = {
     user: null,
     isInitializing: false,
     login: mockLogin,
     logout: vi.fn(),
     initialize: vi.fn(),
+    finalizeLogin: vi.fn(),
   }
   mockUseAuth.mockImplementation((selector) => selector(baseState as Parameters<typeof selector>[0]))
-  return render(<LoginForm />)
+  return render(<LoginForm {...props} />)
 }
 
 describe('LoginForm', () => {
   it('calls login with credentials on submit', async () => {
-    const mockLogin = vi.fn().mockResolvedValue(undefined)
+    const mockLogin = vi.fn().mockResolvedValue({ kind: 'authenticated' })
     const { getByLabelText, queryByRole } = setup(mockLogin)
 
     fireEvent.change(getByLabelText('field.username'), { target: { value: 'alice' } })
@@ -116,8 +117,8 @@ describe('LoginForm', () => {
   })
 
   it('disables submit button while loading', async () => {
-    let resolveLogin!: () => void
-    const pendingPromise = new Promise<void>((resolve) => { resolveLogin = resolve })
+    let resolveLogin!: (value: { kind: 'authenticated' }) => void
+    const pendingPromise = new Promise<{ kind: 'authenticated' }>((resolve) => { resolveLogin = resolve })
     const mockLogin = vi.fn().mockReturnValue(pendingPromise)
     const { getByLabelText, container } = setup(mockLogin)
 
@@ -130,13 +131,51 @@ describe('LoginForm', () => {
     const submitBtn = container.querySelector('button[type="submit"]') as HTMLButtonElement
     expect(submitBtn.disabled).toBe(true)
 
-    await act(async () => { resolveLogin() })
+    await act(async () => { resolveLogin({ kind: 'authenticated' }) })
     expect(submitBtn.disabled).toBe(false)
   })
 
+  it('calls onLoginOutcome when login returns totp_required', async () => {
+    const mockLogin = vi.fn().mockResolvedValue({ kind: 'totp_required', username: 'alice' })
+    const onLoginOutcome = vi.fn()
+    const { getByLabelText } = setup(mockLogin, { onLoginOutcome })
+
+    fireEvent.change(getByLabelText('field.username'), { target: { value: 'alice' } })
+    fireEvent.change(getByLabelText('field.password'), { target: { value: 'secret' } })
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => expect(onLoginOutcome).toHaveBeenCalledWith({ kind: 'totp_required', username: 'alice' }))
+  })
+
+  it('calls onLoginOutcome when login returns enrollment_proposed', async () => {
+    const user = { id: '1', username: 'alice', role: 'USER', totpEnabled: false }
+    const mockLogin = vi.fn().mockResolvedValue({ kind: 'enrollment_proposed', user })
+    const onLoginOutcome = vi.fn()
+    const { getByLabelText } = setup(mockLogin, { onLoginOutcome })
+
+    fireEvent.change(getByLabelText('field.username'), { target: { value: 'alice' } })
+    fireEvent.change(getByLabelText('field.password'), { target: { value: 'secret' } })
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => expect(onLoginOutcome).toHaveBeenCalledWith({ kind: 'enrollment_proposed', user }))
+  })
+
+  it('does not call onLoginOutcome when login returns authenticated', async () => {
+    const mockLogin = vi.fn().mockResolvedValue({ kind: 'authenticated' })
+    const onLoginOutcome = vi.fn()
+    const { getByLabelText } = setup(mockLogin, { onLoginOutcome })
+
+    fireEvent.change(getByLabelText('field.username'), { target: { value: 'alice' } })
+    fireEvent.change(getByLabelText('field.password'), { target: { value: 'secret' } })
+    fireEvent.submit(getByLabelText('field.username').closest('form')!)
+
+    await waitFor(() => expect(mockLogin).toHaveBeenCalled())
+    expect(onLoginOutcome).not.toHaveBeenCalled()
+  })
+
   it('prevents double-submit — login called only once for concurrent submits', async () => {
-    let resolveLogin!: () => void
-    const pendingPromise = new Promise<void>((resolve) => { resolveLogin = resolve })
+    let resolveLogin!: (value: { kind: 'authenticated' }) => void
+    const pendingPromise = new Promise<{ kind: 'authenticated' }>((resolve) => { resolveLogin = resolve })
     const mockLogin = vi.fn().mockReturnValue(pendingPromise)
     const { getByLabelText } = setup(mockLogin)
     const form = getByLabelText('field.username').closest('form')!
@@ -148,6 +187,6 @@ describe('LoginForm', () => {
     })
 
     expect(mockLogin).toHaveBeenCalledTimes(1)
-    await act(async () => { resolveLogin() })
+    await act(async () => { resolveLogin({ kind: 'authenticated' }) })
   })
 })

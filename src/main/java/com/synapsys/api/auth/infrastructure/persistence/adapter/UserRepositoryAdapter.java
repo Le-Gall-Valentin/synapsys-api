@@ -6,10 +6,13 @@ import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserAdminPort;
 import com.synapsys.api.auth.domain.port.out.UserCommandPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
+import com.synapsys.api.auth.domain.port.out.UserTotpPort;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -18,12 +21,15 @@ import java.util.UUID;
 // Implements UserRepository (queries), UserCommandPort (mutations), and UserAdminPort (admin checks),
 // sharing a single JPA repository to avoid duplicating persistence logic across multiple adapters.
 @Component
-public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort {
+public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort, UserTotpPort {
 
     private final UserJpaRepository jpa;
+    private final TextEncryptor encryptor;
 
-    public UserRepositoryAdapter(UserJpaRepository jpa) {
+    public UserRepositoryAdapter(UserJpaRepository jpa,
+                                 @Qualifier("totpSecretEncryptor") TextEncryptor encryptor) {
         this.jpa = jpa;
+        this.encryptor = encryptor;
     }
 
     @Override
@@ -76,8 +82,30 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
         return new AuthException.DataIntegrityError();
     }
 
+    @Override
+    public void saveTotpSecret(UUID userId, String secret) {
+        jpa.saveTotpSecretById(userId, encryptor.encrypt(secret));
+    }
+
+    @Override
+    public boolean saveTotpSecretIfAbsent(UUID userId, String secret) {
+        return jpa.saveTotpSecretIfAbsent(userId, encryptor.encrypt(secret)) > 0;
+    }
+
+    @Override
+    public void enableTotp(UUID userId) {
+        jpa.enableTotpById(userId);
+    }
+
+    @Override
+    public void disableTotp(UUID userId) {
+        jpa.disableTotpById(userId);
+    }
+
     private User toDomain(UserEntity e) {
+        String totpSecret = e.getTotpSecret() != null ? encryptor.decrypt(e.getTotpSecret()) : null;
         return new User(e.getId(), e.getUsername(), e.getEmail(),
-            e.getPasswordHash(), e.getRole(), e.isActive(), e.getCreatedAt());
+            e.getPasswordHash(), e.getRole(), e.isActive(), e.getCreatedAt(),
+            totpSecret, e.isTotpEnabled());
     }
 }

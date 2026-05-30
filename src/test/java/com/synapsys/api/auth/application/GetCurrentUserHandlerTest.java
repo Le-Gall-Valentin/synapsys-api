@@ -30,7 +30,7 @@ class GetCurrentUserHandlerTest {
     @Test
     void getCurrentUser_found_returnsUser() {
         UUID id = UUID.randomUUID();
-        User user = new User(id, "user1", "u@test.com", "hash", Role.USER, true, Instant.now());
+        User user = new User(id, "user1", "u@test.com", "hash", Role.USER, true, Instant.now(), null, false);
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
 
         User result = handler.getCurrentUser(id);
@@ -49,7 +49,7 @@ class GetCurrentUserHandlerTest {
     @Test
     void getCurrentUser_inactiveUser_throwsUserNotActive() {
         UUID id = UUID.randomUUID();
-        User inactive = new User(id, "user1", "u@test.com", "hash", Role.USER, false, Instant.now());
+        User inactive = new User(id, "user1", "u@test.com", "hash", Role.USER, false, Instant.now(), null, false);
         when(userRepository.findById(id)).thenReturn(Optional.of(inactive));
 
         assertThatThrownBy(() -> handler.getCurrentUser(id))

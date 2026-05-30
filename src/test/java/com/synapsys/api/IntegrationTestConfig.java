@@ -22,6 +22,7 @@ import java.lang.annotation.Target;
     "synapsys.seed.email=it-admin@test.local",
     "synapsys.seed.password=integration-test-seed-password",
     "synapsys.cors.allowed-origins=",
+    "synapsys.encryption.secret=integration-test-encryption-secret-32chars!",
     "spring.jpa.hibernate.ddl-auto=none"
 })
 public @interface IntegrationTestConfig {}

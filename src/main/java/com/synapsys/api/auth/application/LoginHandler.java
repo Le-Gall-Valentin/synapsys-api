@@ -3,6 +3,7 @@ package com.synapsys.api.auth.application;
 import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.LoginUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
+import com.synapsys.api.auth.domain.port.out.TotpChallengeStorePort;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ public class LoginHandler implements LoginUseCase {
     private final PasswordHasherPort passwordHasher;
     private final AccessTokenPort accessTokenPort;
     private final RefreshTokenIssuerPort refreshTokenPort;
+    private final TotpChallengeStorePort totpChallengeStore;
     private final int refreshTokenExpiryDays;
     private final String dummyHash;
 
@@ -24,11 +26,13 @@ public class LoginHandler implements LoginUseCase {
                         PasswordHasherPort passwordHasher,
                         AccessTokenPort accessTokenPort,
                         RefreshTokenIssuerPort refreshTokenPort,
-                        RefreshTokenConfigPort tokenConfig) {
+                        RefreshTokenConfigPort tokenConfig,
+                        TotpChallengeStorePort totpChallengeStore) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
+        this.totpChallengeStore = totpChallengeStore;
         this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
         // Precomputed hash for constant-time dummy comparison — prevents timing-based username enumeration
         this.dummyHash = passwordHasher.hash("synapsys-timing-sentinel");
@@ -58,11 +62,17 @@ public class LoginHandler implements LoginUseCase {
             throw new AuthException.UserNotActive();
         }
 
+        if (user.totpEnabled()) {
+            String challengeId = totpChallengeStore.createChallenge(user.id());
+            log.info("TOTP challenge created for user: {}", user.id());
+            return new LoginResult.TotpRequired(challengeId);
+        }
+
         log.info("Successful login for user: {}", user.id());
         AuthTokens tokens = new AuthTokens(
             accessTokenPort.generate(user),
             refreshTokenPort.generate(user, refreshTokenExpiryDays)
         );
-        return new LoginResult(tokens, user);
+        return new LoginResult.Success(tokens, user);
     }
 }

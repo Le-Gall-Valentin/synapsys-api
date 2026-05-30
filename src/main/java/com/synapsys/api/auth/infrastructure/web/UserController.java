@@ -22,20 +22,24 @@ public class UserController {
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final RegisterUseCase registerUseCase;
     private final DeactivateUserUseCase deactivateUserUseCase;
+    private final ResetUserTotpUseCase resetUserTotpUseCase;
 
     public UserController(GetCurrentUserUseCase getCurrentUserUseCase,
                           RegisterUseCase registerUseCase,
-                          DeactivateUserUseCase deactivateUserUseCase) {
+                          DeactivateUserUseCase deactivateUserUseCase,
+                          ResetUserTotpUseCase resetUserTotpUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.registerUseCase = registerUseCase;
         this.deactivateUserUseCase = deactivateUserUseCase;
+        this.resetUserTotpUseCase = resetUserTotpUseCase;
     }
 
     @GetMapping("/me")
+    @RateLimiting(max = 60)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserInfoResponse> me(@AuthenticationPrincipal CustomUserDetails caller) {
         User user = getCurrentUserUseCase.getCurrentUser(caller.getUserId());
-        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
+        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role(), user.totpEnabled()));
     }
 
     @PostMapping
@@ -48,7 +52,7 @@ public class UserController {
             caller.getRole()
         );
         URI location = URI.create("/api/users/" + user.id());
-        return ResponseEntity.created(location).body(new UserInfoResponse(user.id(), user.username(), user.role()));
+        return ResponseEntity.created(location).body(new UserInfoResponse(user.id(), user.username(), user.role(), user.totpEnabled()));
     }
 
     @DeleteMapping("/{id}")
@@ -57,6 +61,15 @@ public class UserController {
     public ResponseEntity<Void> deactivate(@PathVariable UUID id,
                                            @AuthenticationPrincipal CustomUserDetails caller) {
         deactivateUserUseCase.deactivate(new DeactivateUserCommand(id, caller.getUserId(), caller.getRole()));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/2fa/reset")
+    @RateLimiting(max = 10)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Void> resetTotp(@PathVariable UUID id,
+                                          @AuthenticationPrincipal CustomUserDetails caller) {
+        resetUserTotpUseCase.reset(new ResetUserTotpCommand(id, caller.getUserId(), caller.getRole()));
         return ResponseEntity.noContent().build();
     }
 }

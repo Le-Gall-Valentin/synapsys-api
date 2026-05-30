@@ -1,15 +1,16 @@
 import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
 import type { User } from '@/entities/user'
-import type { LoginCredentials } from '../model/types'
+import type { LoginApiResult, LoginCredentials } from '../model/types'
 import type { IAuthApi } from '../model/IAuthApi'
 import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 
 export const authApi: IAuthApi = {
-  async login(credentials: LoginCredentials): Promise<User> {
+  async login(credentials: LoginCredentials): Promise<LoginApiResult> {
     try {
-      const { data } = await client.post<User>('/auth/login', credentials)
-      return data
+      const { data } = await client.post<{ totpRequired?: true } & Partial<User>>('/auth/login', credentials)
+      if (data.totpRequired === true) return { type: 'totp_required' }
+      return { type: 'success', user: data as User }
     } catch (error) {
       if (isAxiosError(error)) {
         const status = error.response?.status

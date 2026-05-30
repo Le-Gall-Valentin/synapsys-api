@@ -3,6 +3,7 @@ package com.synapsys.api.infrastructure.config;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
@@ -17,7 +18,8 @@ public record SynapsysProperties(
     CookieProperties cookie,
     @Valid SeedProperties seed,
     CorsProperties cors,
-    RateLimitProperties rateLimit
+    RateLimitProperties rateLimit,
+    @Valid EncryptionProperties encryption
 ) {
 
     public record JwtProperties(
@@ -48,5 +50,9 @@ public record SynapsysProperties(
 
     public record RateLimitProperties(
         @DefaultValue("") List<String> trustedProxies
+    ) {}
+
+    public record EncryptionProperties(
+        @NotBlank @Size(min = 32, message = "Encryption secret must be at least 32 characters for sufficient entropy") String secret
     ) {}
 }

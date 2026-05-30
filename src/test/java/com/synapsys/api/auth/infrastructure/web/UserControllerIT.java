@@ -9,6 +9,8 @@ import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
 import jakarta.servlet.http.Cookie;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,7 @@ class UserControllerIT {
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
+    @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -74,6 +77,15 @@ class UserControllerIT {
         admin.setPasswordHash(encoder.encode("adminpass"));
         admin.setRole(Role.SUPER_ADMIN);
         userJpaRepository.save(admin);
+
+        UserEntity totpUser = new UserEntity();
+        totpUser.setUsername("totpuser");
+        totpUser.setEmail("totpuser@test.com");
+        totpUser.setPasswordHash(encoder.encode("totppass"));
+        totpUser.setRole(Role.USER);
+        totpUser.setTotpSecret(encryptor.encrypt("JBSWY3DPEHPK3PXP"));
+        totpUser.setTotpEnabled(true);
+        userJpaRepository.save(totpUser);
     }
 
     @Test
@@ -215,6 +227,30 @@ class UserControllerIT {
 
         mockMvc.perform(delete("/api/users/" + selfId).cookie(access))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void resetTotp_asSuperAdmin_resetsTotpForUser_returns204() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        String targetId = userJpaRepository.findByUsername("totpuser").get().getId().toString();
+
+        mockMvc.perform(post("/api/users/" + targetId + "/2fa/reset").cookie(access))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void resetTotp_asUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        String targetId = userJpaRepository.findByUsername("totpuser").get().getId().toString();
+
+        mockMvc.perform(post("/api/users/" + targetId + "/2fa/reset").cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void resetTotp_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(post("/api/users/" + java.util.UUID.randomUUID() + "/2fa/reset"))
+            .andExpect(status().isUnauthorized());
     }
 
     private Cookie loginAs(String username, String password) throws Exception {

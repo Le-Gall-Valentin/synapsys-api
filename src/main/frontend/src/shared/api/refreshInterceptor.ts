@@ -53,7 +53,11 @@ export function createRefreshInterceptorHandlers(
     if (
       requestPath?.endsWith('/auth/login') ||
       requestPath?.endsWith('/auth/refresh') ||
-      requestPath?.endsWith('/auth/logout')
+      requestPath?.endsWith('/auth/logout') ||
+      // TOTP endpoints authenticated via challenge cookie or TOTP code validation, not JWT.
+      // A 401 from these paths means wrong code — must NOT trigger a refresh or session expiry.
+      requestPath?.endsWith('/auth/2fa/verify') ||
+      requestPath?.endsWith('/auth/2fa/confirm')
     ) {
       return Promise.reject(error)
     }

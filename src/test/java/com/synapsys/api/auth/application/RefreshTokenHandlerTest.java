@@ -33,7 +33,8 @@ class RefreshTokenHandlerTest {
 
     private final User activeUser = new User(
         UUID.randomUUID(), "user1", "user1@test.com",
-        "hashed_pw", Role.USER, true, Instant.now()
+        "hashed_pw", Role.USER, true, Instant.now(),
+        null, false
     );
 
     @BeforeEach
@@ -160,7 +161,8 @@ class RefreshTokenHandlerTest {
         String raw = "valid-raw-token";
         User inactiveUser = new User(
             activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt()
+            activeUser.passwordHash(), activeUser.role(), false, activeUser.createdAt(),
+            null, false
         );
         RefreshToken stored = new RefreshToken(
             UUID.randomUUID(), inactiveUser.id(), TestHashUtils.sha256(raw),

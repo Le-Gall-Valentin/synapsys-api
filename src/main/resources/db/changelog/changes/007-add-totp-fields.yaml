@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-add-totp-fields
+      author: system
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: totp_secret
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: totp_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

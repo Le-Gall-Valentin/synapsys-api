@@ -11,7 +11,13 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.UsernameAlreadyExists,
             AuthException.EmailAlreadyExists,
             AuthException.InsufficientPermissions,
-            AuthException.DataIntegrityError {
+            AuthException.DataIntegrityError,
+            AuthException.TotpCodeInvalid,
+            AuthException.TotpAlreadyEnabled,
+            AuthException.TotpNotEnabled,
+            AuthException.TotpSetupNotStarted,
+            AuthException.TotpChallengeExpired,
+            AuthException.TotpMaxAttemptsExceeded {
 
     private AuthException(String message) {
         super(message);
@@ -63,5 +69,29 @@ public abstract sealed class AuthException extends RuntimeException
         public DataIntegrityError() {
             super("Unexpected data integrity violation");
         }
+    }
+
+    public static final class TotpCodeInvalid extends AuthException {
+        public TotpCodeInvalid() { super("Invalid or expired TOTP code"); }
+    }
+
+    public static final class TotpAlreadyEnabled extends AuthException {
+        public TotpAlreadyEnabled() { super("Two-factor authentication is already enabled"); }
+    }
+
+    public static final class TotpNotEnabled extends AuthException {
+        public TotpNotEnabled() { super("Two-factor authentication is not enabled"); }
+    }
+
+    public static final class TotpSetupNotStarted extends AuthException {
+        public TotpSetupNotStarted() { super("Two-factor authentication setup has not been started"); }
+    }
+
+    public static final class TotpChallengeExpired extends AuthException {
+        public TotpChallengeExpired() { super("Two-factor authentication challenge has expired"); }
+    }
+
+    public static final class TotpMaxAttemptsExceeded extends AuthException {
+        public TotpMaxAttemptsExceeded() { super("Too many incorrect TOTP attempts"); }
     }
 }

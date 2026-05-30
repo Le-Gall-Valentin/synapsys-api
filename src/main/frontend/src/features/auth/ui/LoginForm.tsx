@@ -4,9 +4,11 @@ import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../model/authStoreContext'
 import { Button, Input } from '@/shared/ui'
+import type { LoginOutcome } from '../model/types'
 
 interface LoginFormProps {
   labelId?: string
+  onLoginOutcome?: (outcome: Exclude<LoginOutcome, { kind: 'authenticated' }>) => void
 }
 
 type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null
@@ -22,7 +24,7 @@ const ERROR_I18N_KEYS = {
   server: 'error.server',
 } as const satisfies Record<NonNullable<ErrorKind>, string>
 
-export function LoginForm({ labelId }: LoginFormProps) {
+export function LoginForm({ labelId, onLoginOutcome }: LoginFormProps) {
   const login = useAuth((s) => s.login)
   const { t } = useTranslation('auth')
   const errorAlertId = useId()
@@ -42,7 +44,10 @@ export function LoginForm({ labelId }: LoginFormProps) {
     setRetryAfterSeconds(null)
     setIsLoading(true)
     try {
-      await login({ username, password })
+      const outcome = await login({ username, password })
+      if (outcome.kind !== 'authenticated') {
+        onLoginOutcome?.(outcome)
+      }
     } catch (error) {
       if (error instanceof CredentialsError) {
         setErrorKind('credentials')

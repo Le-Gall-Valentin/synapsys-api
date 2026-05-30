@@ -4,6 +4,7 @@ import com.synapsys.api.auth.domain.model.*;
 import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.infrastructure.security.CookieService;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
+import com.synapsys.api.auth.infrastructure.web.dto.TotpRequiredResponse;
 import com.synapsys.api.auth.infrastructure.web.dto.UserInfoResponse;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,13 +35,21 @@ public class AuthController {
 
     @PostMapping("/login")
     @RateLimiting(max = 5)
-    public ResponseEntity<UserInfoResponse> login(@Valid @RequestBody LoginRequest request,
-                                                  HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
+                                   HttpServletResponse response) {
         LoginResult result = loginUseCase.login(new LoginCommand(request.username(), request.password()));
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildAccessCookie(result.tokens().accessToken()).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildRefreshCookie(result.tokens().refreshToken()).toString());
-        User user = result.user();
-        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
+        return switch (result) {
+            case LoginResult.Success s -> {
+                response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildAccessCookie(s.tokens().accessToken()).toString());
+                response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildRefreshCookie(s.tokens().refreshToken()).toString());
+                User user = s.user();
+                yield ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role(), user.totpEnabled()));
+            }
+            case LoginResult.TotpRequired t -> {
+                response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildChallengeCookie(t.challengeId()).toString());
+                yield ResponseEntity.ok(new TotpRequiredResponse());
+            }
+        };
     }
 
     @PostMapping("/refresh")

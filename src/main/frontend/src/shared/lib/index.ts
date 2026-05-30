@@ -1,2 +1,3 @@
 export { setSessionExpiredCallback, triggerSessionExpired } from './sessionCallbacks'
 export { setSessionHint, clearSessionHint, hasSessionHint } from './sessionHint'
+export { NetworkError, ServerError, RateLimitError } from './apiErrors'
