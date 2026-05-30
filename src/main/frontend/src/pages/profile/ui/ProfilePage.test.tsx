@@ -25,11 +25,12 @@ beforeEach(() => {
 })
 
 const baseState = {
+  user: null,
   isInitializing: false,
   login: vi.fn(),
   logout: vi.fn(),
   initialize: vi.fn(),
-  getMe: vi.fn(),
+  finalizeLogin: vi.fn(),
 }
 
 describe('ProfilePage', () => {
