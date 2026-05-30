@@ -10,10 +10,10 @@ const GRID_BG_IMAGE =
 const GRID_MASK =
   'radial-gradient(ellipse 80% 60% at 50% 50%, #000 30%, transparent 80%)'
 
-const BRAND_ICON_BG = 'linear-gradient(135deg, #5eead4, #38bdf8)'
+const BRAND_ICON_BG = 'linear-gradient(135deg, var(--brand-icon-from), var(--brand-icon-to))'
 
 const BRAND_ICON_SHADOW =
-  '0 1px 0 rgba(255,255,255,0.15) inset, 0 2px 6px rgba(94,234,212,0.18)'
+  '0 1px 0 rgba(255,255,255,0.15) inset, 0 2px 6px var(--brand-icon-glow)'
 
 const HERO_TEXT_BG = 'linear-gradient(135deg, var(--brand-hero-text-from) 0%, var(--brand-hero-text-to) 100%)'
 

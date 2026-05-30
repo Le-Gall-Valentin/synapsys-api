@@ -27,7 +27,6 @@
   --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 }
 
-/* Variables not needed as utility classes (brand panel, ring) */
 :root {
   --color-accent-ring: rgba(13, 148, 136, 0.15);
   --brand-panel-from: #e8f5f3;
@@ -38,6 +37,14 @@
   --brand-quote-bg: rgba(0, 0, 0, 0.04);
   --brand-hero-text-from: #111318;
   --brand-hero-text-to: #3a4050;
+  --brand-icon-from: #0f766e;
+  --brand-icon-to: #0369a1;
+  --brand-icon-glow: rgba(15, 118, 110, 0.28);
+  --brand-node-fill: #0d9488;
+  --brand-node-stroke: rgba(13, 148, 136, 0.22);
+  --brand-node-glow-sm: rgba(13, 148, 136, 0.10);
+  --brand-node-glow-lg: rgba(13, 148, 136, 0.18);
+  --brand-hub-text: #ffffff;
 }
 
 /* ── Dark theme override ────────────────────────────────────────── */
@@ -74,6 +81,14 @@
     --brand-quote-bg: rgba(255, 255, 255, 0.02);
     --brand-hero-text-from: #ffffff;
     --brand-hero-text-to: #b6bbc5;
+    --brand-icon-from: #5eead4;
+    --brand-icon-to: #38bdf8;
+    --brand-icon-glow: rgba(94, 234, 212, 0.18);
+    --brand-node-fill: #5eead4;
+    --brand-node-stroke: rgba(94, 234, 212, 0.25);
+    --brand-node-glow-sm: rgba(94, 234, 212, 0.08);
+    --brand-node-glow-lg: rgba(94, 234, 212, 0.15);
+    --brand-hub-text: #0a0b0d;
   }
 }
 
