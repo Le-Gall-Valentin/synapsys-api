@@ -3,6 +3,7 @@ package com.synapsys.api.infrastructure.config;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
@@ -52,6 +53,6 @@ public record SynapsysProperties(
     ) {}
 
     public record EncryptionProperties(
-        @NotBlank String secret
+        @NotBlank @Size(min = 32, message = "Encryption secret must be at least 32 characters for sufficient entropy") String secret
     ) {}
 }

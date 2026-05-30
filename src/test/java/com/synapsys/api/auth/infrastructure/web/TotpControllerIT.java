@@ -27,6 +27,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.code.HashingAlgorithm;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -223,6 +227,31 @@ class TotpControllerIT {
             .andExpect(header().string("Set-Cookie", containsString("totp_challenge")))
             .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
             .andExpect(header().string("Set-Cookie", containsString("Path=/api/auth/2fa")));
+    }
+
+    // ─── /api/auth/2fa/verify — happy path ───────────────────────────────────
+
+    @Test
+    void verify_withValidCode_returns200AndSetsJwtCookies() throws Exception {
+        Cookie challenge = loginAndGetChallengeCookie("totpuser", "totppass");
+
+        // Generate the current-window TOTP code for the known test secret using SHA-256
+        DefaultCodeGenerator generator = new DefaultCodeGenerator(HashingAlgorithm.SHA256, 6);
+        long counter = Math.floorDiv(System.currentTimeMillis() / 1000L, 30);
+        String validCode = generator.generate(KNOWN_TOTP_SECRET, counter);
+
+        MvcResult result = mockMvc.perform(post("/api/auth/2fa/verify")
+                .cookie(challenge)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + validCode + "\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.username").value("totpuser"))
+            .andExpect(jsonPath("$.totpEnabled").value(true))
+            .andReturn();
+
+        // Verify JWT cookies are set (multiple Set-Cookie headers — check response cookies directly)
+        assertThat(result.getResponse().getCookie("access_token")).isNotNull();
+        assertThat(result.getResponse().getCookie("refresh_token")).isNotNull();
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
