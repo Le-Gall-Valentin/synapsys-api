@@ -5,7 +5,9 @@ import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
+import com.synapsys.api.auth.infrastructure.persistence.repository.UserCredentialJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
+import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
@@ -50,6 +52,8 @@ class AuthControllerIT {
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
+    @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
+    @Autowired UserTotpJpaRepository userTotpJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
     @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
 
@@ -64,6 +68,8 @@ class AuthControllerIT {
             .build();
         rateLimitBucketStore.clearAll();
         refreshTokenJpaRepository.deleteAll();
+        userTotpJpaRepository.deleteAll();
+        userCredentialJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
 
         UserEntity user = new UserEntity();

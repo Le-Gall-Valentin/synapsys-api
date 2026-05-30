@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
+import com.synapsys.api.auth.infrastructure.persistence.repository.UserCredentialJpaRepository;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
@@ -57,6 +58,7 @@ class TotpControllerIT {
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
+    @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
     @Autowired UserTotpJpaRepository userTotpJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
     @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
@@ -77,6 +79,7 @@ class TotpControllerIT {
         rateLimitBucketStore.clearAll();
         refreshTokenJpaRepository.deleteAll();
         userTotpJpaRepository.deleteAll();
+        userCredentialJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
 
         // Plain user — no TOTP

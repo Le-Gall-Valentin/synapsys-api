@@ -3,6 +3,8 @@ package com.synapsys.api.auth.infrastructure.persistence.repository;
 import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.infrastructure.persistence.entity.RefreshTokenEntity;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
+import com.synapsys.api.auth.infrastructure.persistence.repository.UserCredentialJpaRepository;
+import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
 import com.synapsys.api.IntegrationTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,12 +32,16 @@ class RefreshTokenRepositoryIT {
 
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired UserJpaRepository userJpaRepository;
+    @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
+    @Autowired UserTotpJpaRepository userTotpJpaRepository;
 
     private UserEntity savedUser;
 
     @BeforeEach
     void setUp() {
         refreshTokenJpaRepository.deleteAll();
+        userTotpJpaRepository.deleteAll();
+        userCredentialJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
 
         UserEntity user = new UserEntity();
