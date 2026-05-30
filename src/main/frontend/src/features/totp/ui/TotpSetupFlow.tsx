@@ -31,21 +31,20 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   // setup() calls that would store different secrets while the QR shows the wrong one.
   const setupCalledRef = useRef(false)
 
-  // `api` is excluded from deps: setupCalledRef ensures exactly one call per lifetime.
-  // Assumption: `api` identity is stable (module-level singleton `totpApi`).
+  // setupCalledRef ensures setup() runs at most once per component lifetime,
+  // preventing concurrent calls in React StrictMode (double-invoke) or if api
+  // identity ever changes. The ref returning early is safe: the single pending
+  // promise will still resolve and update state.
   useEffect(() => {
     if (setupCalledRef.current) return
     setupCalledRef.current = true
-    // No cancellation needed: the guard ensures exactly one call is ever made,
-    // so the response is always safe to apply regardless of cleanup timing.
     api.setup()
       .then(data => {
         if (!data.secret) { setSetupError(true); return }
         setSetupData(data)
       })
       .catch(() => setSetupError(true))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [api])
 
   const groupedSecret = setupData?.secret.match(/.{1,4}/g)?.join(' ') ?? ''
 
