@@ -11,6 +11,8 @@ import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -22,9 +24,12 @@ import java.util.UUID;
 public class UserRepositoryAdapter implements UserRepository, UserCommandPort, UserAdminPort, UserTotpPort {
 
     private final UserJpaRepository jpa;
+    private final TextEncryptor encryptor;
 
-    public UserRepositoryAdapter(UserJpaRepository jpa) {
+    public UserRepositoryAdapter(UserJpaRepository jpa,
+                                 @Qualifier("totpSecretEncryptor") TextEncryptor encryptor) {
         this.jpa = jpa;
+        this.encryptor = encryptor;
     }
 
     @Override
@@ -79,7 +84,7 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
 
     @Override
     public void saveTotpSecret(UUID userId, String secret) {
-        jpa.saveTotpSecretById(userId, secret);
+        jpa.saveTotpSecretById(userId, encryptor.encrypt(secret));
     }
 
     @Override
@@ -93,8 +98,9 @@ public class UserRepositoryAdapter implements UserRepository, UserCommandPort, U
     }
 
     private User toDomain(UserEntity e) {
+        String totpSecret = e.getTotpSecret() != null ? encryptor.decrypt(e.getTotpSecret()) : null;
         return new User(e.getId(), e.getUsername(), e.getEmail(),
             e.getPasswordHash(), e.getRole(), e.isActive(), e.getCreatedAt(),
-            e.getTotpSecret(), e.isTotpEnabled());
+            totpSecret, e.isTotpEnabled());
     }
 }

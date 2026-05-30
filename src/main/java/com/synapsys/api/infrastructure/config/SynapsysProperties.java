@@ -17,7 +17,8 @@ public record SynapsysProperties(
     CookieProperties cookie,
     @Valid SeedProperties seed,
     CorsProperties cors,
-    RateLimitProperties rateLimit
+    RateLimitProperties rateLimit,
+    @Valid EncryptionProperties encryption
 ) {
 
     public record JwtProperties(
@@ -48,5 +49,9 @@ public record SynapsysProperties(
 
     public record RateLimitProperties(
         @DefaultValue("") List<String> trustedProxies
+    ) {}
+
+    public record EncryptionProperties(
+        @NotBlank String secret
     ) {}
 }

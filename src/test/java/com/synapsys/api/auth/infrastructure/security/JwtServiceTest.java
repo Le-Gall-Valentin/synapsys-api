@@ -33,7 +33,8 @@ class JwtServiceTest {
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
-            new SynapsysProperties.RateLimitProperties(java.util.List.of())
+            new SynapsysProperties.RateLimitProperties(java.util.List.of()),
+            new SynapsysProperties.EncryptionProperties("test-enc-secret")
         );
         jwtService = new JwtService(key, properties);
         validationService = new JwtValidationService(key, properties);
@@ -140,7 +141,8 @@ class JwtServiceTest {
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
-            new SynapsysProperties.RateLimitProperties(java.util.List.of())
+            new SynapsysProperties.RateLimitProperties(java.util.List.of()),
+            new SynapsysProperties.EncryptionProperties("test-enc-secret")
         );
         JwtService expiredJwtService = new JwtService(key, properties);
         JwtValidationService expiredValidationService = new JwtValidationService(key, properties);
@@ -162,7 +164,8 @@ class JwtServiceTest {
             new SynapsysProperties.CookieProperties(false),
             null,
             new SynapsysProperties.CorsProperties(java.util.List.of()),
-            new SynapsysProperties.RateLimitProperties(java.util.List.of())
+            new SynapsysProperties.RateLimitProperties(java.util.List.of()),
+            new SynapsysProperties.EncryptionProperties("test-enc-secret")
         );
         JwtValidationService vs = new JwtValidationService(JwtKeyFactory.from(SECRET), props);
 
