@@ -1,7 +1,7 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.AuthException;
-import com.synapsys.api.auth.domain.model.DeactivateUserCommand;
+import com.synapsys.api.auth.application.dto.DeactivateUserCommand;
 import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.model.User;
 import com.synapsys.api.auth.domain.port.out.UserCommandPort;

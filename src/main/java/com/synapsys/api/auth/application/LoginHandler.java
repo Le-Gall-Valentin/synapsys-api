@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.auth.application.dto.*;
 import com.synapsys.api.auth.domain.port.in.LoginUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
 import com.synapsys.api.auth.domain.port.out.TotpChallengeStorePort;

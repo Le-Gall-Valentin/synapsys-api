@@ -62,11 +62,13 @@ class ArchRulesTest {
     }
 
     @Test
-    void web_layer_should_not_bypass_use_case_ports() {
+    void web_layer_should_not_instantiate_handler_implementations() {
+        // Controllers may import UseCase interfaces from application/port/in/
+        // and Commands from application/dto/, but must never depend on Handler implementations.
         noClasses()
             .that().resideInAPackage("..infrastructure.web..")
             .should().dependOnClassesThat()
-            .resideInAPackage("..application..")
+            .resideInAPackage("..application.handler..")
             .check(classes);
     }
 

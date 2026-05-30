@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.infrastructure.web;
 
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.auth.application.dto.*;
 import com.synapsys.api.auth.domain.port.in.*;
 import com.synapsys.api.auth.infrastructure.security.CookieService;
 import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;

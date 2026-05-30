@@ -44,7 +44,8 @@ public class JwtValidationService {
             String roleStr = claims.get("role", String.class);
             if (roleStr == null) throw new JwtException("Missing role claim");
             Role role = Role.valueOf(roleStr);
-            return new UserClaims(userId, role);
+            String email = claims.get("email", String.class);
+            return new UserClaims(userId, role, email);
         } catch (JwtException | IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid JWT token", e);
         }

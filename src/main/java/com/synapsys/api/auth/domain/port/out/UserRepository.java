@@ -1,6 +1,5 @@
 package com.synapsys.api.auth.domain.port.out;
 
-import com.synapsys.api.auth.domain.model.CreateUserCommand;
 import com.synapsys.api.auth.domain.model.User;
 
 import java.util.Optional;

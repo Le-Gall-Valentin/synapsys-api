@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.auth.application.dto.*;
 import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.port.out.*;
 import org.junit.jupiter.api.AfterEach;

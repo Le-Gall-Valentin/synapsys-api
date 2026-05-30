@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.auth.application.dto.*;
 import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.auth.domain.port.out.UserCommandPort;

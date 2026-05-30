@@ -1,7 +1,13 @@
 package com.synapsys.api.auth.infrastructure.web;
 
-import com.synapsys.api.auth.domain.model.*;
-import com.synapsys.api.auth.domain.port.in.*;
+import com.synapsys.api.auth.application.dto.AdminResetTotpCommand;
+import com.synapsys.api.auth.application.dto.DeactivateUserCommand;
+import com.synapsys.api.auth.application.dto.RegisterCommand;
+import com.synapsys.api.auth.application.port.in.AdminResetTotpUseCase;
+import com.synapsys.api.auth.domain.model.User;
+import com.synapsys.api.auth.domain.port.in.DeactivateUserUseCase;
+import com.synapsys.api.auth.domain.port.in.GetCurrentUserUseCase;
+import com.synapsys.api.auth.domain.port.in.RegisterUseCase;
 import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.auth.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.auth.infrastructure.web.dto.UserInfoResponse;
@@ -22,16 +28,16 @@ public class UserController {
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final RegisterUseCase registerUseCase;
     private final DeactivateUserUseCase deactivateUserUseCase;
-    private final ResetUserTotpUseCase resetUserTotpUseCase;
+    private final AdminResetTotpUseCase adminResetTotpUseCase;
 
     public UserController(GetCurrentUserUseCase getCurrentUserUseCase,
                           RegisterUseCase registerUseCase,
                           DeactivateUserUseCase deactivateUserUseCase,
-                          ResetUserTotpUseCase resetUserTotpUseCase) {
+                          AdminResetTotpUseCase adminResetTotpUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.registerUseCase = registerUseCase;
         this.deactivateUserUseCase = deactivateUserUseCase;
-        this.resetUserTotpUseCase = resetUserTotpUseCase;
+        this.adminResetTotpUseCase = adminResetTotpUseCase;
     }
 
     @GetMapping("/me")
@@ -69,7 +75,7 @@ public class UserController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Void> resetTotp(@PathVariable UUID id,
                                           @AuthenticationPrincipal CustomUserDetails caller) {
-        resetUserTotpUseCase.reset(new ResetUserTotpCommand(id, caller.getUserId(), caller.getRole()));
+        adminResetTotpUseCase.reset(new AdminResetTotpCommand(id, caller.getUserId(), caller.getRole()));
         return ResponseEntity.noContent().build();
     }
 }

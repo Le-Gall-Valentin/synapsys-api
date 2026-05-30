@@ -14,11 +14,13 @@ public class CustomUserDetails implements UserDetails, RateLimitPrincipal {
 
     private final UUID userId;
     private final Role role;
+    private final String email;
     private final Collection<GrantedAuthority> authorities;
 
-    public CustomUserDetails(UUID userId, Role role) {
+    public CustomUserDetails(UUID userId, Role role, String email) {
         this.userId = userId;
         this.role = role;
+        this.email = email;
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
@@ -28,6 +30,10 @@ public class CustomUserDetails implements UserDetails, RateLimitPrincipal {
 
     public Role getRole() {
         return role;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     @Override

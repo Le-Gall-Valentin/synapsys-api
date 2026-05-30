@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CustomUserDetailsTest {
 
     private final UUID userId = UUID.randomUUID();
-    private final CustomUserDetails details = new CustomUserDetails(userId, Role.USER);
+    private final CustomUserDetails details = new CustomUserDetails(userId, Role.USER, "user@test.com");
 
     @Test
     void getPassword_returnsEmptyString() {
@@ -33,7 +33,7 @@ class CustomUserDetailsTest {
 
     @Test
     void adminRole_hasAdminAuthority() {
-        CustomUserDetails admin = new CustomUserDetails(UUID.randomUUID(), Role.ADMIN);
+        CustomUserDetails admin = new CustomUserDetails(UUID.randomUUID(), Role.ADMIN, "admin@test.com");
         assertThat(admin.getAuthorities().iterator().next().getAuthority()).isEqualTo("ROLE_ADMIN");
     }
 

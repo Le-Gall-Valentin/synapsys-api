@@ -74,40 +74,6 @@ class RedisTotpChallengeStoreTest {
     }
 
     @Test
-    void markCodeUsedIfAbsent_newCode_returnsTrue_andStoresWithTtl() {
-        when(valueOps.setIfAbsent(
-            eq("totp:used:" + userId + ":654321"),
-            eq("1"),
-            eq(Duration.ofSeconds(120))
-        )).thenReturn(Boolean.TRUE);
-
-        assertThat(store.markCodeUsedIfAbsent(userId, "654321")).isTrue();
-        verify(valueOps).setIfAbsent(
-            eq("totp:used:" + userId + ":654321"),
-            eq("1"),
-            eq(Duration.ofSeconds(120))
-        );
-    }
-
-    @Test
-    void markCodeUsedIfAbsent_replayedCode_returnsFalse() {
-        when(valueOps.setIfAbsent(
-            eq("totp:used:" + userId + ":123456"),
-            eq("1"),
-            eq(Duration.ofSeconds(120))
-        )).thenReturn(Boolean.FALSE);
-
-        assertThat(store.markCodeUsedIfAbsent(userId, "123456")).isFalse();
-    }
-
-    @Test
-    void markCodeUsedIfAbsent_nullReturnFromRedis_returnsFalse() {
-        when(valueOps.setIfAbsent(any(), any(), any(Duration.class))).thenReturn(null);
-
-        assertThat(store.markCodeUsedIfAbsent(userId, "111111")).isFalse();
-    }
-
-    @Test
     void incrementFailedAttempts_firstAttempt_returns1_andSetsTtl() {
         String challengeId = UUID.randomUUID().toString();
         when(valueOps.increment("totp:attempts:" + challengeId)).thenReturn(1L);

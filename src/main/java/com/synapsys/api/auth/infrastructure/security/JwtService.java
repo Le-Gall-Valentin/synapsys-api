@@ -33,6 +33,7 @@ public class JwtService implements AccessTokenPort {
             .audience().add(audience).and()
             .subject(user.id().toString())
             .claim("role", user.role().name())
+            .claim("email", user.email())
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plusSeconds(expiryMinutes * 60L)))
             .signWith(key)

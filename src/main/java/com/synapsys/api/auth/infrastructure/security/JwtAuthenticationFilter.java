@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         cookieService.extractFromRequest(request, CookieService.ACCESS_COOKIE).ifPresent(token -> {
             try {
                 UserClaims claims = jwtValidationService.validateAndExtract(token);
-                var userDetails = new CustomUserDetails(claims.userId(), claims.role());
+                var userDetails = new CustomUserDetails(claims.userId(), claims.role(), claims.email());
                 var auth = new UsernamePasswordAuthenticationToken(
                     userDetails,
                     null,

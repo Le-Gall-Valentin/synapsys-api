@@ -12,11 +12,7 @@ import java.util.UUID;
 public class RedisTotpChallengeStore implements TotpChallengeStorePort {
 
     private static final String CHALLENGE_PREFIX = "totp:challenge:";
-    private static final String USED_CODE_PREFIX = "totp:used:";
     private static final Duration CHALLENGE_TTL = Duration.ofMinutes(15);
-    // 120s covers two full TOTP periods (±1 window tolerance = 90s effective validity)
-    // ensuring the anti-replay key always outlives the cryptographic validity window.
-    private static final Duration ANTI_REPLAY_TTL = Duration.ofSeconds(120);
 
     private final StringRedisTemplate redisTemplate;
 
@@ -41,13 +37,6 @@ public class RedisTotpChallengeStore implements TotpChallengeStorePort {
     @Override
     public void invalidateChallenge(String challengeId) {
         redisTemplate.delete(CHALLENGE_PREFIX + challengeId);
-    }
-
-    @Override
-    public boolean markCodeUsedIfAbsent(UUID userId, String code) {
-        Boolean set = redisTemplate.opsForValue()
-            .setIfAbsent(USED_CODE_PREFIX + userId + ":" + code, "1", ANTI_REPLAY_TTL);
-        return Boolean.TRUE.equals(set);
     }
 
     @Override

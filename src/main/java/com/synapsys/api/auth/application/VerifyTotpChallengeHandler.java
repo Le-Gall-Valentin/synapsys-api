@@ -1,11 +1,11 @@
 package com.synapsys.api.auth.application;
 
+import com.synapsys.api.auth.application.dto.VerifyTotpChallengeCommand;
+import com.synapsys.api.auth.application.port.in.VerifyTotpChallengeUseCase;
 import com.synapsys.api.auth.domain.model.*;
-import com.synapsys.api.auth.domain.port.in.VerifyTotpChallengeUseCase;
 import com.synapsys.api.auth.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 // @Transactional is required here because RefreshTokenGenerator (RefreshTokenIssuerPort)
@@ -18,20 +18,20 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
     private static final int MAX_FAILED_ATTEMPTS = 5;
 
     private final TotpChallengeStorePort challengeStore;
-    private final TotpCodeValidatorPort codeValidator;
+    private final MfaTotpVerifierPort mfaVerifier;
     private final UserRepository userRepository;
     private final AccessTokenPort accessTokenPort;
     private final RefreshTokenIssuerPort refreshTokenPort;
     private final int refreshTokenExpiryDays;
 
     public VerifyTotpChallengeHandler(TotpChallengeStorePort challengeStore,
-                                      TotpCodeValidatorPort codeValidator,
+                                      MfaTotpVerifierPort mfaVerifier,
                                       UserRepository userRepository,
                                       AccessTokenPort accessTokenPort,
                                       RefreshTokenIssuerPort refreshTokenPort,
                                       RefreshTokenConfigPort tokenConfig) {
         this.challengeStore = challengeStore;
-        this.codeValidator = codeValidator;
+        this.mfaVerifier = mfaVerifier;
         this.userRepository = userRepository;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
@@ -47,29 +47,14 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
         User user = userRepository.findById(userId)
             .orElseThrow(AuthException.UserNotFound::new);
 
-        if (!user.isActive()) {
-            throw new AuthException.UserNotActive();
-        }
+        if (!user.isActive()) throw new AuthException.UserNotActive();
 
-        // Data inconsistency guard: totpEnabled=true with no secret is unreachable in normal flow
-        // (encryption failure or direct DB manipulation). Treat as invalid code — no NPE, no leakage.
-        if (user.totpSecret() == null) {
-            throw new AuthException.TotpCodeInvalid();
-        }
-
-        // Validate cryptographically first — wrong code must NOT consume the anti-replay slot,
-        // so the user can retry with the next TOTP window's code.
-        if (!codeValidator.isValid(user.totpSecret(), command.code())) {
+        if (!mfaVerifier.verifyAndConsume(userId, command.code())) {
             int attempts = challengeStore.incrementFailedAttempts(command.challengeId());
             if (attempts >= MAX_FAILED_ATTEMPTS) {
                 challengeStore.invalidateChallenge(command.challengeId());
                 throw new AuthException.TotpMaxAttemptsExceeded();
             }
-            throw new AuthException.TotpCodeInvalid();
-        }
-
-        // Atomic SETNX: consume the code, reject if already consumed (concurrent replay).
-        if (!challengeStore.markCodeUsedIfAbsent(userId, command.code())) {
             throw new AuthException.TotpCodeInvalid();
         }
 

@@ -54,7 +54,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void doFilter_validToken_setsAuthenticationInContext() throws Exception {
-        var claims = new UserClaims(UUID.randomUUID(), Role.USER);
+        var claims = new UserClaims(UUID.randomUUID(), Role.USER, "user@test.com");
         when(cookieService.extractFromRequest(request, CookieService.ACCESS_COOKIE))
             .thenReturn(Optional.of("valid.jwt.token"));
         when(jwtValidationService.validateAndExtract("valid.jwt.token")).thenReturn(claims);

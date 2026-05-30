@@ -1,6 +1,7 @@
 package com.synapsys.api.auth.application;
 
 import com.synapsys.api.auth.domain.model.*;
+import com.synapsys.api.auth.application.dto.*;
 import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.auth.domain.port.out.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.*;
 class VerifyTotpChallengeHandlerTest {
 
     @Mock TotpChallengeStorePort challengeStore;
-    @Mock TotpCodeValidatorPort codeValidator;
+    @Mock MfaTotpVerifierPort mfaVerifier;
     @Mock UserRepository userRepository;
     @Mock AccessTokenPort accessTokenPort;
     @Mock RefreshTokenIssuerPort refreshTokenPort;
@@ -40,7 +41,7 @@ class VerifyTotpChallengeHandlerTest {
     void setUp() {
         when(tokenConfig.refreshTokenExpiryDays()).thenReturn(30);
         handler = new VerifyTotpChallengeHandler(
-            challengeStore, codeValidator, userRepository,
+            challengeStore, mfaVerifier, userRepository,
             accessTokenPort, refreshTokenPort, tokenConfig
         );
     }
@@ -49,8 +50,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_validChallenge_validCode_returnsSuccess() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
-        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(true);
         when(accessTokenPort.generate(user)).thenReturn("jwt-token");
         when(refreshTokenPort.generate(eq(user), anyInt())).thenReturn("refresh-token");
 
@@ -65,15 +65,13 @@ class VerifyTotpChallengeHandlerTest {
     void verify_validChallenge_validCode_invalidatesChallenge() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
-        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(true);
         when(accessTokenPort.generate(any())).thenReturn("jwt");
         when(refreshTokenPort.generate(any(), anyInt())).thenReturn("refresh");
 
         handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456"));
 
         verify(challengeStore).invalidateChallenge("challenge-id");
-        verify(challengeStore).markCodeUsedIfAbsent(userId, "123456");
     }
 
     @Test
@@ -85,42 +83,14 @@ class VerifyTotpChallengeHandlerTest {
     }
 
     @Test
-    void verify_invalidCode_throwsTotpCodeInvalid_withoutConsumingCode() {
+    void verify_invalidCode_throwsTotpCodeInvalid() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
+        when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(1);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
             .isInstanceOf(AuthException.TotpCodeInvalid.class);
-
-        // Wrong code must NOT be marked as used — user can retry with next window's code
-        verify(challengeStore, never()).markCodeUsedIfAbsent(any(), any());
-    }
-
-    @Test
-    void verify_replayedCode_throwsTotpCodeInvalid() {
-        // Valid code but SETNX returns false → another request already consumed it
-        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
-        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(false);
-
-        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
-            .isInstanceOf(AuthException.TotpCodeInvalid.class);
-    }
-
-    @Test
-    void verify_nullSecret_throwsTotpCodeInvalid_withoutNpe() {
-        // totpEnabled=true but secret null: data inconsistency — must not reach isValid()
-        User noSecret = new User(userId, "user1", "user1@test.com", "hash",
-            Role.USER, true, Instant.now(), null, true);
-        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(noSecret));
-
-        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
-            .isInstanceOf(AuthException.TotpCodeInvalid.class);
-
-        verifyNoInteractions(codeValidator);
     }
 
     @Test
@@ -138,7 +108,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_incrementsAttempts() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(1);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
@@ -151,7 +121,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_atMaxAttempts_throwsTotpMaxAttemptsExceededAndInvalidates() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(5);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
@@ -164,7 +134,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_belowMaxAttempts_doesNotInvalidateChallenge() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(codeValidator.isValid("SECRETBASE32XXXX", "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(4);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
