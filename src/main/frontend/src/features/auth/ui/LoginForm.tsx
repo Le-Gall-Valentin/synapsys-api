@@ -3,7 +3,7 @@ import React, { useId, useRef, useState } from 'react'
 import { AlertTriangle, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../model/authStoreContext'
-import { Button, Input } from '@/shared/ui'
+import { Button, Input, CTA_BUTTON_STYLE, CTA_BUTTON_SHADOW } from '@/shared/ui'
 import type { LoginOutcome } from '../model/types'
 
 interface LoginFormProps {
@@ -13,9 +13,6 @@ interface LoginFormProps {
 
 type ErrorKind = 'credentials' | 'network' | 'rateLimit' | 'server' | null
 
-const SUBMIT_BUTTON_BG = 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)'
-const SUBMIT_BUTTON_SHADOW =
-  '0 1px 0 rgba(255,255,255,0.2) inset, 0 6px 16px rgba(94,234,212,0.15)'
 
 const ERROR_I18N_KEYS = {
   credentials: 'error.credentials',
@@ -129,11 +126,7 @@ export function LoginForm({ labelId, onLoginOutcome }: LoginFormProps) {
         type="submit"
         isLoading={isLoading}
         className="mt-2 w-full border-transparent py-3 font-semibold active:translate-y-px disabled:cursor-wait"
-        style={{
-          background: SUBMIT_BUTTON_BG,
-          color: '#07211c',
-          boxShadow: SUBMIT_BUTTON_SHADOW,
-        }}
+        style={{ ...CTA_BUTTON_STYLE, boxShadow: CTA_BUTTON_SHADOW }}
       >
         {t('action.submit')}
         <ChevronRight className="size-3.5" />

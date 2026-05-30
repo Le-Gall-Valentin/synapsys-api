@@ -1,6 +1,6 @@
 import { ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/shared/ui'
+import { Button, CTA_BUTTON_STYLE } from '@/shared/ui'
 
 interface TotpEnrollProposalProps {
   username: string
@@ -14,7 +14,7 @@ export function TotpEnrollProposal({ username, onActivate, onSkip }: TotpEnrollP
   return (
     <div>
       <div className="mb-8">
-        <h2 className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+        <h2 className="mb-2 text-[24px] lg:text-[28px] font-semibold tracking-tight text-fg-0">
           {t('enroll.title')}
         </h2>
         <p className="text-sm text-fg-2">
@@ -42,7 +42,7 @@ export function TotpEnrollProposal({ username, onActivate, onSkip }: TotpEnrollP
         type="button"
         onClick={onActivate}
         className="mt-2 w-full border-transparent py-3 font-semibold active:translate-y-px"
-        style={{ background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)', color: '#07211c' }}
+        style={CTA_BUTTON_STYLE}
       >
         <ShieldCheck className="size-4" />
         {t('enroll.activate')}
