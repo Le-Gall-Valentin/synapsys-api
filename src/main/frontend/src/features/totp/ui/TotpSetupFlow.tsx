@@ -6,7 +6,7 @@ import { Button, Spinner } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpCodeError } from '../model/errors'
-import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
+import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 import type { ITotpApi } from '../api/ITotpApi'
 import type { TotpSetupData } from '../model/types'
 
@@ -31,12 +31,8 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   // setup() calls that would store different secrets while the QR shows the wrong one.
   const setupCalledRef = useRef(false)
 
-  // `api` is intentionally in the dependency array for exhaustive-deps compliance,
-  // but `setupCalledRef` ensures setup() runs at most once per component lifetime.
+  // `api` is excluded from deps: setupCalledRef ensures exactly one call per lifetime.
   // Assumption: `api` identity is stable (module-level singleton `totpApi`).
-  // If `api` ever changes identity, the effect re-fires but returns early — this is
-  // acceptable since setup generates a new secret and QR code regardless.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (setupCalledRef.current) return
     setupCalledRef.current = true
@@ -48,6 +44,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
         setSetupData(data)
       })
       .catch(() => setSetupError(true))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const groupedSecret = setupData?.secret.match(/.{1,4}/g)?.join(' ') ?? ''

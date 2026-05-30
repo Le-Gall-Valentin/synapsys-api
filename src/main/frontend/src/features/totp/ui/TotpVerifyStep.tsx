@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpChallengeExpiredError } from '../model/errors'
-import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
+import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 import type { ITotpApi } from '../api/ITotpApi'
 import type { User } from '@/entities/user'
 
