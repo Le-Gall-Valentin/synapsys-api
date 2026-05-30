@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import { Button, Spinner } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
+import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpCodeError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 import type { ITotpApi } from '../api/ITotpApi'
@@ -18,12 +19,14 @@ interface TotpSetupFlowProps {
 
 export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpSetupFlowProps) {
   const { t } = useTranslation('totp')
+  const headingId = useId()
   const [setupData, setSetupData] = useState<TotpSetupData | null>(null)
   const [setupError, setSetupError] = useState(false)
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const isSubmittingRef = useRef(false)
+  const digitInputRef = useRef<TotpDigitInputHandle>(null)
   // Ref persists across StrictMode's simulated unmount/remount — prevents two concurrent
   // setup() calls that would store different secrets while the QR shows the wrong one.
   const setupCalledRef = useRef(false)
@@ -53,6 +56,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
       if (error instanceof TotpCodeError) {
         setErrorKey('setup.error.invalid_code')
         setCode('')
+        digitInputRef.current?.focusFirst()
       } else if (error instanceof RateLimitError) {
         setErrorKey('setup.error.rate_limit')
       } else if (error instanceof NetworkError) {
@@ -62,6 +66,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
       } else {
         setErrorKey('setup.error.invalid_code')
         setCode('')
+        digitInputRef.current?.focusFirst()
       }
     } finally {
       isSubmittingRef.current = false
@@ -84,7 +89,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   return (
     <div>
       <div className="mb-8">
-        <h2 className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+        <h2 id={headingId} className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
           {t('setup.title')}
         </h2>
         <p className="text-sm text-fg-2">{t('setup.subtitle')}</p>
@@ -104,8 +109,16 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-4">
-        <TotpDigitInput value={code} onChange={setCode} disabled={isLoading} autoFocus />
+      <form onSubmit={handleSubmit} aria-labelledby={headingId} className="mt-4">
+        <TotpDigitInput
+          ref={digitInputRef}
+          value={code}
+          onChange={setCode}
+          disabled={isLoading}
+          autoFocus
+          groupLabel={t('setup.code_group_label')}
+          digitLabel={(i) => t('setup.digit_label', { n: i + 1 })}
+        />
 
         {errorKey && (
           <div

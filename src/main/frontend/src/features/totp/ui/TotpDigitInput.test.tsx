@@ -1,6 +1,7 @@
 import { render, fireEvent } from '@testing-library/react'
+import { createRef } from 'react'
 import { describe, it, expect, vi } from 'vitest'
-import { TotpDigitInput } from './TotpDigitInput'
+import { TotpDigitInput, type TotpDigitInputHandle } from './TotpDigitInput'
 
 function setup(value = '', onChange = vi.fn()) {
   return render(<TotpDigitInput value={value} onChange={onChange} />)
@@ -92,5 +93,29 @@ describe('TotpDigitInput', () => {
     )
     const inputs = getAllByRole('textbox') as HTMLInputElement[]
     inputs.forEach(input => expect(input.disabled).toBe(true))
+  })
+
+  it('uses provided groupLabel for the group aria-label', () => {
+    const { getByRole } = render(
+      <TotpDigitInput value="" onChange={vi.fn()} groupLabel="Code de vérification" />
+    )
+    expect(getByRole('group', { name: 'Code de vérification' })).toBeTruthy()
+  })
+
+  it('uses provided digitLabel for each input aria-label', () => {
+    const { getAllByRole } = render(
+      <TotpDigitInput value="" onChange={vi.fn()} digitLabel={(i) => `Chiffre ${i + 1}`} />
+    )
+    const inputs = getAllByRole('textbox')
+    expect(inputs[0].getAttribute('aria-label')).toBe('Chiffre 1')
+    expect(inputs[5].getAttribute('aria-label')).toBe('Chiffre 6')
+  })
+
+  it('exposes focusFirst() via ref', () => {
+    const ref = createRef<TotpDigitInputHandle>()
+    render(<TotpDigitInput value="" onChange={vi.fn()} ref={ref} />)
+    expect(ref.current).toBeTruthy()
+    // focusFirst should not throw
+    expect(() => ref.current?.focusFirst()).not.toThrow()
   })
 })

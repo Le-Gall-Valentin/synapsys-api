@@ -5,6 +5,8 @@
     "submit": "Vérifier",
     "back": "← Utiliser un autre compte",
     "help": "Vous avez perdu votre appareil ? Demandez à un administrateur de réinitialiser votre double authentification.",
+    "code_group_label": "Code de vérification",
+    "digit_label": "Chiffre {{n}}",
     "error": {
       "invalid_code": "Code invalide ou expiré.",
       "challenge_expired": "Session expirée. Veuillez vous reconnecter.",
@@ -28,6 +30,8 @@
     "subtitle": "Scannez ce QR code avec Google Authenticator, 1Password, ou toute autre application TOTP.",
     "manual_label": "Ou saisissez ce secret manuellement",
     "submit": "Vérifier et activer",
+    "code_group_label": "Code de vérification",
+    "digit_label": "Chiffre {{n}}",
     "dismiss_login": "Ignorer pour cette fois",
     "dismiss_profile": "Annuler",
     "loading": "Chargement...",

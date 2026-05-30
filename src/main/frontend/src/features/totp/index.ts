@@ -4,6 +4,7 @@ export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError } fro
 export { totpTranslations } from './locales'
 export { totpApi } from './api/totpApi'
 export { TotpDigitInput } from './ui/TotpDigitInput'
+export type { TotpDigitInputHandle } from './ui/TotpDigitInput'
 export { TotpVerifyStep } from './ui/TotpVerifyStep'
 export { TotpEnrollProposal } from './ui/TotpEnrollProposal'
 export { TotpSetupFlow } from './ui/TotpSetupFlow'

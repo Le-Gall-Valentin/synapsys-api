@@ -5,6 +5,8 @@
     "submit": "Verify",
     "back": "← Use another account",
     "help": "Lost your device? Ask an administrator to reset your two-factor authentication.",
+    "code_group_label": "Verification code",
+    "digit_label": "Digit {{n}}",
     "error": {
       "invalid_code": "Invalid or expired code.",
       "challenge_expired": "Session expired. Please log in again.",
@@ -28,6 +30,8 @@
     "subtitle": "Scan this QR code with Google Authenticator, 1Password, or any TOTP application.",
     "manual_label": "Or enter this secret manually",
     "submit": "Verify and activate",
+    "code_group_label": "Verification code",
+    "digit_label": "Digit {{n}}",
     "dismiss_login": "Skip for now",
     "dismiss_profile": "Cancel",
     "loading": "Loading...",

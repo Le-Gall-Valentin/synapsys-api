@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react'
+import React, { useId, useRef, useState } from 'react'
 import { AlertTriangle, Check, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
+import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpChallengeExpiredError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 import type { ITotpApi } from '../api/ITotpApi'
@@ -17,10 +18,12 @@ interface TotpVerifyStepProps {
 
 export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerifyStepProps) {
   const { t } = useTranslation('totp')
+  const headingId = useId()
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const isSubmittingRef = useRef(false)
+  const digitInputRef = useRef<TotpDigitInputHandle>(null)
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
@@ -44,6 +47,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
       } else {
         setErrorKey('verify.error.invalid_code')
         setCode('')
+        digitInputRef.current?.focusFirst()
       }
     } finally {
       isSubmittingRef.current = false
@@ -54,7 +58,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
   return (
     <div>
       <div className="mb-8">
-        <h2 className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
+        <h2 id={headingId} className="mb-2 text-[28px] font-semibold tracking-tight text-fg-0">
           {t('verify.title')}
         </h2>
         <p className="text-sm text-fg-2">
@@ -62,8 +66,16 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
         </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <TotpDigitInput value={code} onChange={setCode} disabled={isLoading} autoFocus />
+      <form onSubmit={handleSubmit} aria-labelledby={headingId}>
+        <TotpDigitInput
+          ref={digitInputRef}
+          value={code}
+          onChange={setCode}
+          disabled={isLoading}
+          autoFocus
+          groupLabel={t('verify.code_group_label')}
+          digitLabel={(i) => t('verify.digit_label', { n: i + 1 })}
+        />
 
         {errorKey && (
           <div
