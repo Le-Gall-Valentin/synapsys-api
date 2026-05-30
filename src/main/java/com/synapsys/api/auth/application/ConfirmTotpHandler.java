@@ -12,13 +12,16 @@ public class ConfirmTotpHandler implements ConfirmTotpUseCase {
     private final UserRepository userRepository;
     private final TotpCodeValidatorPort codeValidator;
     private final UserTotpPort userTotpPort;
+    private final TotpChallengeStorePort challengeStore;
 
     public ConfirmTotpHandler(UserRepository userRepository,
                               TotpCodeValidatorPort codeValidator,
-                              UserTotpPort userTotpPort) {
+                              UserTotpPort userTotpPort,
+                              TotpChallengeStorePort challengeStore) {
         this.userRepository = userRepository;
         this.codeValidator = codeValidator;
         this.userTotpPort = userTotpPort;
+        this.challengeStore = challengeStore;
     }
 
     @Override
@@ -28,10 +31,15 @@ public class ConfirmTotpHandler implements ConfirmTotpUseCase {
             .orElseThrow(AuthException.UserNotFound::new);
 
         if (user.totpSecret() == null) {
-            throw new AuthException.TotpNotEnabled();
+            throw new AuthException.TotpSetupNotStarted();
         }
 
         if (!codeValidator.isValid(user.totpSecret(), command.code())) {
+            throw new AuthException.TotpCodeInvalid();
+        }
+
+        // Atomic anti-replay: same code cannot confirm enrollment twice in its validity window.
+        if (!challengeStore.markCodeUsedIfAbsent(command.userId(), command.code())) {
             throw new AuthException.TotpCodeInvalid();
         }
 

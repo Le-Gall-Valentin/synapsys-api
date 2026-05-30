@@ -22,6 +22,7 @@ class ConfirmTotpHandlerTest {
     @Mock UserRepository userRepository;
     @Mock TotpCodeValidatorPort codeValidator;
     @Mock UserTotpPort userTotpPort;
+    @Mock TotpChallengeStorePort challengeStore;
 
     private ConfirmTotpHandler handler;
 
@@ -33,13 +34,14 @@ class ConfirmTotpHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new ConfirmTotpHandler(userRepository, codeValidator, userTotpPort);
+        handler = new ConfirmTotpHandler(userRepository, codeValidator, userTotpPort, challengeStore);
     }
 
     @Test
     void confirm_validCode_enablesTotp() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(userWithSecret));
         when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
 
         assertThatNoException().isThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")));
 
@@ -58,12 +60,26 @@ class ConfirmTotpHandlerTest {
     }
 
     @Test
-    void confirm_noSecretConfigured_throws() {
+    void confirm_replayedCode_throwsTotpCodeInvalid() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userWithSecret));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verifyNoInteractions(userTotpPort);
+    }
+
+    @Test
+    void confirm_setupNeverStarted_throwsTotpSetupNotStarted() {
+        // setup() was never called — secret is null, but totpEnabled is also false.
+        // This is a precondition failure, not a "TOTP not enabled" state.
         User noSecret = new User(userId, "user1", "user1@test.com", "hash",
             Role.USER, true, Instant.now(), null, false);
         when(userRepository.findById(userId)).thenReturn(Optional.of(noSecret));
 
         assertThatThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
-            .isInstanceOf(AuthException.TotpNotEnabled.class);
+            .isInstanceOf(AuthException.TotpSetupNotStarted.class);
     }
 }

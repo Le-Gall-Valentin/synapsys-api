@@ -14,22 +14,22 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByUsername(String username);
     Optional<UserEntity> findByEmail(String email);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE UserEntity u SET u.active = false WHERE u.id = :id")
     void deactivateById(@Param("id") UUID id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE UserEntity u SET u.totpSecret = :secret WHERE u.id = :id")
     void saveTotpSecretById(@Param("id") UUID id, @Param("secret") String secret);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE UserEntity u SET u.totpEnabled = true WHERE u.id = :id")
     void enableTotpById(@Param("id") UUID id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE UserEntity u SET u.totpEnabled = false, u.totpSecret = null WHERE u.id = :id")
     void disableTotpById(@Param("id") UUID id);

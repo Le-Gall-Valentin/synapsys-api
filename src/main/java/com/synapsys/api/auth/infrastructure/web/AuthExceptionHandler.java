@@ -73,6 +73,9 @@ public class AuthExceptionHandler {
 
             case AuthException.TotpNotEnabled ex ->
                     response(409, ex, ex.getMessage());
+
+            case AuthException.TotpSetupNotStarted ex ->
+                    response(422, ex, ex.getMessage());
         };
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(

@@ -15,6 +15,7 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.TotpCodeInvalid,
             AuthException.TotpAlreadyEnabled,
             AuthException.TotpNotEnabled,
+            AuthException.TotpSetupNotStarted,
             AuthException.TotpChallengeExpired {
 
     private AuthException(String message) {
@@ -79,6 +80,10 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class TotpNotEnabled extends AuthException {
         public TotpNotEnabled() { super("Two-factor authentication is not enabled"); }
+    }
+
+    public static final class TotpSetupNotStarted extends AuthException {
+        public TotpSetupNotStarted() { super("Two-factor authentication setup has not been started"); }
     }
 
     public static final class TotpChallengeExpired extends AuthException {
