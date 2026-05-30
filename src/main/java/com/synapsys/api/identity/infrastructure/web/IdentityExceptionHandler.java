@@ -7,12 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.net.URI;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class IdentityExceptionHandler {
@@ -54,20 +52,6 @@ public class IdentityExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
 
         return ResponseEntity.status(response.status()).body(problem);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException e,
-                                                          HttpServletRequest request) {
-        String details = e.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, details);
-        problem.setTitle("Validation failed");
-        problem.setInstance(URI.create(request.getRequestURI()));
-
-        return ResponseEntity.badRequest().body(problem);
     }
 
     private static IdentityErrorResponse response(int status, IdentityException e, String detail) {

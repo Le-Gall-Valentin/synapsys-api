@@ -77,6 +77,26 @@ class DeactivateUserHandlerTest {
     }
 
     @Test
+    void deactivate_adminCannotDeactivateSuperAdmin_throwsInsufficientPermissions() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
+
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.ADMIN)))
+            .isInstanceOf(IdentityException.InsufficientPermissions.class);
+
+        verify(userCommandPort, never()).deactivate(any());
+    }
+
+    @Test
+    void deactivate_superAdminCannotDeactivateAnotherSuperAdmin_throwsInsufficientPermissions() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
+
+        assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(targetId, callerId, Role.SUPER_ADMIN)))
+            .isInstanceOf(IdentityException.InsufficientPermissions.class);
+
+        verify(userCommandPort, never()).deactivate(any());
+    }
+
+    @Test
     void deactivate_selfDeactivation_throwsInsufficientPermissions() {
         assertThatThrownBy(() -> handler.deactivate(new DeactivateUserCommand(callerId, callerId, Role.SUPER_ADMIN)))
             .isInstanceOf(IdentityException.InsufficientPermissions.class)

@@ -1,5 +1,10 @@
 package com.synapsys.api.identity.domain.model;
 
 import com.synapsys.api.shared.model.Role;
+import java.util.Locale;
 
-public record RegisterCommand(String username, String email, String rawPassword, Role role) {}
+public record RegisterCommand(String username, String email, String rawPassword, Role role) {
+    public RegisterCommand {
+        if (email != null) email = email.toLowerCase(Locale.ROOT);
+    }
+}

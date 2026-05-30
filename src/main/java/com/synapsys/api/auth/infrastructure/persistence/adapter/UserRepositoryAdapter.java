@@ -1,13 +1,9 @@
 package com.synapsys.api.auth.infrastructure.persistence.adapter;
 
-import com.synapsys.api.auth.domain.model.AuthException;
 import com.synapsys.api.auth.domain.model.User;
-import com.synapsys.api.auth.domain.port.out.UserAdminPort;
 import com.synapsys.api.auth.domain.port.out.UserRepository;
 import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
 import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.stereotype.Component;
@@ -15,10 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
-// Implements UserRepository (queries) and UserAdminPort (admin checks),
-// sharing a single JPA repository to avoid duplicating persistence logic across multiple adapters.
 @Component
-public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
+public class UserRepositoryAdapter implements UserRepository {
 
     private final UserJpaRepository jpa;
     private final TextEncryptor encryptor;
@@ -27,11 +21,6 @@ public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
                                  @Qualifier("totpSecretEncryptor") TextEncryptor encryptor) {
         this.jpa = jpa;
         this.encryptor = encryptor;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return jpa.count() == 0;
     }
 
     @Override
@@ -47,17 +36,6 @@ public class UserRepositoryAdapter implements UserRepository, UserAdminPort {
     @Override
     public Optional<User> findById(UUID id) {
         return jpa.findById(id).map(this::toDomain);
-    }
-
-    private AuthException resolveConstraintViolation(DataIntegrityViolationException e) {
-        if (e.getCause() instanceof ConstraintViolationException cve) {
-            String constraint = cve.getConstraintName();
-            if (constraint != null) {
-                if (constraint.contains("uq_users_email"))    return new AuthException.EmailAlreadyExists();
-                if (constraint.contains("uq_users_username")) return new AuthException.UsernameAlreadyExists();
-            }
-        }
-        return new AuthException.DataIntegrityError();
     }
 
     public void saveTotpSecret(UUID userId, String secret) {
