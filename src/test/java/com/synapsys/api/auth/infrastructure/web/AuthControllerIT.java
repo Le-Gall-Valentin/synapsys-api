@@ -11,6 +11,8 @@ import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,7 @@ class AuthControllerIT {
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
+    @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -76,6 +79,15 @@ class AuthControllerIT {
         admin.setPasswordHash(encoder.encode("adminpass"));
         admin.setRole(Role.SUPER_ADMIN);
         userJpaRepository.save(admin);
+
+        UserEntity totpUser = new UserEntity();
+        totpUser.setUsername("totpuser");
+        totpUser.setEmail("totpuser@test.com");
+        totpUser.setPasswordHash(encoder.encode("totppass"));
+        totpUser.setRole(Role.USER);
+        totpUser.setTotpSecret(encryptor.encrypt("JBSWY3DPEHPK3PXP"));
+        totpUser.setTotpEnabled(true);
+        userJpaRepository.save(totpUser);
     }
 
     @Test
@@ -226,6 +238,18 @@ class AuthControllerIT {
                 .with(req -> { req.setRemoteAddr("198.51.100.2"); return req; }))
             .andExpect(status().isTooManyRequests())
             .andExpect(header().exists("Retry-After"));
+    }
+
+    @Test
+    void login_whenTotpEnabled_returnsTotpRequiredAndSetsChallengeHttpOnlyCookie() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("totpuser", "totppass"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totpRequired").value(true))
+            .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("totp_challenge")))
+            .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("HttpOnly")))
+            .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Path=/api/auth/2fa")));
     }
 
     MvcResult login() throws Exception {
