@@ -12,7 +12,7 @@ vi.mock('@/features/auth', () => ({
   LoginForm: ({ labelId, onLoginOutcome }: { labelId?: string; onLoginOutcome?: (o: unknown) => void }) => (
     <div>
       <form aria-label="login" aria-labelledby={labelId} />
-      <button onClick={() => onLoginOutcome?.({ kind: 'totp_required' })}>trigger-totp</button>
+      <button onClick={() => onLoginOutcome?.({ kind: 'totp_required', username: 'alice' })}>trigger-totp</button>
       <button onClick={() => onLoginOutcome?.({ kind: 'enrollment_proposed', user: { id: '1', username: 'alice', role: 'USER', totpEnabled: false } })}>trigger-enroll</button>
     </div>
   ),

@@ -28,13 +28,15 @@ export function createAuthStore(api: IAuthApi) {
     async login(credentials: LoginCredentials): Promise<LoginOutcome> {
       const result = await api.login(credentials)
       if (result.type === 'totp_required') {
-        return { kind: 'totp_required' }
+        return { kind: 'totp_required', username: credentials.username }
       }
       const { user } = result
+      // Credentials are verified — notify interceptor so session expiry flag is reset.
+      notifyLoginSuccess()
       if (!user.totpEnabled) {
+        // Authenticated but enrollment not yet done; don't set user or session hint yet.
         return { kind: 'enrollment_proposed', user }
       }
-      notifyLoginSuccess()
       setSessionHint()
       set({ user })
       return { kind: 'authenticated' }

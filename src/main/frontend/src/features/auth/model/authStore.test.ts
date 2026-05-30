@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from './authStore'
 import type { IAuthApi } from './IAuthApi'
 import { clearSessionHint, hasSessionHint, setSessionHint } from '@/shared/lib'
+import { notifyLoginSuccess } from '@/shared/api'
 import { CredentialsError, NetworkError, ServerError } from './errors'
 
 vi.mock('@/shared/lib', async (importActual) => {
@@ -14,9 +15,15 @@ vi.mock('@/shared/lib', async (importActual) => {
   }
 })
 
+vi.mock('@/shared/api', () => ({
+  notifyLoginSuccess: vi.fn(),
+  client: { post: vi.fn(), get: vi.fn() },
+}))
+
 const mockedSetSessionHint = vi.mocked(setSessionHint)
 const mockedClearSessionHint = vi.mocked(clearSessionHint)
 const mockedHasSessionHint = vi.mocked(hasSessionHint)
+const mockedNotifyLoginSuccess = vi.mocked(notifyLoginSuccess)
 
 function createApiMock(): IAuthApi {
   return {
@@ -31,6 +38,7 @@ describe('authStore', () => {
     mockedSetSessionHint.mockReset()
     mockedClearSessionHint.mockReset()
     mockedHasSessionHint.mockReset()
+    mockedNotifyLoginSuccess.mockReset()
   })
 
   it('login sets authenticated state and session hint', async () => {
@@ -49,19 +57,20 @@ describe('authStore', () => {
     expect(outcome).toEqual({ kind: 'authenticated' })
   })
 
-  it('login returns totp_required and does not set user when server returns totpRequired', async () => {
+  it('login returns totp_required with username and does not set user', async () => {
     const api = createApiMock()
     vi.mocked(api.login).mockResolvedValue({ type: 'totp_required' })
     const store = createAuthStore(api)
 
-    const outcome = await store.getState().login({ username: 'user', password: 'secret' })
+    const outcome = await store.getState().login({ username: 'alice', password: 'secret' })
 
-    expect(outcome).toEqual({ kind: 'totp_required' })
+    expect(outcome).toEqual({ kind: 'totp_required', username: 'alice' })
     expect(mockedSetSessionHint).not.toHaveBeenCalled()
+    expect(mockedNotifyLoginSuccess).not.toHaveBeenCalled()
     expect(store.getState().user).toBeNull()
   })
 
-  it('login returns enrollment_proposed and does not set user when user has totpEnabled false', async () => {
+  it('login returns enrollment_proposed and calls notifyLoginSuccess (F-M3)', async () => {
     const user = { id: '1', username: 'user', role: 'USER' as const, totpEnabled: false }
     const api = createApiMock()
     vi.mocked(api.login).mockResolvedValue({ type: 'success', user })
@@ -70,6 +79,8 @@ describe('authStore', () => {
     const outcome = await store.getState().login({ username: 'user', password: 'secret' })
 
     expect(outcome).toEqual({ kind: 'enrollment_proposed', user })
+    // Credentials verified — refresh interceptor must be notified even though user is not set yet
+    expect(mockedNotifyLoginSuccess).toHaveBeenCalledTimes(1)
     expect(mockedSetSessionHint).not.toHaveBeenCalled()
     expect(store.getState().user).toBeNull()
   })

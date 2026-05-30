@@ -11,5 +11,5 @@ export type LoginApiResult =
 
 export type LoginOutcome =
   | { kind: 'authenticated' }
-  | { kind: 'totp_required' }
+  | { kind: 'totp_required'; username: string }
   | { kind: 'enrollment_proposed'; user: User }

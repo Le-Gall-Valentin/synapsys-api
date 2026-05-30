@@ -16,9 +16,11 @@ export function LoginPage() {
 
   const [step, setStep] = useState<LoginStep>('credentials')
   const [pendingUser, setPendingUser] = useState<User | null>(null)
+  const [pendingUsername, setPendingUsername] = useState('')
 
   function handleLoginOutcome(outcome: Exclude<LoginOutcome, { kind: 'authenticated' }>) {
     if (outcome.kind === 'totp_required') {
+      setPendingUsername(outcome.username)
       setStep('totp')
     } else {
       // enrollment_proposed
@@ -34,6 +36,7 @@ export function LoginPage() {
   function handleBack() {
     setStep('credentials')
     setPendingUser(null)
+    setPendingUsername('')
   }
 
   function handleActivate() {
@@ -57,7 +60,7 @@ export function LoginPage() {
       <LoginBrandPanel />
 
       <main className="relative flex flex-col justify-center bg-bg-0 px-8 py-12 sm:px-11">
-        <div className="mx-auto w-full max-w-[380px]">
+        <div className="mx-auto w-full max-w-95">
 
           {step === 'credentials' && (
             <>
@@ -77,7 +80,7 @@ export function LoginPage() {
 
           {step === 'totp' && (
             <TotpVerifyStep
-              username=""
+              username={pendingUsername}
               api={totpApi}
               onVerified={handleVerified}
               onBack={handleBack}

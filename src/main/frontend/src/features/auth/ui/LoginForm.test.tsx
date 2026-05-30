@@ -136,7 +136,7 @@ describe('LoginForm', () => {
   })
 
   it('calls onLoginOutcome when login returns totp_required', async () => {
-    const mockLogin = vi.fn().mockResolvedValue({ kind: 'totp_required' })
+    const mockLogin = vi.fn().mockResolvedValue({ kind: 'totp_required', username: 'alice' })
     const onLoginOutcome = vi.fn()
     const { getByLabelText } = setup(mockLogin, { onLoginOutcome })
 
@@ -144,7 +144,7 @@ describe('LoginForm', () => {
     fireEvent.change(getByLabelText('field.password'), { target: { value: 'secret' } })
     fireEvent.submit(getByLabelText('field.username').closest('form')!)
 
-    await waitFor(() => expect(onLoginOutcome).toHaveBeenCalledWith({ kind: 'totp_required' }))
+    await waitFor(() => expect(onLoginOutcome).toHaveBeenCalledWith({ kind: 'totp_required', username: 'alice' }))
   })
 
   it('calls onLoginOutcome when login returns enrollment_proposed', async () => {
