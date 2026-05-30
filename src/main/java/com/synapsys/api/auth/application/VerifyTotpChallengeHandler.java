@@ -63,7 +63,7 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
             int attempts = challengeStore.incrementFailedAttempts(command.challengeId());
             if (attempts >= MAX_FAILED_ATTEMPTS) {
                 challengeStore.invalidateChallenge(command.challengeId());
-                throw new AuthException.TotpChallengeExpired();
+                throw new AuthException.TotpMaxAttemptsExceeded();
             }
             throw new AuthException.TotpCodeInvalid();
         }

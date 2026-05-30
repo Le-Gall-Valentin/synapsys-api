@@ -9,3 +9,7 @@ export class TotpChallengeExpiredError extends Error {
 export class TotpAlreadyEnabledError extends Error {
   constructor() { super('TOTP is already enabled'); this.name = 'TotpAlreadyEnabledError' }
 }
+
+export class TotpMaxAttemptsError extends Error {
+  constructor() { super('Too many incorrect TOTP attempts'); this.name = 'TotpMaxAttemptsError' }
+}

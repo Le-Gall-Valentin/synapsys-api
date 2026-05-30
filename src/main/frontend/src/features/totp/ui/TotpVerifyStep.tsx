@@ -1,10 +1,10 @@
-import React, { useId, useRef, useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, Check, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
-import { TotpChallengeExpiredError } from '../model/errors'
+import { TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 import type { ITotpApi } from '../api/ITotpApi'
 import type { User } from '@/entities/user'
@@ -22,8 +22,16 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
+  const [autoBack, setAutoBack] = useState(false)
   const isSubmittingRef = useRef(false)
   const digitInputRef = useRef<TotpDigitInputHandle>(null)
+
+  // After max attempts lockout, redirect automatically after 2 seconds.
+  useEffect(() => {
+    if (!autoBack) return
+    const timer = setTimeout(() => onBack(), 2000)
+    return () => clearTimeout(timer)
+  }, [autoBack, onBack])
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
@@ -36,7 +44,10 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
       const user = await api.verify(code)
       onVerified(user)
     } catch (error) {
-      if (error instanceof TotpChallengeExpiredError) {
+      if (error instanceof TotpMaxAttemptsError) {
+        setErrorKey('verify.error.max_attempts')
+        setAutoBack(true)
+      } else if (error instanceof TotpChallengeExpiredError) {
         setErrorKey('verify.error.challenge_expired')
       } else if (error instanceof RateLimitError) {
         setErrorKey('verify.error.rate_limit')

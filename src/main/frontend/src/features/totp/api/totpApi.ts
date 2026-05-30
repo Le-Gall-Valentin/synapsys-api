@@ -3,7 +3,7 @@ import { client } from '@/shared/api'
 import type { User } from '@/entities/user'
 import type { ITotpApi } from './ITotpApi'
 import type { TotpSetupData } from '../model/types'
-import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError } from '../model/errors'
+import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpMaxAttemptsError } from '../model/errors'
 import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
 
 export const totpApi: ITotpApi = {
@@ -18,8 +18,13 @@ export const totpApi: ITotpApi = {
           // Backend ProblemDetail title distinguishes challenge expiry from wrong code.
           // 'TotpChallengeExpired' is set in AuthExceptionHandler for TotpChallengeExpired exception.
           // Any other 401 title (or absent title) maps to a wrong code.
+          // Backend title distinguishes the three 401 cases:
+          // 'TotpChallengeExpired'     → session timeout
+          // 'TotpMaxAttemptsExceeded'  → brute-force lockout after 5 failures
+          // anything else / absent     → wrong code
           const title = error.response?.data?.title as string | undefined
           if (title === 'TotpChallengeExpired') throw new TotpChallengeExpiredError()
+          if (title === 'TotpMaxAttemptsExceeded') throw new TotpMaxAttemptsError()
           throw new TotpCodeError()
         }
         if (status === 429) {

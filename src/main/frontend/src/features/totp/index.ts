@@ -1,6 +1,6 @@
 export type { ITotpApi } from './api/ITotpApi'
 export type { TotpSetupData } from './model/types'
-export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError } from './model/errors'
+export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError } from './model/errors'
 export { totpTranslations } from './locales'
 export { totpApi } from './api/totpApi'
 export { TotpDigitInput } from './ui/TotpDigitInput'

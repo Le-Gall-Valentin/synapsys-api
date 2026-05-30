@@ -12,13 +12,16 @@ public class DisableTotpHandler implements DisableTotpUseCase {
     private final UserRepository userRepository;
     private final UserTotpPort userTotpPort;
     private final TotpCodeValidatorPort codeValidator;
+    private final TotpChallengeStorePort challengeStore;
 
     public DisableTotpHandler(UserRepository userRepository,
                               UserTotpPort userTotpPort,
-                              TotpCodeValidatorPort codeValidator) {
+                              TotpCodeValidatorPort codeValidator,
+                              TotpChallengeStorePort challengeStore) {
         this.userRepository = userRepository;
         this.userTotpPort = userTotpPort;
         this.codeValidator = codeValidator;
+        this.challengeStore = challengeStore;
     }
 
     @Override
@@ -31,13 +34,17 @@ public class DisableTotpHandler implements DisableTotpUseCase {
             throw new AuthException.TotpNotEnabled();
         }
 
-        // Data inconsistency guard: totpEnabled=true with no secret is unreachable in normal flow.
-        // Treat as invalid code — no NPE, no leakage of internal state.
         if (user.totpSecret() == null) {
             throw new AuthException.TotpCodeInvalid();
         }
 
         if (!codeValidator.isValid(user.totpSecret(), command.code())) {
+            throw new AuthException.TotpCodeInvalid();
+        }
+
+        // Consume the code atomically — prevents replay within the 90-second validity window.
+        // Same invariant as VerifyTotpChallengeHandler and ConfirmTotpHandler.
+        if (!challengeStore.markCodeUsedIfAbsent(command.userId(), command.code())) {
             throw new AuthException.TotpCodeInvalid();
         }
 

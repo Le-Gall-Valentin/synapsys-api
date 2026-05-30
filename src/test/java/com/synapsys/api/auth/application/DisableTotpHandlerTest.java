@@ -22,6 +22,7 @@ class DisableTotpHandlerTest {
     @Mock UserRepository userRepository;
     @Mock UserTotpPort userTotpPort;
     @Mock TotpCodeValidatorPort codeValidator;
+    @Mock TotpChallengeStorePort challengeStore;
 
     private DisableTotpHandler handler;
 
@@ -33,7 +34,7 @@ class DisableTotpHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new DisableTotpHandler(userRepository, userTotpPort, codeValidator);
+        handler = new DisableTotpHandler(userRepository, userTotpPort, codeValidator, challengeStore);
     }
 
     @Test
@@ -53,10 +54,23 @@ class DisableTotpHandlerTest {
     void disable_validCode_disablesIt() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(enabledUser));
         when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
 
         assertThatNoException().isThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")));
 
         verify(userTotpPort).disableTotp(userId);
+    }
+
+    @Test
+    void disable_replayedCode_throwsTotpCodeInvalid() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(enabledUser));
+        when(codeValidator.isValid("SECRETBASE32XXXX", "123456")).thenReturn(true);
+        when(challengeStore.markCodeUsedIfAbsent(userId, "123456")).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
+            .isInstanceOf(AuthException.TotpCodeInvalid.class);
+
+        verifyNoInteractions(userTotpPort);
     }
 
     @Test

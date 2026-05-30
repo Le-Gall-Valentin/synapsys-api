@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios, { type AxiosError } from 'axios'
 import { totpApi } from './totpApi'
 import { client } from '@/shared/api'
-import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError } from '../model/errors'
+import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError } from '../model/errors'
 import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 
 vi.mock('@/shared/api', () => ({
@@ -56,6 +56,13 @@ describe('totpApi', () => {
         makeAxiosError(401, 'Unauthorized', {}, { title: 'TotpChallengeExpired' }),
       )
       await expect(totpApi.verify('123456')).rejects.toBeInstanceOf(TotpChallengeExpiredError)
+    })
+
+    it('throws TotpMaxAttemptsError on 401 with TotpMaxAttemptsExceeded title', async () => {
+      mockedClient.post.mockRejectedValue(
+        makeAxiosError(401, 'Unauthorized', {}, { title: 'TotpMaxAttemptsExceeded' }),
+      )
+      await expect(totpApi.verify('123456')).rejects.toBeInstanceOf(TotpMaxAttemptsError)
     })
 
     it('throws RateLimitError on 429', async () => {

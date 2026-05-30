@@ -16,7 +16,8 @@ public abstract sealed class AuthException extends RuntimeException
             AuthException.TotpAlreadyEnabled,
             AuthException.TotpNotEnabled,
             AuthException.TotpSetupNotStarted,
-            AuthException.TotpChallengeExpired {
+            AuthException.TotpChallengeExpired,
+            AuthException.TotpMaxAttemptsExceeded {
 
     private AuthException(String message) {
         super(message);
@@ -88,5 +89,9 @@ public abstract sealed class AuthException extends RuntimeException
 
     public static final class TotpChallengeExpired extends AuthException {
         public TotpChallengeExpired() { super("Two-factor authentication challenge has expired"); }
+    }
+
+    public static final class TotpMaxAttemptsExceeded extends AuthException {
+        public TotpMaxAttemptsExceeded() { super("Too many incorrect TOTP attempts"); }
     }
 }

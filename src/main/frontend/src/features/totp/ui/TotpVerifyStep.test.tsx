@@ -2,7 +2,7 @@ import { render, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { TotpVerifyStep } from './TotpVerifyStep'
 import type { ITotpApi } from '../api/ITotpApi'
-import { TotpCodeError, TotpChallengeExpiredError } from '../model/errors'
+import { TotpCodeError, TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
 
 vi.mock('react-i18next', () => ({
@@ -219,5 +219,38 @@ describe('TotpVerifyStep', () => {
       fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
     })
     await waitFor(() => expect(getByText('verify.error.server')).toBeTruthy())
+  })
+
+  it('shows max_attempts error on TotpMaxAttemptsError', async () => {
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new TotpMaxAttemptsError()) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+    await waitFor(() => expect(getByText('verify.error.max_attempts')).toBeTruthy())
+  })
+
+  it('calls onBack automatically after max_attempts lockout', async () => {
+    vi.useFakeTimers()
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new TotpMaxAttemptsError()) })
+    const onBack = vi.fn()
+    const { container, getByRole } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={onBack} />
+    )
+    fillCode(container, '123456')
+
+    // Submit and flush all async work before activating fake timers
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+
+    // At this point error is shown and autoBack=true; now advance fake timers
+    expect(onBack).not.toHaveBeenCalled()
+    act(() => { vi.runAllTimers() })
+    expect(onBack).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 })

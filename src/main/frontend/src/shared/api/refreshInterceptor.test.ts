@@ -70,6 +70,21 @@ describe('refreshInterceptor', () => {
     expect(mockOnSessionExpired).not.toHaveBeenCalled()
   })
 
+  it('lets 401 on /auth/2fa/confirm pass through without refreshing (wrong enrollment code)', async () => {
+    const instance = axios.create()
+    let refreshCalled = false
+    instance.defaults.adapter = async (config) => {
+      if (config.url === '/auth/refresh') refreshCalled = true
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config }
+    }
+    const { onRejected } = createRefreshInterceptorHandlers(instance, mockOnSessionExpired)
+
+    const error = make401('/auth/2fa/confirm')
+    await expect(onRejected(error)).rejects.toBeDefined()
+    expect(refreshCalled).toBe(false)
+    expect(mockOnSessionExpired).not.toHaveBeenCalled()
+  })
+
   it('lets 401 on /auth/2fa/verify pass through without refreshing (wrong TOTP code)', async () => {
     const instance = axios.create()
     let refreshCalled = false

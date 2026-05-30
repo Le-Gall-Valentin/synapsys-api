@@ -68,6 +68,9 @@ public class AuthExceptionHandler {
             case AuthException.TotpChallengeExpired ex ->
                     response(401, ex, "Authentication required");
 
+            case AuthException.TotpMaxAttemptsExceeded ex ->
+                    response(401, ex, "Authentication required");
+
             case AuthException.TotpAlreadyEnabled ex ->
                     response(409, ex, ex.getMessage());
 
