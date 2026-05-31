@@ -1,16 +1,16 @@
 package com.synapsys.api.authentication.infrastructure.security;
 
 import com.synapsys.api.authentication.domain.port.out.MfaTotpVerifierPort;
-import com.synapsys.api.mfa.application.service.TotpCodeVerificationService;
+import com.synapsys.api.mfa.application.port.in.VerifyTotpCodeUseCase;
 import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
 public class MfaTotpVerifierAdapter implements MfaTotpVerifierPort {
 
-    private final TotpCodeVerificationService verificationService;
+    private final VerifyTotpCodeUseCase verificationService;
 
-    public MfaTotpVerifierAdapter(TotpCodeVerificationService verificationService) {
+    public MfaTotpVerifierAdapter(VerifyTotpCodeUseCase verificationService) {
         this.verificationService = verificationService;
     }
 
