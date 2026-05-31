@@ -45,7 +45,7 @@ public class AuthController {
             case LoginResult.Success s -> {
                 response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildAccessCookie(s.tokens().accessToken()).toString());
                 response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildRefreshCookie(s.tokens().refreshToken()).toString());
-                UserCredentials user = s.user();
+                UserCredentials user = s.credentials();
                 yield ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
             }
             case LoginResult.TotpRequired t -> {

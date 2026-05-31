@@ -1,6 +1,5 @@
-package com.synapsys.api.authentication.infrastructure.persistence.domain.model;
+package com.synapsys.api.authentication.domain.model;
 
-import com.synapsys.api.authentication.domain.model.RefreshToken;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;

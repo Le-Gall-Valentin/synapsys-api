@@ -46,7 +46,7 @@ public class TotpChallengeController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildRefreshCookie(result.tokens().refreshToken()).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildClearChallengeCookie().toString());
 
-        UserCredentials user = result.user();
+        UserCredentials user = result.credentials();
         return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 

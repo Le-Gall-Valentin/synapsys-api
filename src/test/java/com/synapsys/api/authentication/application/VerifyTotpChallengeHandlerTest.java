@@ -56,7 +56,7 @@ class VerifyTotpChallengeHandlerTest {
 
         assertThat(result.tokens().accessToken()).isEqualTo("jwt-token");
         assertThat(result.tokens().refreshToken()).isEqualTo("refresh-token");
-        assertThat(result.user()).isEqualTo(creds);
+        assertThat(result.credentials()).isEqualTo(creds);
     }
 
     @Test

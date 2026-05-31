@@ -79,7 +79,7 @@ class LoginHandlerTest {
         LoginResult.Success success = (LoginResult.Success) result;
         assertThat(success.tokens().accessToken()).isEqualTo("jwt_access");
         assertThat(success.tokens().refreshToken()).isEqualTo("raw_refresh");
-        assertThat(success.user()).isEqualTo(activeUser);
+        assertThat(success.credentials()).isEqualTo(activeUser);
         verify(refreshTokenPort).generate(activeUser, 30);
     }
 
