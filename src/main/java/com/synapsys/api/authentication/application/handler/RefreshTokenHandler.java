@@ -1,4 +1,4 @@
-package com.synapsys.api.authentication.application;
+package com.synapsys.api.authentication.application.handler;
 
 import com.synapsys.api.authentication.application.port.in.RefreshTokenUseCase;
 import com.synapsys.api.authentication.domain.model.*;

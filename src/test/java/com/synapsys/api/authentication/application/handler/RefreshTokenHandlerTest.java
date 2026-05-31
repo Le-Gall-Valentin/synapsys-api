@@ -1,4 +1,4 @@
-package com.synapsys.api.authentication.application;
+package com.synapsys.api.authentication.application.handler;
 
 import com.synapsys.api.TestHashUtils;
 import com.synapsys.api.authentication.domain.model.*;

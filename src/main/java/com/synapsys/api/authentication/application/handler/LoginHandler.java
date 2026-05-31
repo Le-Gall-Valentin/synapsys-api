@@ -1,4 +1,4 @@
-package com.synapsys.api.authentication.application;
+package com.synapsys.api.authentication.application.handler;
 
 import com.synapsys.api.authentication.application.dto.LoginCommand;
 import com.synapsys.api.authentication.application.port.in.LoginUseCase;

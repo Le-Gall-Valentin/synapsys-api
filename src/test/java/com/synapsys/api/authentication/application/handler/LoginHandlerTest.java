@@ -1,6 +1,5 @@
-package com.synapsys.api.authentication.application;
+package com.synapsys.api.authentication.application.handler;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.synapsys.api.authentication.application.dto.LoginCommand;
