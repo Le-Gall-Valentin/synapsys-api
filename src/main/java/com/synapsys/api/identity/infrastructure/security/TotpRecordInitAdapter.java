@@ -1,21 +1,21 @@
 package com.synapsys.api.identity.infrastructure.security;
 
 import com.synapsys.api.identity.domain.port.out.TotpRecordInitPort;
-import com.synapsys.api.mfa.application.service.TotpRecordInitService;
+import com.synapsys.api.mfa.application.port.in.InitTotpRecordUseCase;
 import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
 public class TotpRecordInitAdapter implements TotpRecordInitPort {
 
-    private final TotpRecordInitService totpRecordInitService;
+    private final InitTotpRecordUseCase initTotpRecordUseCase;
 
-    public TotpRecordInitAdapter(TotpRecordInitService totpRecordInitService) {
-        this.totpRecordInitService = totpRecordInitService;
+    public TotpRecordInitAdapter(InitTotpRecordUseCase initTotpRecordUseCase) {
+        this.initTotpRecordUseCase = initTotpRecordUseCase;
     }
 
     @Override
     public void initForUser(UUID userId) {
-        totpRecordInitService.initForNewUser(userId);
+        initTotpRecordUseCase.initForNewUser(userId);
     }
 }

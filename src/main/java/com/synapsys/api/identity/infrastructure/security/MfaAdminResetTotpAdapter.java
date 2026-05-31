@@ -1,7 +1,7 @@
 package com.synapsys.api.identity.infrastructure.security;
 
 import com.synapsys.api.identity.domain.port.out.MfaAdminResetTotpPort;
-import com.synapsys.api.mfa.application.service.AdminTotpDisableService;
+import com.synapsys.api.mfa.application.port.in.AdminDisableTotpUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -9,14 +9,14 @@ import java.util.UUID;
 @Component
 public class MfaAdminResetTotpAdapter implements MfaAdminResetTotpPort {
 
-    private final AdminTotpDisableService adminTotpDisableService;
+    private final AdminDisableTotpUseCase adminDisableTotpUseCase;
 
-    public MfaAdminResetTotpAdapter(AdminTotpDisableService adminTotpDisableService) {
-        this.adminTotpDisableService = adminTotpDisableService;
+    public MfaAdminResetTotpAdapter(AdminDisableTotpUseCase adminDisableTotpUseCase) {
+        this.adminDisableTotpUseCase = adminDisableTotpUseCase;
     }
 
     @Override
     public void disableTotpIfEnabled(UUID userId) {
-        adminTotpDisableService.disableIfEnabled(userId);
+        adminDisableTotpUseCase.disableIfEnabled(userId);
     }
 }

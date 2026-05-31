@@ -1,12 +1,13 @@
 package com.synapsys.api.mfa.application.service;
 
+import com.synapsys.api.mfa.application.port.in.AdminDisableTotpUseCase;
 import com.synapsys.api.mfa.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @ApplicationService
-public class AdminTotpDisableService {
+public class AdminTotpDisableService implements AdminDisableTotpUseCase {
 
     private final UserTotpQueryPort userTotpQuery;
     private final UserTotpPort userTotpPort;
