@@ -41,7 +41,7 @@ public record SynapsysProperties(
     public record SeedProperties(
         @NotBlank String username,
         @NotBlank String email,
-        @NotBlank String password
+        @NotBlank @Size(min = 8, message = "Seed password must be at least 8 characters") String password
     ) {}
 
     public record CorsProperties(

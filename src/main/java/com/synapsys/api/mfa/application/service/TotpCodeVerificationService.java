@@ -26,6 +26,7 @@ public class TotpCodeVerificationService implements VerifyTotpCodeUseCase {
         Optional<UserTotpProfile> profileOpt = userTotpQuery.findById(userId);
         if (profileOpt.isEmpty()) return false;
         UserTotpProfile profile = profileOpt.get();
+        if (!profile.totpEnabled()) return false;
         if (profile.totpSecret().isEmpty()) return false;
         if (!codeValidator.isValid(profile.totpSecret().get(), code)) return false;
         return codeReplay.markCodeUsedIfAbsent(userId, code);

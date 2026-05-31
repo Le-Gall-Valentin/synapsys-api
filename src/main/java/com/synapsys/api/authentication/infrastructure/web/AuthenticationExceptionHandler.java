@@ -21,7 +21,7 @@ public class AuthenticationExceptionHandler {
     public ResponseEntity<ProblemDetail> handle(AuthenticationException e, HttpServletRequest request) {
         AuthErrorResponse response = switch (e) {
             case AuthenticationException.InvalidCredentials ex ->
-                    response(401, ex, ex.getMessage());
+                    response(401, ex, "Invalid credentials");
 
             case AuthenticationException.UserNotActive ex ->
                     response(403, ex, "User account is not active.");

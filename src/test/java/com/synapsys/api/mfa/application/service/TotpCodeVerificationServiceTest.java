@@ -68,6 +68,16 @@ class TotpCodeVerificationServiceTest {
     }
 
     @Test
+    void verifyAndConsume_totpDisabled_withExistingSecret_returnsFalse() {
+        // Enrollment started (secret saved) but not yet confirmed (totpEnabled=false)
+        UserTotpProfile profile = new UserTotpProfile(userId, false, Optional.of(secret));
+        when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
+
+        assertThat(service.verifyAndConsume(userId, "123456")).isFalse();
+        verifyNoInteractions(codeValidator, codeReplay);
+    }
+
+    @Test
     void verifyAndConsume_replayedCode_returnsFalse() {
         UserTotpProfile profile = new UserTotpProfile(userId,true, Optional.of(secret));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
