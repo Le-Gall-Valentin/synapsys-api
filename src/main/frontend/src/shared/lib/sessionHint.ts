@@ -2,23 +2,23 @@ const SESSION_HINT_KEY = 'synapsys.hasSession'
 
 export function setSessionHint(): void {
   try {
-    localStorage.setItem(SESSION_HINT_KEY, '1')
+    sessionStorage.setItem(SESSION_HINT_KEY, '1')
   } catch {
-    // localStorage unavailable (private mode, quota exceeded)
+    // sessionStorage unavailable (private mode, quota exceeded)
   }
 }
 
 export function clearSessionHint(): void {
   try {
-    localStorage.removeItem(SESSION_HINT_KEY)
+    sessionStorage.removeItem(SESSION_HINT_KEY)
   } catch {
-    // localStorage unavailable (private mode, quota exceeded)
+    // sessionStorage unavailable (private mode, quota exceeded)
   }
 }
 
 export function hasSessionHint(): boolean {
   try {
-    return localStorage.getItem(SESSION_HINT_KEY) === '1'
+    return sessionStorage.getItem(SESSION_HINT_KEY) === '1'
   } catch {
     return false
   }

@@ -19,6 +19,7 @@ export interface AuthActions {
 }
 
 export function createAuthStore(api: IAuthApi) {
+  // Aborted via signal on StrictMode remount — reset ensures the next mount can re-enter initialize().
   let initializationStarted = false
 
   return create<AuthState & AuthActions>((set) => ({
