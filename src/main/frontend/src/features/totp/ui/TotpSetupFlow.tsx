@@ -25,7 +25,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
-  const [isSecretVisible, setIsSecretVisible] = useState(true)
+  const [isSecretVisible, setIsSecretVisible] = useState(false)
   const isSubmittingRef = useRef(false)
   const digitInputRef = useRef<TotpDigitInputHandle>(null)
   // Ref persists across StrictMode's simulated unmount/remount — prevents two concurrent
@@ -125,7 +125,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
               type="button"
               onClick={() => setIsSecretVisible(v => !v)}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-2 hover:text-fg-0"
-              aria-label={isSecretVisible ? 'Hide secret' : 'Show secret'}
+              aria-label={isSecretVisible ? t('setup.hide_secret') : t('setup.show_secret')}
             >
               {isSecretVisible ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>

@@ -71,16 +71,40 @@ describe('TotpSetupFlow', () => {
     expect(alert.textContent).toContain('setup.error.setup_failed')
   })
 
-  it('renders QR code and grouped secret after setup succeeds', async () => {
+  it('renders QR code after setup succeeds', async () => {
     const api = makeApi()
-    const { findByTestId, getByText } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
+    const { findByTestId } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
 
     const qr = await findByTestId('qr-code')
     expect(qr).toBeTruthy()
     expect(qr.getAttribute('data-value')).toBe(SETUP_DATA.otpauthUri)
+  })
 
-    // Secret grouped by 4: ABCD EFGH IJKL MNOP
+  it('hides secret by default after setup succeeds', async () => {
+    const api = makeApi()
+    const { findByTestId, queryByText } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
+    await findByTestId('qr-code')
+    // Secret should be masked, not visible
+    expect(queryByText('ABCD EFGH IJKL MNOP')).toBeNull()
+  })
+
+  it('reveals secret after clicking show button', async () => {
+    const api = makeApi()
+    const { findByTestId, getByRole, getByText } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
+    await findByTestId('qr-code')
+
+    fireEvent.click(getByRole('button', { name: 'setup.show_secret' }))
     expect(getByText('ABCD EFGH IJKL MNOP')).toBeTruthy()
+  })
+
+  it('hides secret again after clicking hide button', async () => {
+    const api = makeApi()
+    const { findByTestId, getByRole, queryByText } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
+    await findByTestId('qr-code')
+
+    fireEvent.click(getByRole('button', { name: 'setup.show_secret' }))
+    fireEvent.click(getByRole('button', { name: 'setup.hide_secret' }))
+    expect(queryByText('ABCD EFGH IJKL MNOP')).toBeNull()
   })
 
   it('calls api.confirm with the entered code on submit', async () => {

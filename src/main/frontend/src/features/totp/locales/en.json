@@ -29,6 +29,8 @@
     "title": "Configure 2FA",
     "subtitle": "Scan this QR code with Google Authenticator, 1Password, or any TOTP application.",
     "manual_label": "Or enter this secret manually",
+    "show_secret": "Show secret",
+    "hide_secret": "Hide secret",
     "submit": "Verify and activate",
     "code_group_label": "Verification code",
     "digit_label": "Digit {{n}}",
