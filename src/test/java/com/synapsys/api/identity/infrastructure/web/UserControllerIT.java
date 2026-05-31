@@ -1,12 +1,11 @@
 package com.synapsys.api.identity.infrastructure.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.synapsys.api.auth.infrastructure.persistence.entity.UserCredentialEntity;
-import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
-import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
-import com.synapsys.api.auth.infrastructure.persistence.repository.UserCredentialJpaRepository;
-import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
-import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
+import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCredentialEntity;
+import com.synapsys.api.authentication.infrastructure.persistence.repository.RefreshTokenJpaRepository;
+import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
+import com.synapsys.api.authentication.infrastructure.web.dto.LoginRequest;
+import com.synapsys.api.identity.infrastructure.persistence.entity.UserIdentityEntity;
 import com.synapsys.api.identity.infrastructure.persistence.repository.UserIdentityJpaRepository;
 import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
@@ -53,8 +52,6 @@ class UserControllerIT {
     static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
 
     @Autowired WebApplicationContext webApplicationContext;
-    // UserJpaRepository used for setup only — login still reads users.password_hash until Task 5
-    @Autowired UserJpaRepository userJpaRepository;
     @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
     @Autowired UserIdentityJpaRepository userIdentityJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
@@ -75,30 +72,27 @@ class UserControllerIT {
         refreshTokenJpaRepository.deleteAll();
         userTotpJpaRepository.deleteAll();
         userCredentialJpaRepository.deleteAll();
-        userJpaRepository.deleteAll();
+        userIdentityJpaRepository.deleteAll();
 
-        UserEntity user = new UserEntity();
+        UserIdentityEntity user = new UserIdentityEntity();
         user.setUsername("testuser");
         user.setEmail("testuser@test.com");
-        user.setPasswordHash(encoder.encode("password"));
         user.setRole(Role.USER);
-        user = userJpaRepository.saveAndFlush(user);
+        userIdentityJpaRepository.saveAndFlush(user);
         saveCredential(user.getId(), "password");
 
-        UserEntity admin = new UserEntity();
+        UserIdentityEntity admin = new UserIdentityEntity();
         admin.setUsername("superadmin");
         admin.setEmail("superadmin@test.com");
-        admin.setPasswordHash(encoder.encode("adminpass"));
         admin.setRole(Role.SUPER_ADMIN);
-        admin = userJpaRepository.saveAndFlush(admin);
+        userIdentityJpaRepository.saveAndFlush(admin);
         saveCredential(admin.getId(), "adminpass");
 
-        UserEntity totpUser = new UserEntity();
+        UserIdentityEntity totpUser = new UserIdentityEntity();
         totpUser.setUsername("totpuser");
         totpUser.setEmail("totpuser@test.com");
-        totpUser.setPasswordHash(encoder.encode("totppass"));
         totpUser.setRole(Role.USER);
-        totpUser = userJpaRepository.saveAndFlush(totpUser);
+        userIdentityJpaRepository.saveAndFlush(totpUser);
         saveCredential(totpUser.getId(), "totppass");
         saveTotpRecord(totpUser.getId(), "JBSWY3DPEHPK3PXP", true);
     }

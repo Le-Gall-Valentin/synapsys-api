@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.ratelimit;
 
-import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
+import com.synapsys.api.authentication.infrastructure.security.CustomUserDetails;
 import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

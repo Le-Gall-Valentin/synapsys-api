@@ -1,6 +1,6 @@
 package com.synapsys.api.mfa.infrastructure.web;
 
-import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
+import com.synapsys.api.authentication.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import com.synapsys.api.mfa.application.port.in.ConfirmTotpUseCase;
 import com.synapsys.api.mfa.application.port.in.DisableTotpUseCase;

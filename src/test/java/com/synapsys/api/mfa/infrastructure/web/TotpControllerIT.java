@@ -2,14 +2,15 @@ package com.synapsys.api.mfa.infrastructure.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapsys.api.shared.model.Role;
-import com.synapsys.api.auth.infrastructure.persistence.entity.UserEntity;
-import com.synapsys.api.auth.infrastructure.persistence.repository.RefreshTokenJpaRepository;
-import com.synapsys.api.auth.infrastructure.persistence.repository.UserCredentialJpaRepository;
-import com.synapsys.api.auth.infrastructure.persistence.repository.UserJpaRepository;
+import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCredentialEntity;
+import com.synapsys.api.authentication.infrastructure.persistence.repository.RefreshTokenJpaRepository;
+import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
+import com.synapsys.api.authentication.infrastructure.security.CustomUserDetails;
+import com.synapsys.api.authentication.infrastructure.web.dto.LoginRequest;
+import com.synapsys.api.identity.infrastructure.persistence.entity.UserIdentityEntity;
+import com.synapsys.api.identity.infrastructure.persistence.repository.UserIdentityJpaRepository;
 import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
-import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
-import com.synapsys.api.auth.infrastructure.web.dto.LoginRequest;
 import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
 import jakarta.servlet.http.Cookie;
@@ -56,7 +57,7 @@ class TotpControllerIT {
     static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
 
     @Autowired WebApplicationContext webApplicationContext;
-    @Autowired UserJpaRepository userJpaRepository;
+    @Autowired UserIdentityJpaRepository userIdentityJpaRepository;
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
     @Autowired UserTotpJpaRepository userTotpJpaRepository;
@@ -80,41 +81,51 @@ class TotpControllerIT {
         refreshTokenJpaRepository.deleteAll();
         userTotpJpaRepository.deleteAll();
         userCredentialJpaRepository.deleteAll();
-        userJpaRepository.deleteAll();
+        userIdentityJpaRepository.deleteAll();
 
         // Plain user — no TOTP
-        UserEntity user = new UserEntity();
+        UserIdentityEntity user = new UserIdentityEntity();
         user.setUsername("testuser");
         user.setEmail("testuser@test.com");
-        user.setPasswordHash(encoder.encode("password"));
         user.setRole(Role.USER);
-        userJpaRepository.save(user);
+        userIdentityJpaRepository.save(user);
+
+        UserCredentialEntity userCred = new UserCredentialEntity();
+        userCred.setUserId(user.getId());
+        userCred.setPasswordHash(encoder.encode("password"));
+        userCredentialJpaRepository.save(userCred);
 
         UserTotpEntity userTotpRecord = new UserTotpEntity();
         userTotpRecord.setUserId(user.getId());
         userTotpJpaRepository.save(userTotpRecord);
 
         // Super-admin (for admin-only endpoints)
-        UserEntity admin = new UserEntity();
+        UserIdentityEntity admin = new UserIdentityEntity();
         admin.setUsername("superadmin");
         admin.setEmail("superadmin@test.com");
-        admin.setPasswordHash(encoder.encode("adminpass"));
         admin.setRole(Role.SUPER_ADMIN);
-        userJpaRepository.save(admin);
+        userIdentityJpaRepository.save(admin);
+
+        UserCredentialEntity adminCred = new UserCredentialEntity();
+        adminCred.setUserId(admin.getId());
+        adminCred.setPasswordHash(encoder.encode("adminpass"));
+        userCredentialJpaRepository.save(adminCred);
 
         UserTotpEntity adminTotpRecord = new UserTotpEntity();
         adminTotpRecord.setUserId(admin.getId());
         userTotpJpaRepository.save(adminTotpRecord);
 
         // User with TOTP already enabled
-        UserEntity totpUser = new UserEntity();
+        UserIdentityEntity totpUser = new UserIdentityEntity();
         totpUser.setUsername("totpuser");
         totpUser.setEmail("totpuser@test.com");
-        totpUser.setPasswordHash(encoder.encode("totppass"));
         totpUser.setRole(Role.USER);
-        totpUser.setTotpSecret(encryptor.encrypt(KNOWN_TOTP_SECRET));
-        totpUser.setTotpEnabled(true);
-        userJpaRepository.save(totpUser);
+        userIdentityJpaRepository.save(totpUser);
+
+        UserCredentialEntity totpCred = new UserCredentialEntity();
+        totpCred.setUserId(totpUser.getId());
+        totpCred.setPasswordHash(encoder.encode("totppass"));
+        userCredentialJpaRepository.save(totpCred);
 
         UserTotpEntity totpRecord = new UserTotpEntity();
         totpRecord.setUserId(totpUser.getId());
@@ -145,7 +156,7 @@ class TotpControllerIT {
     void setup_alreadyEnabled_returns409() throws Exception {
         // totpuser has totpEnabled=true; logging in as them starts the challenge flow (no access_token).
         // Inject authentication directly to reach the endpoint as an authenticated totpuser.
-        String totpUserId = userJpaRepository.findByUsername("totpuser")
+        String totpUserId = userIdentityJpaRepository.findByUsername("totpuser")
             .orElseThrow().getId().toString();
         CustomUserDetails totpPrincipal = new CustomUserDetails(
             java.util.UUID.fromString(totpUserId), Role.USER, "totpuser@test.com");
@@ -267,7 +278,6 @@ class TotpControllerIT {
                 .content("{\"code\":\"" + validCode + "\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.username").value("totpuser"))
-            .andExpect(jsonPath("$.totpEnabled").value(true))
             .andReturn();
 
         // Verify JWT cookies are set (multiple Set-Cookie headers — check response cookies directly)

@@ -1,6 +1,6 @@
 package com.synapsys.api.identity.infrastructure.web;
 
-import com.synapsys.api.auth.infrastructure.security.CustomUserDetails;
+import com.synapsys.api.authentication.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.identity.application.port.in.AdminResetTotpUseCase;
 import com.synapsys.api.identity.application.port.in.DeactivateUserUseCase;
 import com.synapsys.api.identity.application.port.in.GetCurrentUserUseCase;

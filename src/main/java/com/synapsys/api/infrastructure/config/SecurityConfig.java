@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.infrastructure.security.JwtAuthenticationFilter;
+import com.synapsys.api.authentication.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

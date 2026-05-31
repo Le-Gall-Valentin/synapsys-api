@@ -17,15 +17,15 @@ public class UserCredentialsService {
         this.userRepository = userRepository;
     }
 
-    public record UserInfo(UUID id, String username, boolean isActive, Role role, Instant createdAt) {}
+    public record UserInfo(UUID id, String username, String email, boolean isActive, Role role, Instant createdAt) {}
 
     public Optional<UserInfo> findByUsername(String username) {
         return userRepository.findByUsername(username)
-            .map(u -> new UserInfo(u.id(), u.username(), u.isActive(), u.role(), u.createdAt()));
+            .map(u -> new UserInfo(u.id(), u.username(), u.email(), u.isActive(), u.role(), u.createdAt()));
     }
 
     public Optional<UserInfo> findById(UUID id) {
         return userRepository.findById(id)
-            .map(u -> new UserInfo(u.id(), u.username(), u.isActive(), u.role(), u.createdAt()));
+            .map(u -> new UserInfo(u.id(), u.username(), u.email(), u.isActive(), u.role(), u.createdAt()));
     }
 }

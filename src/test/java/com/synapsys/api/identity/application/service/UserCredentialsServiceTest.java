@@ -40,6 +40,7 @@ class UserCredentialsServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().id()).isEqualTo(id);
         assertThat(result.get().username()).isEqualTo("alice");
+        assertThat(result.get().email()).isEqualTo("alice@test.com");
         assertThat(result.get().isActive()).isTrue();
         assertThat(result.get().role()).isEqualTo(Role.USER);
         assertThat(result.get().createdAt()).isEqualTo(now);

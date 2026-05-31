@@ -1,6 +1,6 @@
 package com.synapsys.api.identity.infrastructure.security;
 
-import com.synapsys.api.auth.application.service.CredentialSetupService;
+import com.synapsys.api.authentication.application.service.CredentialSetupService;
 import com.synapsys.api.identity.domain.port.out.CredentialSetupPort;
 import org.springframework.stereotype.Component;
 

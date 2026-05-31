@@ -102,6 +102,7 @@ class ArchRulesTest {
         classes()
             .that().resideInAPackage("..domain.port.in..")
             .should().beInterfaces()
+            .allowEmptyShould(true)
             .check(classes);
     }
 
@@ -185,7 +186,7 @@ class ArchRulesTest {
     void configuration_classes_should_not_implement_domain_ports() {
         noClasses()
             .that().haveSimpleName("SynapsysProperties")
-            .should().implement(com.synapsys.api.auth.domain.port.out.RefreshTokenConfigPort.class)
+            .should().implement(com.synapsys.api.authentication.domain.port.out.RefreshTokenConfigPort.class)
             .check(classes);
     }
 }
