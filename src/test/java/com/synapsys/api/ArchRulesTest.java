@@ -176,6 +176,16 @@ class ArchRulesTest {
             c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
 
         noClasses()
+            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
+            .and(excludeTests)
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.synapsys.api.identity.infrastructure..",
+                "com.synapsys.api.mfa.infrastructure..")
+            .allowEmptyShould(false)
+            .check(classes);
+
+        noClasses()
             .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
             .and(excludeTests)
             .should().dependOnClassesThat()
@@ -197,9 +207,23 @@ class ArchRulesTest {
     }
 
     @Test
+    void authentication_infrastructure_should_not_depend_on_mfa_concrete_services() {
+        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
+            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
+            .and(excludeTests)
+            .should().dependOnClassesThat()
+            .resideInAPackage("com.synapsys.api.mfa.application.service..")
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    @Test
     void outbound_adapters_should_implement_a_domain_port() {
         classes()
-            .that().resideInAPackage("..infrastructure.persistence.adapter..")
+            .that().resideInAPackage("..infrastructure..")
+            .and().haveSimpleNameEndingWith("Adapter")
             .and().areAnnotatedWith(org.springframework.stereotype.Component.class)
             .should().implement(DescribedPredicate.describe(
                 "a port in ..domain.port.out..",
