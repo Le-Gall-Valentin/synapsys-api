@@ -1,6 +1,7 @@
 package com.synapsys.api.authentication.infrastructure.security;
 
 import com.synapsys.api.shared.model.Role;
+import com.synapsys.api.shared.security.AuthenticatedUser;
 import com.synapsys.api.shared.security.RateLimitPrincipal;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -34,6 +35,10 @@ public class CustomUserDetails implements UserDetails, RateLimitPrincipal {
 
     public String getEmail() {
         return email;
+    }
+
+    public AuthenticatedUser authenticatedUser() {
+        return new AuthenticatedUser(userId, role, email);
     }
 
     @Override

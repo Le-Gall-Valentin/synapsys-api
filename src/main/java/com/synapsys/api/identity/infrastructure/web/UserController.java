@@ -1,7 +1,8 @@
 package com.synapsys.api.identity.infrastructure.web;
 
-import com.synapsys.api.authentication.infrastructure.security.CustomUserDetails;
 import com.synapsys.api.identity.application.port.in.AdminResetTotpUseCase;
+import com.synapsys.api.shared.security.AuthenticatedUser;
+import com.synapsys.api.shared.security.CurrentUser;
 import com.synapsys.api.identity.application.port.in.DeactivateUserUseCase;
 import com.synapsys.api.identity.application.port.in.GetCurrentUserUseCase;
 import com.synapsys.api.identity.application.port.in.RegisterUseCase;
@@ -15,7 +16,6 @@ import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -43,8 +43,8 @@ public class UserController {
     @GetMapping("/me")
     @RateLimiting(max = 60)
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserInfoResponse> me(@AuthenticationPrincipal CustomUserDetails caller) {
-        User user = getCurrentUserUseCase.getCurrentUser(caller.getUserId());
+    public ResponseEntity<UserInfoResponse> me(@CurrentUser AuthenticatedUser caller) {
+        User user = getCurrentUserUseCase.getCurrentUser(caller.userId());
         return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 
@@ -52,10 +52,10 @@ public class UserController {
     @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
-                                                     @AuthenticationPrincipal CustomUserDetails caller) {
+                                                     @CurrentUser AuthenticatedUser caller) {
         User user = registerUseCase.register(
             new RegisterCommand(request.username(), request.email(), request.password(), request.role()),
-            caller.getRole()
+            caller.role()
         );
         URI location = URI.create("/api/users/" + user.id());
         return ResponseEntity.created(location).body(new UserInfoResponse(user.id(), user.username(), user.role()));
@@ -65,8 +65,8 @@ public class UserController {
     @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id,
-                                           @AuthenticationPrincipal CustomUserDetails caller) {
-        deactivateUserUseCase.deactivate(new DeactivateUserCommand(id, caller.getUserId(), caller.getRole()));
+                                           @CurrentUser AuthenticatedUser caller) {
+        deactivateUserUseCase.deactivate(new DeactivateUserCommand(id, caller.userId(), caller.role()));
         return ResponseEntity.noContent().build();
     }
 
@@ -74,8 +74,8 @@ public class UserController {
     @RateLimiting(max = 10)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Void> resetTotp(@PathVariable UUID id,
-                                          @AuthenticationPrincipal CustomUserDetails caller) {
-        adminResetTotpUseCase.reset(new AdminResetTotpCommand(id, caller.getUserId(), caller.getRole()));
+                                          @CurrentUser AuthenticatedUser caller) {
+        adminResetTotpUseCase.reset(new AdminResetTotpCommand(id, caller.userId(), caller.role()));
         return ResponseEntity.noContent().build();
     }
 }

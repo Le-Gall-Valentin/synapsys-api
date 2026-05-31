@@ -15,8 +15,7 @@ import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
 import com.synapsys.api.IntegrationTestConfig;
 import com.synapsys.api.TestHashUtils;
 import jakarta.servlet.http.Cookie;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
+import com.synapsys.api.mfa.infrastructure.config.TotpEncryptorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +56,7 @@ class AuthControllerIT {
     @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
     @Autowired UserTotpJpaRepository userTotpJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
-    @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
+    @Autowired TotpEncryptorFactory encryptorFactory;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -109,7 +108,7 @@ class AuthControllerIT {
 
         UserTotpEntity totpEntity = new UserTotpEntity();
         totpEntity.setUserId(totpUser.getId());
-        totpEntity.setTotpSecret(encryptor.encrypt("JBSWY3DPEHPK3PXP"));
+        totpEntity.setTotpSecret(encryptorFactory.forUser(totpUser.getId()).encrypt("JBSWY3DPEHPK3PXP"));
         totpEntity.setTotpEnabled(true);
         userTotpJpaRepository.save(totpEntity);
     }

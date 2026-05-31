@@ -16,11 +16,10 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.synapsys.api.mfa.infrastructure.config.TotpEncryptorFactory;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -57,7 +56,7 @@ class UserControllerIT {
     @Autowired RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired UserTotpJpaRepository userTotpJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
-    @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
+    @Autowired TotpEncryptorFactory encryptorFactory;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -272,7 +271,7 @@ class UserControllerIT {
     private void saveTotpRecord(UUID userId, String secret, boolean enabled) {
         UserTotpEntity totp = new UserTotpEntity();
         totp.setUserId(userId);
-        totp.setTotpSecret(encryptor.encrypt(secret));
+        totp.setTotpSecret(encryptorFactory.forUser(userId).encrypt(secret));
         totp.setTotpEnabled(enabled);
         userTotpJpaRepository.save(totp);
     }
