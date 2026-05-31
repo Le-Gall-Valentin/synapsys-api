@@ -30,7 +30,7 @@ public class TotpChallengeController {
     }
 
     @PostMapping("/verify")
-    @RateLimiting(max = 10)
+    @RateLimiting(max = 5)
     public ResponseEntity<UserInfoResponse> verify(@Valid @RequestBody VerifyRequest request,
                                                    HttpServletRequest httpRequest,
                                                    HttpServletResponse response) {

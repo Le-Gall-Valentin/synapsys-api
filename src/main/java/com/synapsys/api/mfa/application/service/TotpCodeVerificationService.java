@@ -25,8 +25,8 @@ public class TotpCodeVerificationService {
         Optional<UserTotpProfile> profileOpt = userTotpQuery.findById(userId);
         if (profileOpt.isEmpty()) return false;
         UserTotpProfile profile = profileOpt.get();
-        if (profile.totpSecret() == null) return false;
-        if (!codeValidator.isValid(profile.totpSecret(), code)) return false;
+        if (profile.totpSecret().isEmpty()) return false;
+        if (!codeValidator.isValid(profile.totpSecret().get(), code)) return false;
         return codeReplay.markCodeUsedIfAbsent(userId, code);
     }
 }

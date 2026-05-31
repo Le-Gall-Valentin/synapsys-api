@@ -31,8 +31,8 @@ public class ConfirmTotpHandler implements ConfirmTotpUseCase {
         UserTotpProfile user = userTotpQuery.findById(command.userId())
             .orElseThrow(MfaException.UserNotFound::new);
 
-        if (user.totpSecret() == null) throw new MfaException.TotpSetupNotStarted();
-        if (!codeValidator.isValid(user.totpSecret(), command.code())) throw new MfaException.TotpCodeInvalid();
+        String secret = user.totpSecret().orElseThrow(MfaException.TotpSetupNotStarted::new);
+        if (!codeValidator.isValid(secret, command.code())) throw new MfaException.TotpCodeInvalid();
         if (!codeReplay.markCodeUsedIfAbsent(command.userId(), command.code())) throw new MfaException.TotpCodeInvalid();
 
         userTotpPort.enableTotp(command.userId());

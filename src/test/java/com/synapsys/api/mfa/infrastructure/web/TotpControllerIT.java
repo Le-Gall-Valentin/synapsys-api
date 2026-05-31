@@ -17,11 +17,10 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.synapsys.api.mfa.infrastructure.config.TotpEncryptorFactory;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -39,6 +38,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,7 +62,7 @@ class TotpControllerIT {
     @Autowired UserCredentialJpaRepository userCredentialJpaRepository;
     @Autowired UserTotpJpaRepository userTotpJpaRepository;
     @Autowired RedisRateLimitBucketStore rateLimitBucketStore;
-    @Autowired @Qualifier("totpSecretEncryptor") TextEncryptor encryptor;
+    @Autowired TotpEncryptorFactory encryptorFactory;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -129,7 +129,7 @@ class TotpControllerIT {
 
         UserTotpEntity totpRecord = new UserTotpEntity();
         totpRecord.setUserId(totpUser.getId());
-        totpRecord.setTotpSecret(encryptor.encrypt(KNOWN_TOTP_SECRET));
+        totpRecord.setTotpSecret(encryptorFactory.forUser(totpUser.getId()).encrypt(KNOWN_TOTP_SECRET));
         totpRecord.setTotpEnabled(true);
         userTotpJpaRepository.save(totpRecord);
     }
@@ -283,6 +283,47 @@ class TotpControllerIT {
         // Verify JWT cookies are set (multiple Set-Cookie headers — check response cookies directly)
         assertThat(result.getResponse().getCookie("access_token")).isNotNull();
         assertThat(result.getResponse().getCookie("refresh_token")).isNotNull();
+    }
+
+    @Test
+    void status_authenticated_totpNotEnabled_returns200WithFalse() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        mockMvc.perform(get("/api/auth/2fa/status").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totpEnabled").value(false));
+    }
+
+    @Test
+    void confirm_validCode_returns204() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        MvcResult setupResult = mockMvc.perform(post("/api/auth/2fa/setup").cookie(access))
+            .andExpect(status().isOk())
+            .andReturn();
+        String secret = objectMapper.readTree(setupResult.getResponse().getContentAsString()).get("secret").asText();
+        DefaultCodeGenerator generator = new DefaultCodeGenerator(HashingAlgorithm.SHA256, 6);
+        long counter = Math.floorDiv(System.currentTimeMillis() / 1000L, 30);
+        String validCode = generator.generate(secret, counter);
+        mockMvc.perform(post("/api/auth/2fa/confirm")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + validCode + "\"}"))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void disable_validCode_returns204() throws Exception {
+        String totpUserId = userIdentityJpaRepository.findByUsername("totpuser")
+            .orElseThrow().getId().toString();
+        CustomUserDetails totpPrincipal = new CustomUserDetails(
+            java.util.UUID.fromString(totpUserId), Role.USER, "totpuser@test.com");
+        DefaultCodeGenerator generator = new DefaultCodeGenerator(HashingAlgorithm.SHA256, 6);
+        long counter = Math.floorDiv(System.currentTimeMillis() / 1000L, 30);
+        String validCode = generator.generate(KNOWN_TOTP_SECRET, counter);
+        mockMvc.perform(delete("/api/auth/2fa")
+                .with(user(totpPrincipal))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + validCode + "\"}"))
+            .andExpect(status().isNoContent());
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -32,8 +32,8 @@ public class DisableTotpHandler implements DisableTotpUseCase {
             .orElseThrow(MfaException.UserNotFound::new);
 
         if (!user.totpEnabled()) throw new MfaException.TotpNotEnabled();
-        if (user.totpSecret() == null) throw new MfaException.TotpCodeInvalid();
-        if (!codeValidator.isValid(user.totpSecret(), command.code())) throw new MfaException.TotpCodeInvalid();
+        String secret = user.totpSecret().orElseThrow(MfaException.TotpCodeInvalid::new);
+        if (!codeValidator.isValid(secret, command.code())) throw new MfaException.TotpCodeInvalid();
         if (!codeReplay.markCodeUsedIfAbsent(command.userId(), command.code())) throw new MfaException.TotpCodeInvalid();
 
         userTotpPort.disableTotp(command.userId());

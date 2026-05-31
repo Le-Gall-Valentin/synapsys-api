@@ -30,7 +30,7 @@ class TotpStatusServiceTest {
 
     @Test
     void isTotpEnabled_userFoundAndTotpEnabled_returnsTrue() {
-        UserTotpProfile profile = new UserTotpProfile(userId,true, "SECRET");
+        UserTotpProfile profile = new UserTotpProfile(userId,true, Optional.of("SECRET"));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThat(service.isTotpEnabled(userId)).isTrue();
@@ -38,7 +38,7 @@ class TotpStatusServiceTest {
 
     @Test
     void isTotpEnabled_userFoundAndTotpDisabled_returnsFalse() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThat(service.isTotpEnabled(userId)).isFalse();

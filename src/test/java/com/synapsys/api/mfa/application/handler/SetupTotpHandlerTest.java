@@ -39,7 +39,7 @@ class SetupTotpHandlerTest {
 
     @Test
     void setup_userWithNoTotp_savesSecretAndReturnsResult() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(secretGenerator.generateSecret()).thenReturn("NEWSECRET");
         when(secretGenerator.buildOtpauthUri("NEWSECRET", email)).thenReturn("otpauth://totp/...");
@@ -53,7 +53,7 @@ class SetupTotpHandlerTest {
 
     @Test
     void setup_totpAlreadyEnabled_throwsTotpAlreadyEnabled() {
-        UserTotpProfile profile = new UserTotpProfile(userId,true, "EXISTING");
+        UserTotpProfile profile = new UserTotpProfile(userId,true, Optional.of("EXISTING"));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThatThrownBy(() -> handler.setup(new SetupTotpCommand(userId, email)))
@@ -70,8 +70,8 @@ class SetupTotpHandlerTest {
 
     @Test
     void setup_concurrent_saveFails_returnsExistingSecret() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
-        UserTotpProfile refreshed = new UserTotpProfile(userId,false, "EXISTING");
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
+        UserTotpProfile refreshed = new UserTotpProfile(userId,false, Optional.of("EXISTING"));
         when(userTotpQuery.findById(userId))
             .thenReturn(Optional.of(profile))
             .thenReturn(Optional.of(refreshed));

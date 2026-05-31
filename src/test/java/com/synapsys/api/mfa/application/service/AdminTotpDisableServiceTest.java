@@ -31,7 +31,7 @@ class AdminTotpDisableServiceTest {
 
     @Test
     void disableIfEnabled_totpEnabled_callsDisableTotp() {
-        UserTotpProfile profile = new UserTotpProfile(userId,true, "SECRET");
+        UserTotpProfile profile = new UserTotpProfile(userId,true, Optional.of("SECRET"));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         service.disableIfEnabled(userId);
@@ -41,7 +41,7 @@ class AdminTotpDisableServiceTest {
 
     @Test
     void disableIfEnabled_totpDisabled_noOp() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         service.disableIfEnabled(userId);

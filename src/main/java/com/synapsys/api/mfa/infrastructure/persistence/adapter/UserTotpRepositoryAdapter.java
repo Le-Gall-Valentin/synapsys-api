@@ -3,10 +3,9 @@ package com.synapsys.api.mfa.infrastructure.persistence.adapter;
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
+import com.synapsys.api.mfa.infrastructure.config.TotpEncryptorFactory;
 import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,18 +14,19 @@ import java.util.UUID;
 public class UserTotpRepositoryAdapter implements UserTotpPort, UserTotpQueryPort {
 
     private final UserTotpJpaRepository jpa;
-    private final TextEncryptor encryptor;
+    private final TotpEncryptorFactory encryptorFactory;
 
     public UserTotpRepositoryAdapter(UserTotpJpaRepository jpa,
-                                     @Qualifier("totpSecretEncryptor") TextEncryptor encryptor) {
+                                     TotpEncryptorFactory encryptorFactory) {
         this.jpa = jpa;
-        this.encryptor = encryptor;
+        this.encryptorFactory = encryptorFactory;
     }
 
     @Override
     public Optional<UserTotpProfile> findById(UUID userId) {
         return jpa.findById(userId).map(e -> {
-            String secret = e.getTotpSecret() != null ? encryptor.decrypt(e.getTotpSecret()) : null;
+            Optional<String> secret = Optional.ofNullable(e.getTotpSecret())
+                .map(enc -> encryptorFactory.forUser(userId).decrypt(enc));
             return new UserTotpProfile(userId, e.isTotpEnabled(), secret);
         });
     }
@@ -40,12 +40,12 @@ public class UserTotpRepositoryAdapter implements UserTotpPort, UserTotpQueryPor
 
     @Override
     public void saveTotpSecret(UUID userId, String secret) {
-        jpa.saveTotpSecretById(userId, encryptor.encrypt(secret));
+        jpa.saveTotpSecretById(userId, encryptorFactory.forUser(userId).encrypt(secret));
     }
 
     @Override
     public boolean saveTotpSecretIfAbsent(UUID userId, String secret) {
-        return jpa.saveTotpSecretIfAbsent(userId, encryptor.encrypt(secret)) > 0;
+        return jpa.saveTotpSecretIfAbsent(userId, encryptorFactory.forUser(userId).encrypt(secret)) > 0;
     }
 
     @Override

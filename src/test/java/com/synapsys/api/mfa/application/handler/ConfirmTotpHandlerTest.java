@@ -40,7 +40,7 @@ class ConfirmTotpHandlerTest {
 
     @Test
     void confirm_validCode_enablesTotp() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, secret);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.of(secret));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(codeValidator.isValid(secret, "123456")).thenReturn(true);
         when(codeReplay.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
@@ -53,7 +53,7 @@ class ConfirmTotpHandlerTest {
 
     @Test
     void confirm_secretNull_throwsTotpSetupNotStarted() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThatThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
@@ -62,7 +62,7 @@ class ConfirmTotpHandlerTest {
 
     @Test
     void confirm_wrongCode_throwsTotpCodeInvalid() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, secret);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.of(secret));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(codeValidator.isValid(secret, "000000")).thenReturn(false);
 
@@ -72,7 +72,7 @@ class ConfirmTotpHandlerTest {
 
     @Test
     void confirm_replayedCode_throwsTotpCodeInvalid() {
-        UserTotpProfile profile = new UserTotpProfile(userId,false, secret);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.of(secret));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(codeValidator.isValid(secret, "123456")).thenReturn(true);
         when(codeReplay.markCodeUsedIfAbsent(userId, "123456")).thenReturn(false);
