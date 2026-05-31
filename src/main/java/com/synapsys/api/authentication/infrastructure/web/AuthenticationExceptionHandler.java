@@ -27,7 +27,7 @@ public class AuthenticationExceptionHandler {
                     response(403, ex, "User account is not active.");
 
             case AuthenticationException.UserNotFound ex ->
-                    response(404, ex, "User not found");
+                    response(401, ex, "Authentication required");
 
             case AuthenticationException.TokenExpired ex ->
                     response(401, ex, "Authentication required");

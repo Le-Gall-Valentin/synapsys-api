@@ -1,10 +1,11 @@
 package com.synapsys.api.authentication.infrastructure.persistence.adapter;
 
 import com.synapsys.api.authentication.domain.model.UserCredentials;
+import com.synapsys.api.authentication.domain.model.UserProfile;
 import com.synapsys.api.authentication.domain.port.out.UserCredentialsPort;
+import com.synapsys.api.authentication.domain.port.out.UserProfilePort;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
-import com.synapsys.api.identity.application.service.UserCredentialsService;
-import com.synapsys.api.mfa.application.service.TotpStatusService;
+import com.synapsys.api.mfa.application.port.in.GetTotpStatusUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -13,45 +14,41 @@ import java.util.UUID;
 @Component
 public class UserCredentialsRepositoryAdapter implements UserCredentialsPort {
 
-    private final UserCredentialsService identityUserService;
+    private final UserProfilePort userProfilePort;
     private final UserCredentialJpaRepository credentialRepo;
-    private final TotpStatusService totpStatusService;
+    private final GetTotpStatusUseCase totpStatusUseCase;
 
-    public UserCredentialsRepositoryAdapter(UserCredentialsService identityUserService,
+    public UserCredentialsRepositoryAdapter(UserProfilePort userProfilePort,
                                             UserCredentialJpaRepository credentialRepo,
-                                            TotpStatusService totpStatusService) {
-        this.identityUserService = identityUserService;
+                                            GetTotpStatusUseCase totpStatusUseCase) {
+        this.userProfilePort = userProfilePort;
         this.credentialRepo = credentialRepo;
-        this.totpStatusService = totpStatusService;
+        this.totpStatusUseCase = totpStatusUseCase;
     }
 
     @Override
     public Optional<UserCredentials> findByUsername(String username) {
-        return identityUserService.findByUsername(username)
-            .flatMap(userInfo -> credentialRepo.findById(userInfo.id())
-                .map(cred -> new UserCredentials(
-                    userInfo.id(),
-                    userInfo.username(),
-                    userInfo.email(),
-                    cred.getPasswordHash(),
-                    userInfo.isActive(),
-                    userInfo.role(),
-                    totpStatusService.isTotpEnabled(userInfo.id())
-                )));
+        return userProfilePort.findByUsername(username)
+                .flatMap(profile -> credentialRepo.findById(profile.id())
+                        .map(cred -> toUserCredentials(profile, cred.getPasswordHash())));
     }
 
     @Override
     public Optional<UserCredentials> findById(UUID id) {
-        return identityUserService.findById(id)
-            .flatMap(userInfo -> credentialRepo.findById(userInfo.id())
-                .map(cred -> new UserCredentials(
-                    userInfo.id(),
-                    userInfo.username(),
-                    userInfo.email(),
-                    cred.getPasswordHash(),
-                    userInfo.isActive(),
-                    userInfo.role(),
-                    totpStatusService.isTotpEnabled(userInfo.id())
-                )));
+        return userProfilePort.findById(id)
+                .flatMap(profile -> credentialRepo.findById(profile.id())
+                        .map(cred -> toUserCredentials(profile, cred.getPasswordHash())));
+    }
+
+    private UserCredentials toUserCredentials(UserProfile profile, String passwordHash) {
+        return new UserCredentials(
+                profile.id(),
+                profile.username(),
+                profile.email(),
+                passwordHash,
+                profile.isActive(),
+                profile.role(),
+                totpStatusUseCase.isTotpEnabled(profile.id())
+        );
     }
 }
