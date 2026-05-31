@@ -4,7 +4,6 @@ import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.TotpCodeReplayPort;
 import com.synapsys.api.mfa.domain.port.out.TotpCodeValidatorPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
-import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +35,7 @@ class TotpCodeVerificationServiceTest {
 
     @Test
     void verifyAndConsume_validCode_returnsTrue() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, true, secret);
+        UserTotpProfile profile = new UserTotpProfile(userId,true, secret);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(codeValidator.isValid(secret, "123456")).thenReturn(true);
         when(codeReplay.markCodeUsedIfAbsent(userId, "123456")).thenReturn(true);
@@ -53,7 +52,7 @@ class TotpCodeVerificationServiceTest {
 
     @Test
     void verifyAndConsume_secretNull_returnsFalse() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThat(service.verifyAndConsume(userId, "123456")).isFalse();
@@ -61,7 +60,7 @@ class TotpCodeVerificationServiceTest {
 
     @Test
     void verifyAndConsume_invalidCode_returnsFalse() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, true, secret);
+        UserTotpProfile profile = new UserTotpProfile(userId,true, secret);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(codeValidator.isValid(secret, "000000")).thenReturn(false);
 
@@ -70,7 +69,7 @@ class TotpCodeVerificationServiceTest {
 
     @Test
     void verifyAndConsume_replayedCode_returnsFalse() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, true, secret);
+        UserTotpProfile profile = new UserTotpProfile(userId,true, secret);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(codeValidator.isValid(secret, "123456")).thenReturn(true);
         when(codeReplay.markCodeUsedIfAbsent(userId, "123456")).thenReturn(false);

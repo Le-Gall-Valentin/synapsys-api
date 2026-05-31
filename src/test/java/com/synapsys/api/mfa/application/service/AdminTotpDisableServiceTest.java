@@ -3,7 +3,6 @@ package com.synapsys.api.mfa.application.service;
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
-import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +31,7 @@ class AdminTotpDisableServiceTest {
 
     @Test
     void disableIfEnabled_totpEnabled_callsDisableTotp() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, true, "SECRET");
+        UserTotpProfile profile = new UserTotpProfile(userId,true, "SECRET");
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         service.disableIfEnabled(userId);
@@ -42,7 +41,7 @@ class AdminTotpDisableServiceTest {
 
     @Test
     void disableIfEnabled_totpDisabled_noOp() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         service.disableIfEnabled(userId);

@@ -7,7 +7,6 @@ import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.TotpSecretGeneratorPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
-import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +39,7 @@ class SetupTotpHandlerTest {
 
     @Test
     void setup_userWithNoTotp_savesSecretAndReturnsResult() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(secretGenerator.generateSecret()).thenReturn("NEWSECRET");
         when(secretGenerator.buildOtpauthUri("NEWSECRET", email)).thenReturn("otpauth://totp/...");
@@ -54,7 +53,7 @@ class SetupTotpHandlerTest {
 
     @Test
     void setup_totpAlreadyEnabled_throwsTotpAlreadyEnabled() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, true, "EXISTING");
+        UserTotpProfile profile = new UserTotpProfile(userId,true, "EXISTING");
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThatThrownBy(() -> handler.setup(new SetupTotpCommand(userId, email)))
@@ -71,8 +70,8 @@ class SetupTotpHandlerTest {
 
     @Test
     void setup_concurrent_saveFails_returnsExistingSecret() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, false, null);
-        UserTotpProfile refreshed = new UserTotpProfile(userId, Role.USER, false, "EXISTING");
+        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
+        UserTotpProfile refreshed = new UserTotpProfile(userId,false, "EXISTING");
         when(userTotpQuery.findById(userId))
             .thenReturn(Optional.of(profile))
             .thenReturn(Optional.of(refreshed));

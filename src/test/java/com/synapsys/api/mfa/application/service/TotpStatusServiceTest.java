@@ -2,7 +2,6 @@ package com.synapsys.api.mfa.application.service;
 
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
-import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +30,7 @@ class TotpStatusServiceTest {
 
     @Test
     void isTotpEnabled_userFoundAndTotpEnabled_returnsTrue() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, true, "SECRET");
+        UserTotpProfile profile = new UserTotpProfile(userId,true, "SECRET");
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThat(service.isTotpEnabled(userId)).isTrue();
@@ -39,7 +38,7 @@ class TotpStatusServiceTest {
 
     @Test
     void isTotpEnabled_userFoundAndTotpDisabled_returnsFalse() {
-        UserTotpProfile profile = new UserTotpProfile(userId, Role.USER, false, null);
+        UserTotpProfile profile = new UserTotpProfile(userId,false, null);
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
 
         assertThat(service.isTotpEnabled(userId)).isFalse();

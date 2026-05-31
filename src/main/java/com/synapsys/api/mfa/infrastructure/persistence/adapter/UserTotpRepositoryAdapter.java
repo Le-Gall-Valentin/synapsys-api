@@ -5,9 +5,7 @@ import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
 import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
-import com.synapsys.api.shared.model.Role;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
@@ -18,24 +16,18 @@ public class UserTotpRepositoryAdapter implements UserTotpPort, UserTotpQueryPor
 
     private final UserTotpJpaRepository jpa;
     private final TextEncryptor encryptor;
-    private final JdbcTemplate jdbcTemplate;
 
     public UserTotpRepositoryAdapter(UserTotpJpaRepository jpa,
-                                     @Qualifier("totpSecretEncryptor") TextEncryptor encryptor,
-                                     JdbcTemplate jdbcTemplate) {
+                                     @Qualifier("totpSecretEncryptor") TextEncryptor encryptor) {
         this.jpa = jpa;
         this.encryptor = encryptor;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public Optional<UserTotpProfile> findById(UUID userId) {
         return jpa.findById(userId).map(e -> {
             String secret = e.getTotpSecret() != null ? encryptor.decrypt(e.getTotpSecret()) : null;
-            String roleStr = jdbcTemplate.queryForObject(
-                "SELECT role FROM users WHERE id = ?", String.class, userId);
-            Role role = roleStr != null ? Role.valueOf(roleStr) : Role.USER;
-            return new UserTotpProfile(userId, role, e.isTotpEnabled(), secret);
+            return new UserTotpProfile(userId, e.isTotpEnabled(), secret);
         });
     }
 
