@@ -2,6 +2,7 @@ package com.synapsys.api.authentication.infrastructure.persistence.scheduler;
 
 import com.synapsys.api.authentication.domain.port.out.RefreshTokenConfigPort;
 import com.synapsys.api.authentication.domain.port.out.RefreshTokenMaintenancePort;
+import com.synapsys.api.authentication.domain.port.out.RefreshTokenSchedulePort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -22,10 +23,11 @@ public class RefreshTokenPurgeScheduler implements SchedulingConfigurer {
     private final String purgeCron;
 
     public RefreshTokenPurgeScheduler(RefreshTokenMaintenancePort refreshTokenMaintenance,
-                                      RefreshTokenConfigPort tokenConfig) {
+                                      RefreshTokenConfigPort tokenConfig,
+                                      RefreshTokenSchedulePort schedulePort) {
         this.refreshTokenMaintenance = refreshTokenMaintenance;
         this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
-        this.purgeCron = tokenConfig.refreshTokenPurgeCron();
+        this.purgeCron = schedulePort.refreshTokenPurgeCron();
     }
 
     @Override

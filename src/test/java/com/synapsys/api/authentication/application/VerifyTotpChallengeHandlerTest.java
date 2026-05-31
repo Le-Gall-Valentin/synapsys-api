@@ -103,6 +103,15 @@ class VerifyTotpChallengeHandlerTest {
     }
 
     @Test
+    void verify_userNotFound_throwsUserNotFound() {
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userCredentialsPort.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
+            .isInstanceOf(AuthenticationException.UserNotFound.class);
+    }
+
+    @Test
     void verify_invalidCode_incrementsAttempts() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));

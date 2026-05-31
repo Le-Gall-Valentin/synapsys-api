@@ -5,6 +5,6 @@ import java.util.Locale;
 
 public record RegisterCommand(String username, String email, String rawPassword, Role role) {
     public RegisterCommand {
-        if (email != null) email = email.toLowerCase(Locale.ROOT);
+        email = email == null ? null : email.toLowerCase(Locale.ROOT);
     }
 }

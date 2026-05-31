@@ -14,6 +14,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,5 +45,33 @@ class RefreshTokenRepositoryAdapterTest {
         when(jpa.findByTokenHash("unknown")).thenReturn(Optional.empty());
 
         assertThat(adapter.findByTokenHash("unknown")).isEmpty();
+    }
+
+    @Test
+    void tryMarkUsedAndRevoke_rowUpdated_returnsTrue() {
+        UUID tokenId = UUID.randomUUID();
+        when(jpa.markUsedAndRevokeIfNotRevokedById(eq(tokenId), any(Instant.class))).thenReturn(1);
+        assertThat(adapter.tryMarkUsedAndRevoke(tokenId)).isTrue();
+    }
+
+    @Test
+    void tryMarkUsedAndRevoke_alreadyRevoked_returnsFalse() {
+        UUID tokenId = UUID.randomUUID();
+        when(jpa.markUsedAndRevokeIfNotRevokedById(eq(tokenId), any(Instant.class))).thenReturn(0);
+        assertThat(adapter.tryMarkUsedAndRevoke(tokenId)).isFalse();
+    }
+
+    @Test
+    void revoke_delegatesToJpa() {
+        UUID tokenId = UUID.randomUUID();
+        adapter.revoke(tokenId);
+        verify(jpa).revokeById(tokenId);
+    }
+
+    @Test
+    void revokeAllForUser_delegatesToJpa() {
+        UUID userId = UUID.randomUUID();
+        adapter.revokeAllForUser(userId);
+        verify(jpa).revokeAllByUserId(userId);
     }
 }
