@@ -10,7 +10,7 @@ import java.util.UUID;
 public class RedisTotpCodeReplayStore implements TotpCodeReplayPort {
 
     private static final String USED_CODE_PREFIX = "totp:used:";
-    private static final Duration ANTI_REPLAY_TTL = Duration.ofSeconds(120);
+    private static final Duration ANTI_REPLAY_TTL = Duration.ofSeconds(150);
 
     private final StringRedisTemplate redisTemplate;
 

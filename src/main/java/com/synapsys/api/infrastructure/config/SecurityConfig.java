@@ -64,7 +64,12 @@ public class SecurityConfig {
                     "default-src 'self'; " +
                     "style-src 'self' https://fonts.googleapis.com; " +
                     "font-src 'self' https://fonts.gstatic.com; " +
-                    "base-uri 'self'; frame-ancestors 'none'; form-action 'self'")))
+                    "object-src 'none'; " +
+                    "img-src 'self' data:; " +
+                    "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"))
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .build();

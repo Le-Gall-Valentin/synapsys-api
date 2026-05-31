@@ -123,7 +123,7 @@ class ArchRulesTest {
             .resideInAnyPackage(
                 "com.synapsys.api.authentication..",
                 "com.synapsys.api.identity..")
-            .allowEmptyShould(true)
+            .allowEmptyShould(false)
             .check(classes);
     }
 
@@ -136,7 +136,7 @@ class ArchRulesTest {
             .resideInAnyPackage(
                 "com.synapsys.api.authentication..",
                 "com.synapsys.api.mfa..")
-            .allowEmptyShould(true)
+            .allowEmptyShould(false)
             .check(classes);
     }
 
@@ -149,7 +149,7 @@ class ArchRulesTest {
             .resideInAnyPackage(
                 "com.synapsys.api.identity..",
                 "com.synapsys.api.mfa..")
-            .allowEmptyShould(true)
+            .allowEmptyShould(false)
             .check(classes);
     }
 
@@ -167,6 +167,32 @@ class ArchRulesTest {
                 "com.synapsys.api.identity.infrastructure..",
                 "com.synapsys.api.mfa.infrastructure..")
             .allowEmptyShould(true)
+            .check(classes);
+    }
+
+    @Test
+    void bc_infrastructure_should_not_depend_on_other_bc_infrastructure() {
+        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
+            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
+
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
+            .and(excludeTests)
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.synapsys.api.authentication.infrastructure..",
+                "com.synapsys.api.mfa.infrastructure..")
+            .allowEmptyShould(false)
+            .check(classes);
+
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.mfa.infrastructure..")
+            .and(excludeTests)
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.synapsys.api.authentication.infrastructure..",
+                "com.synapsys.api.identity.infrastructure..")
+            .allowEmptyShould(false)
             .check(classes);
     }
 
