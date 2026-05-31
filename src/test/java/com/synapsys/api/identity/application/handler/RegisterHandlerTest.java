@@ -5,6 +5,7 @@ import com.synapsys.api.identity.domain.model.IdentityException;
 import com.synapsys.api.identity.domain.model.RegisterCommand;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.CredentialSetupPort;
+import com.synapsys.api.identity.domain.port.out.TotpRecordInitPort;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.model.Role;
@@ -29,12 +30,13 @@ class RegisterHandlerTest {
     @Mock UserCommandPort userCommandPort;
     @Mock UserRepository userRepository;
     @Mock CredentialSetupPort credentialSetupPort;
+    @Mock TotpRecordInitPort totpRecordInitPort;
 
     private RegisterHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new RegisterHandler(userCommandPort, userRepository, credentialSetupPort);
+        handler = new RegisterHandler(userCommandPort, userRepository, credentialSetupPort, totpRecordInitPort);
     }
 
     @Test
@@ -48,6 +50,7 @@ class RegisterHandlerTest {
 
         assertThat(result.role()).isEqualTo(Role.ADMIN);
         verify(credentialSetupPort).setup(userId, "pass");
+        verify(totpRecordInitPort).initForUser(userId);
     }
 
     @Test

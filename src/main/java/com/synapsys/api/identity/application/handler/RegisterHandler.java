@@ -6,6 +6,7 @@ import com.synapsys.api.identity.domain.model.IdentityException;
 import com.synapsys.api.identity.domain.model.RegisterCommand;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.CredentialSetupPort;
+import com.synapsys.api.identity.domain.port.out.TotpRecordInitPort;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
@@ -25,13 +26,16 @@ public class RegisterHandler implements RegisterUseCase {
     private final UserCommandPort userCommandPort;
     private final UserRepository userRepository;
     private final CredentialSetupPort credentialSetupPort;
+    private final TotpRecordInitPort totpRecordInitPort;
 
     public RegisterHandler(UserCommandPort userCommandPort,
                            UserRepository userRepository,
-                           CredentialSetupPort credentialSetupPort) {
+                           CredentialSetupPort credentialSetupPort,
+                           TotpRecordInitPort totpRecordInitPort) {
         this.userCommandPort = userCommandPort;
         this.userRepository = userRepository;
         this.credentialSetupPort = credentialSetupPort;
+        this.totpRecordInitPort = totpRecordInitPort;
     }
 
     @Override
@@ -43,6 +47,7 @@ public class RegisterHandler implements RegisterUseCase {
         UUID userId = userCommandPort.createProfile(
             new CreateUserProfileCommand(command.username(), command.email(), command.role()));
         credentialSetupPort.setup(userId, command.rawPassword());
+        totpRecordInitPort.initForUser(userId);
         log.info("User {} registered with role {}", userId, command.role());
         return userRepository.findById(userId).orElseThrow(IdentityException.UserNotFound::new);
     }

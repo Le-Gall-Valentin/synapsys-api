@@ -2,6 +2,7 @@ package com.synapsys.api.identity.application.handler;
 
 import com.synapsys.api.identity.domain.model.IdentityException;
 import com.synapsys.api.identity.domain.port.out.CredentialSetupPort;
+import com.synapsys.api.identity.domain.port.out.TotpRecordInitPort;
 import com.synapsys.api.identity.domain.port.out.UserAdminPort;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
 import com.synapsys.api.shared.model.Role;
@@ -24,12 +25,13 @@ class SeedHandlerTest {
     @Mock UserAdminPort userAdminPort;
     @Mock UserCommandPort userCommandPort;
     @Mock CredentialSetupPort credentialSetupPort;
+    @Mock TotpRecordInitPort totpRecordInitPort;
 
     private SeedHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new SeedHandler(userAdminPort, userCommandPort, credentialSetupPort);
+        handler = new SeedHandler(userAdminPort, userCommandPort, credentialSetupPort, totpRecordInitPort);
     }
 
     @Test
@@ -45,6 +47,7 @@ class SeedHandlerTest {
         handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret");
 
         verify(credentialSetupPort).setup(userId, "secret");
+        verify(totpRecordInitPort).initForUser(userId);
     }
 
     @Test
@@ -55,6 +58,7 @@ class SeedHandlerTest {
 
         verifyNoInteractions(userCommandPort);
         verifyNoInteractions(credentialSetupPort);
+        verifyNoInteractions(totpRecordInitPort);
     }
 
     @Test
