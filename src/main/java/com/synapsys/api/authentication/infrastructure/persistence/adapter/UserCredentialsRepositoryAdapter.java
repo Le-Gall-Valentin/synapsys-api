@@ -2,10 +2,10 @@ package com.synapsys.api.authentication.infrastructure.persistence.adapter;
 
 import com.synapsys.api.authentication.domain.model.UserCredentials;
 import com.synapsys.api.authentication.domain.model.UserProfile;
+import com.synapsys.api.authentication.domain.port.out.TotpStatusQueryPort;
 import com.synapsys.api.authentication.domain.port.out.UserCredentialsPort;
 import com.synapsys.api.authentication.domain.port.out.UserProfilePort;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
-import com.synapsys.api.mfa.application.port.in.GetTotpStatusUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -16,14 +16,14 @@ public class UserCredentialsRepositoryAdapter implements UserCredentialsPort {
 
     private final UserProfilePort userProfilePort;
     private final UserCredentialJpaRepository credentialRepo;
-    private final GetTotpStatusUseCase totpStatusUseCase;
+    private final TotpStatusQueryPort totpStatusQuery;
 
     public UserCredentialsRepositoryAdapter(UserProfilePort userProfilePort,
                                             UserCredentialJpaRepository credentialRepo,
-                                            GetTotpStatusUseCase totpStatusUseCase) {
+                                            TotpStatusQueryPort totpStatusQuery) {
         this.userProfilePort = userProfilePort;
         this.credentialRepo = credentialRepo;
-        this.totpStatusUseCase = totpStatusUseCase;
+        this.totpStatusQuery = totpStatusQuery;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class UserCredentialsRepositoryAdapter implements UserCredentialsPort {
                 passwordHash,
                 profile.isActive(),
                 profile.role(),
-                totpStatusUseCase.isTotpEnabled(profile.id())
+                totpStatusQuery.isTotpEnabled(profile.id())
         );
     }
 }
