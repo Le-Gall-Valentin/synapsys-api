@@ -6,35 +6,8 @@ databaseChangeLog:
       file: db/changelog/changes/002-create-refresh-tokens.yaml
       relativeToChangelogFile: false
   - include:
-      file: db/changelog/changes/003-add-refresh-token-expiry-index.yaml
+      file: db/changelog/changes/003-create-user-credentials.yaml
       relativeToChangelogFile: false
   - include:
-      file: db/changelog/changes/004-add-refresh-token-revoked-last-used-index.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/005-remove-redundant-token-hash-index.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/006-drop-role-check-constraint.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/007-add-totp-fields.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/008-resize-totp-secret.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/009-totp-invariant-check.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/010-create-user-credentials.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/011-create-user-totp.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/012-migrate-totp-constraint.yaml
-      relativeToChangelogFile: false
-  - include:
-      file: db/changelog/changes/013-drop-legacy-columns-from-users.yaml
+      file: db/changelog/changes/004-create-user-totp.yaml
       relativeToChangelogFile: false

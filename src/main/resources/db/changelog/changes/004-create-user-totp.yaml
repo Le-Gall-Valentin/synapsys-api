@@ -1,7 +1,12 @@
 databaseChangeLog:
   - changeSet:
-      id: 011-create-user-totp
+      id: 004-create-user-totp
       author: synapsys
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: user_totp
       changes:
         - createTable:
             tableName: user_totp
@@ -26,7 +31,12 @@ databaseChangeLog:
                   constraints:
                     nullable: false
         - sql:
-            sql: "INSERT INTO user_totp (user_id, totp_secret, totp_enabled) SELECT id, totp_secret, totp_enabled FROM users"
+            sql: >
+              ALTER TABLE user_totp
+              ADD CONSTRAINT chk_user_totp_secret_required
+              CHECK (totp_secret IS NOT NULL OR totp_enabled = false)
       rollback:
+        - sql:
+            sql: "ALTER TABLE user_totp DROP CONSTRAINT chk_user_totp_secret_required"
         - dropTable:
             tableName: user_totp

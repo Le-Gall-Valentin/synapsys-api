@@ -15,6 +15,7 @@ import java.util.UUID;
 public class UserCredentialEntity {
 
     @Id
+    @Column(name = "user_id")
     private UUID userId;
 
     @Column(name = "password_hash", nullable = false)

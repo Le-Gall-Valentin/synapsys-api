@@ -13,7 +13,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(
+        name = "refresh_tokens",
+        uniqueConstraints = @UniqueConstraint(name = "uq_refresh_tokens_token_hash", columnNames = "token_hash"),
+        indexes = @Index(name = "idx_refresh_tokens_user_id", columnList = "user_id")
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,7 +32,7 @@ public class RefreshTokenEntity {
     private UUID userId;
 
     @Setter(AccessLevel.NONE)
-    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    @Column(name = "token_hash", nullable = false, length = 64)
     private String tokenHash;
 
     public RefreshTokenEntity(UUID userId, String tokenHash, Instant expiresAt) {
