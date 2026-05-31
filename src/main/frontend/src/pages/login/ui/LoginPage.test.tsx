@@ -35,13 +35,14 @@ vi.mock('@/features/totp', () => ({
   TotpSetupFlow: ({ onSuccess, onDismiss }: { onSuccess: () => void; onDismiss?: () => void }) => (
     <div>
       <button onClick={onSuccess}>setup-success</button>
-      <button onClick={onDismiss}>setup-dismiss</button>
+      {onDismiss && <button onClick={onDismiss}>setup-dismiss</button>}
     </div>
   ),
   totpApi: {},
 }))
 
 const mockFinalizeLogin = vi.fn()
+const mockTotpApi = { verify: vi.fn(), setup: vi.fn(), confirm: vi.fn(), getStatus: vi.fn() }
 
 describe('LoginPage', () => {
   beforeEach(() => {
@@ -55,7 +56,7 @@ describe('LoginPage', () => {
     beforeEach(() => {
       render(
         <MemoryRouter>
-          <LoginPage />
+          <LoginPage totpApi={mockTotpApi} />
         </MemoryRouter>
       )
     })
@@ -93,7 +94,7 @@ describe('LoginPage', () => {
 
   describe('step transitions', () => {
     it('shows TotpVerifyStep when login outcome is totp_required', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-totp'))
       expect(screen.getByText('verify')).not.toBeNull()
       expect(screen.getByText('back')).not.toBeNull()
@@ -101,7 +102,7 @@ describe('LoginPage', () => {
     })
 
     it('shows TotpEnrollProposal when login outcome is enrollment_proposed', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       expect(screen.getByText('activate')).not.toBeNull()
       expect(screen.getByText('skip')).not.toBeNull()
@@ -109,7 +110,7 @@ describe('LoginPage', () => {
     })
 
     it('returns to credentials step when back is clicked from totp step', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-totp'))
       fireEvent.click(screen.getByText('back'))
       expect(screen.getByRole('form')).not.toBeNull()
@@ -117,7 +118,7 @@ describe('LoginPage', () => {
     })
 
     it('shows TotpSetupFlow when user activates from enrollment proposal', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('activate'))
       expect(screen.getByText('setup-success')).not.toBeNull()
@@ -126,21 +127,21 @@ describe('LoginPage', () => {
     })
 
     it('calls finalizeLogin after totp verify', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-totp'))
       fireEvent.click(screen.getByText('verify'))
       expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER' })
     })
 
     it('calls finalizeLogin when skip is chosen from enrollment proposal', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('skip'))
       expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER' })
     })
 
     it('calls finalizeLogin after setup success', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('activate'))
       fireEvent.click(screen.getByText('setup-success'))
@@ -148,7 +149,7 @@ describe('LoginPage', () => {
     })
 
     it('calls finalizeLogin when setup is dismissed', () => {
-      render(<MemoryRouter><LoginPage /></MemoryRouter>)
+      render(<MemoryRouter><LoginPage totpApi={mockTotpApi} /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('activate'))
       fireEvent.click(screen.getByText('setup-dismiss'))

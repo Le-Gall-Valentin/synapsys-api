@@ -1,9 +1,9 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { TotpVerifyStep } from './TotpVerifyStep'
-import type { ITotpApi } from '../api/ITotpApi'
+import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import { TotpCodeError, TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
-import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
+import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -12,12 +12,9 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-function makeApi(overrides: Partial<ITotpApi> = {}): ITotpApi {
+function makeApi(overrides: Partial<ITotpVerifyApi> = {}): ITotpVerifyApi {
   return {
     verify: vi.fn(),
-    setup: vi.fn(),
-    confirm: vi.fn(),
-    getStatus: vi.fn(),
     ...overrides,
   }
 }
@@ -234,6 +231,8 @@ describe('TotpVerifyStep', () => {
     await waitFor(() => expect(getByText('verify.error.max_attempts')).toBeTruthy())
   })
 
+  afterEach(() => { vi.useRealTimers() })
+
   it('calls onBack automatically after max_attempts lockout', async () => {
     vi.useFakeTimers()
     const api = makeApi({ verify: vi.fn().mockRejectedValue(new TotpMaxAttemptsError()) })
@@ -252,6 +251,5 @@ describe('TotpVerifyStep', () => {
     expect(onBack).not.toHaveBeenCalled()
     act(() => { vi.runAllTimers() })
     expect(onBack).toHaveBeenCalledTimes(1)
-    vi.useRealTimers()
   })
 })

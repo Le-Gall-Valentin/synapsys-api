@@ -1,9 +1,9 @@
 import { render, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { TotpSetupFlow } from './TotpSetupFlow'
-import type { ITotpApi } from '../api/ITotpApi'
+import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import { TotpCodeError } from '../model/errors'
-import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
+import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 
 vi.mock('qrcode.react', () => {
   const QRCodeSVG = (props: { value: string }) => <div data-testid="qr-code" data-value={props.value} />
@@ -19,9 +19,8 @@ const SETUP_DATA = {
   secret: 'ABCDEFGHIJKLMNOP',
 }
 
-function makeApi(overrides: Partial<ITotpApi> = {}): ITotpApi {
+function makeApi(overrides: Partial<ITotpEnrollApi> = {}): ITotpEnrollApi {
   return {
-    verify: vi.fn(),
     setup: vi.fn().mockResolvedValue(SETUP_DATA),
     confirm: vi.fn().mockResolvedValue(undefined),
     getStatus: vi.fn(),

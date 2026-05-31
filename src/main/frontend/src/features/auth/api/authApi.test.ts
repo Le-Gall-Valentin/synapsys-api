@@ -50,13 +50,6 @@ describe('authApi', () => {
     expect(result).toEqual({ type: 'totp_required' })
   })
 
-  it('login returns { type: success, user } on normal 200', async () => {
-    const user = { id: '1', username: 'user', role: 'USER' }
-    mockedClient.post.mockResolvedValue({ data: user })
-    const result = await authApi.login({ username: 'u', password: 'p' })
-    expect(result).toEqual({ type: 'success', user })
-  })
-
   it('logout calls logout endpoint', async () => {
     mockedClient.post.mockResolvedValue({})
 

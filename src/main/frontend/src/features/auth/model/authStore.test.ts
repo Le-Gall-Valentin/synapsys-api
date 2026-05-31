@@ -79,6 +79,7 @@ describe('authStore', () => {
 
     expect(mockedSetSessionHint).toHaveBeenCalledTimes(1)
     expect(store.getState().user).toEqual(user)
+    expect(mockedNotifyLoginSuccess).toHaveBeenCalledTimes(1)
   })
 
   it('logout clears auth state even when API fails', async () => {

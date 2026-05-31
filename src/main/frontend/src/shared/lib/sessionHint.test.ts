@@ -34,9 +34,9 @@ describe('sessionHint', () => {
     vi.unstubAllGlobals()
   })
 
-  it('persists and clears session hint when localStorage is available', () => {
+  it('persists and clears session hint when sessionStorage is available', () => {
     const storage = new MemoryStorage()
-    vi.stubGlobal('localStorage', storage)
+    vi.stubGlobal('sessionStorage', storage)
 
     expect(hasSessionHint()).toBe(false)
     setSessionHint()
@@ -45,8 +45,8 @@ describe('sessionHint', () => {
     expect(hasSessionHint()).toBe(false)
   })
 
-  it('fails safe when localStorage is unavailable', () => {
-    vi.stubGlobal('localStorage', {
+  it('fails safe when sessionStorage is unavailable', () => {
+    vi.stubGlobal('sessionStorage', {
       getItem: () => {
         throw new Error('storage unavailable')
       },
