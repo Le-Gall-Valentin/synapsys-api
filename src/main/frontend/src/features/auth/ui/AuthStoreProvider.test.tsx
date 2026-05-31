@@ -123,7 +123,7 @@ describe('AuthStoreProvider', () => {
 
   it('calls api.getMe when there is a session hint', async () => {
     const api = createApiMock()
-    api.getMe.mockResolvedValue({ id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false })
+    api.getMe.mockResolvedValue({ id: '1', username: 'alice', role: 'USER' as const })
     mockedHasSessionHint.mockReturnValue(true)
 
     const { container } = render(

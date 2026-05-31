@@ -24,6 +24,7 @@ function makeApi(overrides: Partial<ITotpApi> = {}): ITotpApi {
     verify: vi.fn(),
     setup: vi.fn().mockResolvedValue(SETUP_DATA),
     confirm: vi.fn().mockResolvedValue(undefined),
+    getStatus: vi.fn(),
     ...overrides,
   }
 }

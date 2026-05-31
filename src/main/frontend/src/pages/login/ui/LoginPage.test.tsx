@@ -13,7 +13,7 @@ vi.mock('@/features/auth', () => ({
     <div>
       <form aria-label="login" aria-labelledby={labelId} />
       <button onClick={() => onLoginOutcome?.({ kind: 'totp_required', username: 'alice' })}>trigger-totp</button>
-      <button onClick={() => onLoginOutcome?.({ kind: 'enrollment_proposed', user: { id: '1', username: 'alice', role: 'USER', totpEnabled: false } })}>trigger-enroll</button>
+      <button onClick={() => onLoginOutcome?.({ kind: 'enrollment_proposed', user: { id: '1', username: 'alice', role: 'USER' } })}>trigger-enroll</button>
     </div>
   ),
   useAuth: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('@/features/auth', () => ({
 vi.mock('@/features/totp', () => ({
   TotpVerifyStep: ({ onVerified, onBack }: { onVerified: (u: unknown) => void; onBack: () => void }) => (
     <div>
-      <button onClick={() => onVerified({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })}>verify</button>
+      <button onClick={() => onVerified({ id: '1', username: 'alice', role: 'USER' })}>verify</button>
       <button onClick={onBack}>back</button>
     </div>
   ),
@@ -129,22 +129,22 @@ describe('LoginPage', () => {
       render(<MemoryRouter><LoginPage /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-totp'))
       fireEvent.click(screen.getByText('verify'))
-      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })
+      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER' })
     })
 
     it('calls finalizeLogin when skip is chosen from enrollment proposal', () => {
       render(<MemoryRouter><LoginPage /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('skip'))
-      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER', totpEnabled: false })
+      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER' })
     })
 
-    it('calls finalizeLogin with totpEnabled:true after setup success', () => {
+    it('calls finalizeLogin after setup success', () => {
       render(<MemoryRouter><LoginPage /></MemoryRouter>)
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('activate'))
       fireEvent.click(screen.getByText('setup-success'))
-      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })
+      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER' })
     })
 
     it('calls finalizeLogin when setup is dismissed', () => {
@@ -152,7 +152,7 @@ describe('LoginPage', () => {
       fireEvent.click(screen.getByText('trigger-enroll'))
       fireEvent.click(screen.getByText('activate'))
       fireEvent.click(screen.getByText('setup-dismiss'))
-      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER', totpEnabled: false })
+      expect(mockFinalizeLogin).toHaveBeenCalledWith({ id: '1', username: 'alice', role: 'USER' })
     })
   })
 })

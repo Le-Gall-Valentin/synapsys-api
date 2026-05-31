@@ -9,11 +9,13 @@ import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 vi.mock('@/shared/api', () => ({
   client: {
     post: vi.fn(),
+    get: vi.fn(),
   },
 }))
 
 const mockedClient = client as unknown as {
   post: ReturnType<typeof vi.fn>
+  get: ReturnType<typeof vi.fn>
 }
 
 function makeAxiosError(
@@ -34,12 +36,13 @@ function makeAxiosError(
 describe('totpApi', () => {
   beforeEach(() => {
     mockedClient.post.mockReset()
+    mockedClient.get.mockReset()
   })
 
   // verify
   describe('verify', () => {
     it('returns User on success', async () => {
-      const user = { id: '1', username: 'user', role: 'USER', totpEnabled: true }
+      const user = { id: '1', username: 'user', role: 'USER' }
       mockedClient.post.mockResolvedValue({ data: user })
 
       await expect(totpApi.verify('123456')).resolves.toEqual(user)
@@ -113,6 +116,26 @@ describe('totpApi', () => {
     it('throws NetworkError on no response', async () => {
       mockedClient.post.mockRejectedValue(new Error('Network Error'))
       await expect(totpApi.setup()).rejects.toBeInstanceOf(NetworkError)
+    })
+  })
+
+  // getStatus
+  describe('getStatus', () => {
+    it('returns totpEnabled status on success', async () => {
+      mockedClient.get.mockResolvedValue({ data: { totpEnabled: true } })
+
+      await expect(totpApi.getStatus()).resolves.toEqual({ totpEnabled: true })
+      expect(mockedClient.get).toHaveBeenCalledWith('/auth/2fa/status')
+    })
+
+    it('throws ServerError on 500', async () => {
+      mockedClient.get.mockRejectedValue(makeAxiosError(500))
+      await expect(totpApi.getStatus()).rejects.toBeInstanceOf(ServerError)
+    })
+
+    it('throws NetworkError on no response', async () => {
+      mockedClient.get.mockRejectedValue(new Error('Network Error'))
+      await expect(totpApi.getStatus()).rejects.toBeInstanceOf(NetworkError)
     })
   })
 

@@ -65,4 +65,16 @@ export const totpApi: ITotpApi = {
       throw new NetworkError()
     }
   },
+
+  async getStatus(): Promise<{ totpEnabled: boolean }> {
+    try {
+      const { data } = await client.get<{ totpEnabled: boolean }>('/auth/2fa/status')
+      return data
+    } catch (error) {
+      if (isAxiosError(error)) {
+        if (error.response?.status !== undefined) throw new ServerError()
+      }
+      throw new NetworkError()
+    }
+  },
 }

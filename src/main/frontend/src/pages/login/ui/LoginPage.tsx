@@ -48,7 +48,7 @@ export function LoginPage() {
   }
 
   function handleSetupSuccess() {
-    if (pendingUser) finalizeLogin({ ...pendingUser, totpEnabled: true })
+    if (pendingUser) finalizeLogin(pendingUser)
   }
 
   function handleSetupDismiss() {

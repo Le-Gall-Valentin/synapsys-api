@@ -17,6 +17,7 @@ function makeApi(overrides: Partial<ITotpApi> = {}): ITotpApi {
     verify: vi.fn(),
     setup: vi.fn(),
     confirm: vi.fn(),
+    getStatus: vi.fn(),
     ...overrides,
   }
 }
@@ -43,7 +44,7 @@ describe('TotpVerifyStep', () => {
   })
 
   it('calls api.verify with the entered code on submit', async () => {
-    const api = makeApi({ verify: vi.fn().mockResolvedValue({ id: '1', username: 'alice', role: 'USER', totpEnabled: true }) })
+    const api = makeApi({ verify: vi.fn().mockResolvedValue({ id: '1', username: 'alice', role: 'USER' }) })
     const { container, getByRole } = render(
       <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
     )
@@ -57,7 +58,7 @@ describe('TotpVerifyStep', () => {
   })
 
   it('calls onVerified with user on success', async () => {
-    const user = { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: true }
+    const user = { id: '1', username: 'alice', role: 'USER' as const }
     const api = makeApi({ verify: vi.fn().mockResolvedValue(user) })
     const onVerified = vi.fn()
     const { container, getByRole } = render(
@@ -146,7 +147,7 @@ describe('TotpVerifyStep', () => {
       fireEvent.submit(form)
     })
 
-    resolveVerify({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })
+    resolveVerify({ id: '1', username: 'alice', role: 'USER' })
     await act(async () => { await verifyPromise })
 
     expect(api.verify).toHaveBeenCalledTimes(1)
@@ -170,7 +171,7 @@ describe('TotpVerifyStep', () => {
     expect(button.getAttribute('aria-busy')).toBe('true')
     expect((button as HTMLButtonElement).disabled).toBe(true)
 
-    resolveVerify({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })
+    resolveVerify({ id: '1', username: 'alice', role: 'USER' })
     await act(async () => { await verifyPromise })
   })
 
