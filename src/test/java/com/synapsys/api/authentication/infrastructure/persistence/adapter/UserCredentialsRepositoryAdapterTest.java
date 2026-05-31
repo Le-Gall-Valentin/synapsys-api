@@ -1,10 +1,11 @@
 package com.synapsys.api.authentication.infrastructure.persistence.adapter;
 
 import com.synapsys.api.authentication.domain.model.UserCredentials;
+import com.synapsys.api.authentication.domain.model.UserProfile;
+import com.synapsys.api.authentication.domain.port.out.UserProfilePort;
 import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCredentialEntity;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
-import com.synapsys.api.identity.application.service.UserCredentialsService;
-import com.synapsys.api.mfa.application.service.TotpStatusService;
+import com.synapsys.api.mfa.application.port.in.GetTotpStatusUseCase;
 import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,20 +22,19 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class UserCredentialsRepositoryAdapterTest {
 
-    @Mock UserCredentialsService identityUserService;
+    @Mock UserProfilePort userProfilePort;
     @Mock UserCredentialJpaRepository credentialRepo;
-    @Mock TotpStatusService totpStatusService;
+    @Mock GetTotpStatusUseCase totpStatusUseCase;
 
     private UserCredentialsRepositoryAdapter adapter;
 
     private final UUID userId = UUID.randomUUID();
-    private final UserCredentialsService.UserInfo userInfo = new UserCredentialsService.UserInfo(
-        userId, "alice", "alice@test.com", true, Role.USER, Instant.now()
-    );
+    private final UserProfile userProfile =
+            new UserProfile(userId, "alice", "alice@test.com", true, Role.USER);
 
     @BeforeEach
     void setUp() {
-        adapter = new UserCredentialsRepositoryAdapter(identityUserService, credentialRepo, totpStatusService);
+        adapter = new UserCredentialsRepositoryAdapter(userProfilePort, credentialRepo, totpStatusUseCase);
     }
 
     private UserCredentialEntity entityWithHash(String hash) {
@@ -46,9 +45,9 @@ class UserCredentialsRepositoryAdapterTest {
 
     @Test
     void findByUsername_userFound_credentialFound_returnsUserCredentials() {
-        when(identityUserService.findByUsername("alice")).thenReturn(Optional.of(userInfo));
+        when(userProfilePort.findByUsername("alice")).thenReturn(Optional.of(userProfile));
         when(credentialRepo.findById(userId)).thenReturn(Optional.of(entityWithHash("hashed_pw")));
-        when(totpStatusService.isTotpEnabled(userId)).thenReturn(false);
+        when(totpStatusUseCase.isTotpEnabled(userId)).thenReturn(false);
 
         Optional<UserCredentials> result = adapter.findByUsername("alice");
 
@@ -65,7 +64,7 @@ class UserCredentialsRepositoryAdapterTest {
 
     @Test
     void findByUsername_userNotFound_returnsEmpty() {
-        when(identityUserService.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userProfilePort.findByUsername("unknown")).thenReturn(Optional.empty());
 
         Optional<UserCredentials> result = adapter.findByUsername("unknown");
 
@@ -74,7 +73,7 @@ class UserCredentialsRepositoryAdapterTest {
 
     @Test
     void findByUsername_credentialNotFound_returnsEmpty() {
-        when(identityUserService.findByUsername("alice")).thenReturn(Optional.of(userInfo));
+        when(userProfilePort.findByUsername("alice")).thenReturn(Optional.of(userProfile));
         when(credentialRepo.findById(userId)).thenReturn(Optional.empty());
 
         Optional<UserCredentials> result = adapter.findByUsername("alice");
@@ -84,9 +83,9 @@ class UserCredentialsRepositoryAdapterTest {
 
     @Test
     void findById_userFound_totpEnabled_returnsUserCredentialsWithTotpTrue() {
-        when(identityUserService.findById(userId)).thenReturn(Optional.of(userInfo));
+        when(userProfilePort.findById(userId)).thenReturn(Optional.of(userProfile));
         when(credentialRepo.findById(userId)).thenReturn(Optional.of(entityWithHash("hashed_pw")));
-        when(totpStatusService.isTotpEnabled(userId)).thenReturn(true);
+        when(totpStatusUseCase.isTotpEnabled(userId)).thenReturn(true);
 
         Optional<UserCredentials> result = adapter.findById(userId);
 
@@ -98,7 +97,7 @@ class UserCredentialsRepositoryAdapterTest {
 
     @Test
     void findById_userNotFound_returnsEmpty() {
-        when(identityUserService.findById(userId)).thenReturn(Optional.empty());
+        when(userProfilePort.findById(userId)).thenReturn(Optional.empty());
 
         Optional<UserCredentials> result = adapter.findById(userId);
 

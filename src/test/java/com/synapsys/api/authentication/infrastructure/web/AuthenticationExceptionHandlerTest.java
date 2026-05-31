@@ -30,28 +30,7 @@ class AuthenticationExceptionHandlerTest {
     }
 
     @Test
-    void handle_tokenExpired_returns401() {
-        var response = handler.handle(new AuthenticationException.TokenExpired(), request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-    @Test
-    void handle_tokenNotFound_returns401() {
-        var response = handler.handle(new AuthenticationException.TokenNotFound(), request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-    @Test
-    void handle_tokenRevoked_returns401() {
-        var response = handler.handle(new AuthenticationException.TokenRevoked(), request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-    @Test
-    void handle_userNotActive_returns403WithGenericUserNotActiveMessage() {
+    void handle_userNotActive_returns403WithGenericMessage() {
         var response = handler.handle(new AuthenticationException.UserNotActive(), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
@@ -61,13 +40,70 @@ class AuthenticationExceptionHandlerTest {
     }
 
     @Test
-    void handle_userNotFound_returns404() {
+    void handle_userNotFound_returns401WithGenericMessage() {
         var response = handler.handle(new AuthenticationException.UserNotFound(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("User not found");
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
         assertThat(response.getBody().getTitle()).isEqualTo("UserNotFound");
+    }
+
+    @Test
+    void handle_tokenExpired_returns401WithGenericMessage() {
+        var response = handler.handle(new AuthenticationException.TokenExpired(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+    }
+
+    @Test
+    void handle_tokenNotFound_returns401WithGenericMessage() {
+        var response = handler.handle(new AuthenticationException.TokenNotFound(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+    }
+
+    @Test
+    void handle_tokenRevoked_returns401WithGenericMessage() {
+        var response = handler.handle(new AuthenticationException.TokenRevoked(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+    }
+
+    @Test
+    void handle_totpCodeInvalid_returns401WithGenericMessage() {
+        var response = handler.handle(new AuthenticationException.TotpCodeInvalid(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+        assertThat(response.getBody().getTitle()).isEqualTo("TotpCodeInvalid");
+    }
+
+    @Test
+    void handle_totpChallengeExpired_returns401WithGenericMessage() {
+        var response = handler.handle(new AuthenticationException.TotpChallengeExpired(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+        assertThat(response.getBody().getTitle()).isEqualTo("TotpChallengeExpired");
+    }
+
+    @Test
+    void handle_totpMaxAttemptsExceeded_returns401WithGenericMessage() {
+        var response = handler.handle(new AuthenticationException.TotpMaxAttemptsExceeded(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
+        assertThat(response.getBody().getTitle()).isEqualTo("TotpMaxAttemptsExceeded");
     }
 
     @Test
@@ -77,23 +113,5 @@ class AuthenticationExceptionHandlerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getInstance()).isNotNull();
         assertThat(response.getBody().getInstance().toString()).isEqualTo("/api/auth/login");
-    }
-
-    @Test
-    void handle_tokenRevoked_returnsGenericAuthenticationRequired() {
-        var response = handler.handle(new AuthenticationException.TokenRevoked(), request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
-    }
-
-    @Test
-    void handle_tokenExpired_returnsGenericAuthenticationRequired() {
-        var response = handler.handle(new AuthenticationException.TokenExpired(), request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
     }
 }
