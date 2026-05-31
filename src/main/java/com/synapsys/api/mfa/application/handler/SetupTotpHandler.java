@@ -12,13 +12,16 @@ public class SetupTotpHandler implements SetupTotpUseCase {
 
     private final UserTotpQueryPort userTotpQuery;
     private final TotpSecretGeneratorPort secretGenerator;
+    private final TotpUriBuilderPort uriBuilder;
     private final UserTotpPort userTotpPort;
 
     public SetupTotpHandler(UserTotpQueryPort userTotpQuery,
                             TotpSecretGeneratorPort secretGenerator,
+                            TotpUriBuilderPort uriBuilder,
                             UserTotpPort userTotpPort) {
         this.userTotpQuery = userTotpQuery;
         this.secretGenerator = secretGenerator;
+        this.uriBuilder = uriBuilder;
         this.userTotpPort = userTotpPort;
     }
 
@@ -37,9 +40,9 @@ public class SetupTotpHandler implements SetupTotpUseCase {
             UserTotpProfile refreshed = userTotpQuery.findById(command.userId())
                 .orElseThrow(MfaException.UserNotFound::new);
             String existing = refreshed.totpSecret().orElseThrow(MfaException.TotpSetupNotStarted::new);
-            return new TotpSetupResult(existing, secretGenerator.buildOtpauthUri(existing, command.email()));
+            return new TotpSetupResult(existing, uriBuilder.buildOtpauthUri(existing, command.email()));
         }
 
-        return new TotpSetupResult(candidate, secretGenerator.buildOtpauthUri(candidate, command.email()));
+        return new TotpSetupResult(candidate, uriBuilder.buildOtpauthUri(candidate, command.email()));
     }
 }

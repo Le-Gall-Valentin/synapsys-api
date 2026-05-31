@@ -5,6 +5,7 @@ import com.synapsys.api.mfa.domain.model.MfaException;
 import com.synapsys.api.mfa.domain.model.TotpSetupResult;
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.TotpSecretGeneratorPort;
+import com.synapsys.api.mfa.domain.port.out.TotpUriBuilderPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ class SetupTotpHandlerTest {
 
     @Mock UserTotpQueryPort userTotpQuery;
     @Mock TotpSecretGeneratorPort secretGenerator;
+    @Mock TotpUriBuilderPort uriBuilder;
     @Mock UserTotpPort userTotpPort;
 
     private SetupTotpHandler handler;
@@ -34,7 +36,7 @@ class SetupTotpHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new SetupTotpHandler(userTotpQuery, secretGenerator, userTotpPort);
+        handler = new SetupTotpHandler(userTotpQuery, secretGenerator, uriBuilder, userTotpPort);
     }
 
     @Test
@@ -42,7 +44,7 @@ class SetupTotpHandlerTest {
         UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
         when(secretGenerator.generateSecret()).thenReturn("NEWSECRET");
-        when(secretGenerator.buildOtpauthUri("NEWSECRET", email)).thenReturn("otpauth://totp/...");
+        when(uriBuilder.buildOtpauthUri("NEWSECRET", email)).thenReturn("otpauth://totp/...");
         when(userTotpPort.saveTotpSecretIfAbsent(userId, "NEWSECRET")).thenReturn(true);
 
         TotpSetupResult result = handler.setup(new SetupTotpCommand(userId, email));
@@ -77,7 +79,7 @@ class SetupTotpHandlerTest {
             .thenReturn(Optional.of(refreshed));
         when(secretGenerator.generateSecret()).thenReturn("CANDIDATE");
         when(userTotpPort.saveTotpSecretIfAbsent(userId, "CANDIDATE")).thenReturn(false);
-        when(secretGenerator.buildOtpauthUri("EXISTING", email)).thenReturn("otpauth://totp/existing");
+        when(uriBuilder.buildOtpauthUri("EXISTING", email)).thenReturn("otpauth://totp/existing");
 
         TotpSetupResult result = handler.setup(new SetupTotpCommand(userId, email));
 

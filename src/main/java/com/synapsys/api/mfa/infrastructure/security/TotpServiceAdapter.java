@@ -2,6 +2,7 @@ package com.synapsys.api.mfa.infrastructure.security;
 
 import com.synapsys.api.mfa.domain.port.out.TotpCodeValidatorPort;
 import com.synapsys.api.mfa.domain.port.out.TotpSecretGeneratorPort;
+import com.synapsys.api.mfa.domain.port.out.TotpUriBuilderPort;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeVerifier;
 import dev.samstevens.totp.code.HashingAlgorithm;
@@ -13,7 +14,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class TotpServiceAdapter implements TotpSecretGeneratorPort, TotpCodeValidatorPort {
+public class TotpServiceAdapter implements TotpSecretGeneratorPort, TotpCodeValidatorPort, TotpUriBuilderPort {
 
     private static final String ISSUER = "SynapSys";
     private static final int SECRET_LENGTH = 32;
