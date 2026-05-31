@@ -56,3 +56,4 @@ databaseChangeLog:
       rollback:
         - dropTable:
             tableName: users
+            cascadeConstraints: true
