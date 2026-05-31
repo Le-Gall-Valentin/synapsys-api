@@ -1,12 +1,25 @@
 import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
 import type { User } from '@/entities/user'
-import type { ITotpApi } from './ITotpApi'
+import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
+import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
 import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpMaxAttemptsError } from '../model/errors'
 import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
 
-export const totpApi: ITotpApi = {
+function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<number, () => never>>): never {
+  if (isAxiosError(error)) {
+    const status = error.response?.status
+    if (status !== undefined) {
+      const handler = statusHandlers[status]
+      if (handler) handler()
+      throw new ServerError()
+    }
+  }
+  throw new NetworkError()
+}
+
+export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
   async verify(code: string): Promise<User> {
     try {
       const { data } = await client.post<User>('/auth/2fa/verify', { code })
@@ -44,12 +57,9 @@ export const totpApi: ITotpApi = {
       const { data } = await client.post<TotpSetupData>('/auth/2fa/setup')
       return data
     } catch (error) {
-      if (isAxiosError(error)) {
-        const status = error.response?.status
-        if (status === 409) throw new TotpAlreadyEnabledError()
-        if (status !== undefined) throw new ServerError()
-      }
-      throw new NetworkError()
+      handleTotpApiError(error, {
+        409: () => { throw new TotpAlreadyEnabledError() },
+      })
     }
   },
 
@@ -57,12 +67,9 @@ export const totpApi: ITotpApi = {
     try {
       await client.post('/auth/2fa/confirm', { code })
     } catch (error) {
-      if (isAxiosError(error)) {
-        const status = error.response?.status
-        if (status === 401) throw new TotpCodeError()
-        if (status !== undefined) throw new ServerError()
-      }
-      throw new NetworkError()
+      handleTotpApiError(error, {
+        401: () => { throw new TotpCodeError() },
+      })
     }
   },
 
@@ -71,10 +78,7 @@ export const totpApi: ITotpApi = {
       const { data } = await client.get<{ totpEnabled: boolean }>('/auth/2fa/status')
       return data
     } catch (error) {
-      if (isAxiosError(error)) {
-        if (error.response?.status !== undefined) throw new ServerError()
-      }
-      throw new NetworkError()
+      handleTotpApiError(error, {})
     }
   },
 }

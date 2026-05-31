@@ -6,12 +6,12 @@ import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
-import type { ITotpApi } from '../api/ITotpApi'
+import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import type { User } from '@/entities/user'
 
 interface TotpVerifyStepProps {
   username: string
-  api: ITotpApi
+  api: ITotpVerifyApi
   onVerified: (user: User) => void
   onBack: () => void
 }
