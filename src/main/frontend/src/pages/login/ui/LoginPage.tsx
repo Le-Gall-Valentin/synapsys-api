@@ -23,7 +23,7 @@ export function LoginPage({ totpApi = defaultTotpApi }: { totpApi?: TotpApi } = 
     handleSkip,
     handleSetupSuccess,
     handleSetupDismiss,
-  } = useLoginFlow(totpApi)
+  } = useLoginFlow()
 
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[1fr_1fr] lg:grid-cols-[1.1fr_1fr]">

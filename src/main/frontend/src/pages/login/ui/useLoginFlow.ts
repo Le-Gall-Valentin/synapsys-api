@@ -2,13 +2,10 @@ import { useState } from 'react'
 import type { User } from '@/entities/user'
 import type { LoginOutcome } from '@/features/auth'
 import { useAuth } from '@/features/auth'
-import type { ITotpVerifyApi } from '@/features/totp'
-import type { ITotpEnrollApi } from '@/features/totp'
 
 type LoginStep = 'credentials' | 'totp' | 'enroll' | 'setup'
-type TotpApi = ITotpVerifyApi & ITotpEnrollApi
 
-export function useLoginFlow(_totpApi: TotpApi) {
+export function useLoginFlow() {
   const finalizeLogin = useAuth(s => s.finalizeLogin)
   const [step, setStep] = useState<LoginStep>('credentials')
   const [pendingUser, setPendingUser] = useState<User | null>(null)

@@ -1,6 +1,6 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useAuth } from '@/features/auth/model/authStoreContext'
+import { useAuth } from '@/features/auth'
 import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 import { LoginForm } from './LoginForm'
 
