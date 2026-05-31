@@ -61,7 +61,10 @@ public class SecurityConfig {
             )
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(
-                    "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")))
+                    "default-src 'self'; " +
+                    "style-src 'self' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "base-uri 'self'; frame-ancestors 'none'; form-action 'self'")))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .build();
