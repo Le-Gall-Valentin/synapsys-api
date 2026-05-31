@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -78,5 +79,44 @@ class UserTotpRepositoryAdapterTest {
         adapter.saveTotpSecret(userId, "plain-secret");
 
         verify(jpa).saveTotpSecretById(userId, "encrypted-secret");
+    }
+
+    @Test
+    void saveTotpSecretIfAbsent_rowsUpdated_returnsTrue() {
+        when(encryptorFactory.forUser(userId)).thenReturn(encryptor);
+        when(encryptor.encrypt("plain-secret")).thenReturn("encrypted-secret");
+        when(jpa.saveTotpSecretIfAbsent(userId, "encrypted-secret")).thenReturn(1);
+
+        assertThat(adapter.saveTotpSecretIfAbsent(userId, "plain-secret")).isTrue();
+    }
+
+    @Test
+    void saveTotpSecretIfAbsent_noRowsUpdated_returnsFalse() {
+        when(encryptorFactory.forUser(userId)).thenReturn(encryptor);
+        when(encryptor.encrypt("plain-secret")).thenReturn("encrypted-secret");
+        when(jpa.saveTotpSecretIfAbsent(userId, "encrypted-secret")).thenReturn(0);
+
+        assertThat(adapter.saveTotpSecretIfAbsent(userId, "plain-secret")).isFalse();
+    }
+
+    @Test
+    void createDefaultRecord_savesEntityWithUserId() {
+        adapter.createDefaultRecord(userId);
+
+        verify(jpa).save(argThat(e -> userId.equals(e.getUserId())));
+    }
+
+    @Test
+    void enableTotp_delegatesToJpa() {
+        adapter.enableTotp(userId);
+
+        verify(jpa).enableTotpById(userId);
+    }
+
+    @Test
+    void disableTotp_delegatesToJpa() {
+        adapter.disableTotp(userId);
+
+        verify(jpa).disableTotpById(userId);
     }
 }

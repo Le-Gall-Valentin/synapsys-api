@@ -21,6 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.util.Optional;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -77,6 +79,39 @@ class RegisterHandlerTest {
         assertThatThrownBy(() -> handler.register(cmd("someone", Role.USER), Role.USER))
             .isInstanceOf(IdentityException.InsufficientPermissions.class);
         verifyNoInteractions(userCommandPort);
+    }
+
+    @Test
+    void register_admin_can_create_user() {
+        UUID userId = UUID.randomUUID();
+        User created = user(userId, "newuser", Role.USER);
+        when(userCommandPort.createProfile(any(CreateUserProfileCommand.class))).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(created));
+
+        User result = handler.register(cmd("newuser", Role.USER), Role.ADMIN);
+
+        assertThat(result.role()).isEqualTo(Role.USER);
+        verify(credentialSetupPort).setup(userId, "pass");
+    }
+
+    @Test
+    void register_duplicateEmail_throwsEmailAlreadyExists() {
+        when(userCommandPort.createProfile(any())).thenThrow(new IdentityException.EmailAlreadyExists());
+
+        assertThatThrownBy(() -> handler.register(cmd("new", Role.USER), Role.SUPER_ADMIN))
+            .isInstanceOf(IdentityException.EmailAlreadyExists.class);
+    }
+
+    @Test
+    void register_credentialSetupFails_propagatesException() {
+        UUID userId = UUID.randomUUID();
+        when(userCommandPort.createProfile(any())).thenReturn(userId);
+        doThrow(new RuntimeException("credential store unavailable"))
+            .when(credentialSetupPort).setup(userId, "pass");
+
+        assertThatThrownBy(() -> handler.register(cmd("newuser", Role.USER), Role.SUPER_ADMIN))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("credential store unavailable");
     }
 
     @Test

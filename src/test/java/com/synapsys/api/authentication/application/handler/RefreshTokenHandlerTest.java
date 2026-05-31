@@ -156,6 +156,20 @@ class RefreshTokenHandlerTest {
     }
 
     @Test
+    void refresh_revokedToken_revokeAllForUserFails_stillThrowsTokenRevoked() {
+        String raw = "stolen";
+        RefreshToken revoked = new RefreshToken(
+            UUID.randomUUID(), activeUser.id(), TestHashUtils.sha256(raw),
+            Instant.now().plusSeconds(3600), true, Instant.now(), null
+        );
+        when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(revoked));
+        doThrow(new RuntimeException("DB down")).when(revocationPort).revokeAllForUser(activeUser.id());
+
+        assertThatThrownBy(() -> handler.refresh(raw))
+            .isInstanceOf(AuthenticationException.TokenRevoked.class);
+    }
+
+    @Test
     void refresh_inactiveUser_throwsUserNotActive() {
         String raw = "valid-raw-token";
         UserCredentials inactiveUser = new UserCredentials(

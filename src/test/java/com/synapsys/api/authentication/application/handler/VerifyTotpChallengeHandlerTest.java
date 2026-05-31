@@ -138,6 +138,22 @@ class VerifyTotpChallengeHandlerTest {
     }
 
     @Test
+    void verify_validCode_tokenGenerationFails_challengeAlreadyInvalidated() {
+        // invalidateChallenge() is called before generate() — if generate() throws,
+        // the challenge is consumed (accepted trade-off: user must re-login from scratch)
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(true);
+        when(accessTokenPort.generate(creds)).thenReturn("jwt");
+        when(refreshTokenPort.generate(eq(creds), anyInt())).thenThrow(new RuntimeException("DB error"));
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("DB error");
+        verify(challengeStore).invalidateChallenge("challenge-id");
+    }
+
+    @Test
     void verify_invalidCode_belowMaxAttempts_doesNotInvalidateChallenge() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));

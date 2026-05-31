@@ -275,6 +275,32 @@ class AuthControllerIT {
             .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Path=/api/auth/2fa")));
     }
 
+    @Test
+    void verifyTotp_withoutChallengeCookie_returns401() throws Exception {
+        mockMvc.perform(post("/api/auth/2fa/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"123456\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void verifyTotp_withInvalidCode_returns401() throws Exception {
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("totpuser", "totppass"))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        Cookie challenge = loginResult.getResponse().getCookie("totp_challenge");
+        assertThat(challenge).isNotNull();
+
+        mockMvc.perform(post("/api/auth/2fa/verify")
+                .cookie(challenge)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"000000\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
     MvcResult login() throws Exception {
         return mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)

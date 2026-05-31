@@ -96,6 +96,16 @@ class UserCredentialsRepositoryAdapterTest {
     }
 
     @Test
+    void findById_userFound_credentialAbsent_returnsEmpty() {
+        when(userProfilePort.findById(userId)).thenReturn(Optional.of(userProfile));
+        when(credentialRepo.findById(userId)).thenReturn(Optional.empty());
+
+        Optional<UserCredentials> result = adapter.findById(userId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void findById_userNotFound_returnsEmpty() {
         when(userProfilePort.findById(userId)).thenReturn(Optional.empty());
 
