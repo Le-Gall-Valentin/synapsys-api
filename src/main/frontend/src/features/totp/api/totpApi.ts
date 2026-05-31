@@ -13,6 +13,11 @@ function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<numbe
     if (status !== undefined) {
       const handler = statusHandlers[status]
       if (handler) handler()
+      if (status === 429) {
+        const retryAfter = error.response?.headers?.['retry-after']
+        const parsed = retryAfter ? parseInt(retryAfter, 10) : NaN
+        throw new RateLimitError(Number.isFinite(parsed) ? parsed : null)
+      }
       throw new ServerError()
     }
   }

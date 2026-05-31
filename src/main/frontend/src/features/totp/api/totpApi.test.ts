@@ -95,6 +95,20 @@ describe('totpApi', () => {
 
   // setup
   describe('setup', () => {
+    it('throws RateLimitError on 429', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '60' }))
+      const caught = await totpApi.setup().catch((e) => e)
+      expect(caught).toBeInstanceOf(RateLimitError)
+      expect((caught as RateLimitError).retryAfterSeconds).toBe(60)
+    })
+
+    it('throws RateLimitError with null retryAfterSeconds when header absent on 429', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(429))
+      const caught = await totpApi.setup().catch((e) => e)
+      expect(caught).toBeInstanceOf(RateLimitError)
+      expect((caught as RateLimitError).retryAfterSeconds).toBeNull()
+    })
+
     it('returns TotpSetupData on success', async () => {
       const setupData = { otpauthUri: 'otpauth://totp/App:user?secret=ABC', secret: 'ABC' }
       mockedClient.post.mockResolvedValue({ data: setupData })
@@ -121,6 +135,13 @@ describe('totpApi', () => {
 
   // getStatus
   describe('getStatus', () => {
+    it('throws RateLimitError on 429', async () => {
+      mockedClient.get.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '10' }))
+      const caught = await totpApi.getStatus().catch((e) => e)
+      expect(caught).toBeInstanceOf(RateLimitError)
+      expect((caught as RateLimitError).retryAfterSeconds).toBe(10)
+    })
+
     it('returns totpEnabled status on success', async () => {
       mockedClient.get.mockResolvedValue({ data: { totpEnabled: true } })
 
@@ -141,6 +162,13 @@ describe('totpApi', () => {
 
   // confirm
   describe('confirm', () => {
+    it('throws RateLimitError on 429', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '30' }))
+      const caught = await totpApi.confirm('123456').catch((e) => e)
+      expect(caught).toBeInstanceOf(RateLimitError)
+      expect((caught as RateLimitError).retryAfterSeconds).toBe(30)
+    })
+
     it('resolves void on 204', async () => {
       mockedClient.post.mockResolvedValue({ status: 204, data: undefined })
 
