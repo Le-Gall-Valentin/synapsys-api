@@ -103,6 +103,18 @@ class RegisterHandlerTest {
     }
 
     @Test
+    void register_totpInitFails_propagatesException() {
+        UUID userId = UUID.randomUUID();
+        when(userCommandPort.createProfile(any())).thenReturn(userId);
+        doThrow(new RuntimeException("totp store unavailable"))
+            .when(totpRecordInitPort).initForUser(userId);
+
+        assertThatThrownBy(() -> handler.register(cmd("newuser", Role.USER), Role.SUPER_ADMIN))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("totp store unavailable");
+    }
+
+    @Test
     void register_credentialSetupFails_propagatesException() {
         UUID userId = UUID.randomUUID();
         when(userCommandPort.createProfile(any())).thenReturn(userId);

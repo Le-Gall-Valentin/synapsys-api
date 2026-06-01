@@ -52,6 +52,25 @@ class DisableTotpHandlerTest {
     }
 
     @Test
+    void disable_userNotFound_throwsUserNotFound() {
+        when(userTotpQuery.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
+            .isInstanceOf(MfaException.UserNotFound.class);
+        verifyNoInteractions(codeValidator, codeReplay, userTotpLifecyclePort);
+    }
+
+    @Test
+    void disable_totpEnabledButNoSecret_throwsTotpSetupNotStarted() {
+        UserTotpProfile profile = new UserTotpProfile(userId, true, Optional.empty());
+        when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
+
+        assertThatThrownBy(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
+            .isInstanceOf(MfaException.TotpSetupNotStarted.class);
+        verifyNoInteractions(codeValidator, codeReplay);
+    }
+
+    @Test
     void disable_totpNotEnabled_throwsTotpNotEnabled() {
         UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));

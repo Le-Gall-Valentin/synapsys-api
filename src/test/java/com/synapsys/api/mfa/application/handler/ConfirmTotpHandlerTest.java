@@ -71,6 +71,15 @@ class ConfirmTotpHandlerTest {
     }
 
     @Test
+    void confirm_userNotFound_throwsUserNotFound() {
+        when(userTotpQuery.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
+            .isInstanceOf(MfaException.UserNotFound.class);
+        verifyNoInteractions(codeValidator, codeReplay, userTotpLifecyclePort);
+    }
+
+    @Test
     void confirm_totpAlreadyEnabled_throwsTotpAlreadyEnabled() {
         UserTotpProfile profile = new UserTotpProfile(userId, true, Optional.of(secret));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));

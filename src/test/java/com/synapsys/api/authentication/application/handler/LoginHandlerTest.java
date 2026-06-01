@@ -178,6 +178,43 @@ class LoginHandlerTest {
     }
 
     @Test
+    void login_inactiveUser_totpEnabled_throwsUserNotActive() {
+        UserCredentials inactiveTotpUser = new UserCredentials(
+            UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", false, Role.USER, true);
+        when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(inactiveTotpUser));
+        when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("user2", "password")))
+            .isInstanceOf(AuthenticationException.UserNotActive.class);
+        verifyNoInteractions(totpChallengeStore, accessTokenPort, refreshTokenPort);
+    }
+
+    @Test
+    void login_success_accessTokenThrows_propagatesException() {
+        when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(activeUser));
+        when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
+        when(accessTokenPort.generate(activeUser)).thenThrow(new RuntimeException("jwt store down"));
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "password")))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("jwt store down");
+        verifyNoInteractions(refreshTokenPort);
+    }
+
+    @Test
+    void login_success_refreshTokenThrows_propagatesException() {
+        when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(activeUser));
+        when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
+        when(accessTokenPort.generate(activeUser)).thenReturn("jwt_access");
+        when(refreshTokenPort.generate(eq(activeUser), anyInt()))
+            .thenThrow(new RuntimeException("refresh store down"));
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "password")))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("refresh store down");
+    }
+
+    @Test
     void login_totpEnabled_returnsTotpRequired_andStoresChallenge() {
         when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(totpUser));
         when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);

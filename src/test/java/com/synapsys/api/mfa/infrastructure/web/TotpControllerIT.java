@@ -231,7 +231,7 @@ class TotpControllerIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"code\":\"000005\"}"))
             .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.title").value("TotpMaxAttemptsExceeded"));
+            .andExpect(jsonPath("$.title").value("AuthenticationError"));
     }
 
     // ─── /api/auth/2fa (DELETE) ───────────────────────────────────────────────
@@ -299,6 +299,18 @@ class TotpControllerIT {
         mockMvc.perform(get("/api/auth/2fa/status").cookie(access))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.totpEnabled").value(false));
+    }
+
+    @Test
+    void status_authenticated_totpEnabled_returns200WithTrue() throws Exception {
+        String totpUserId = userIdentityJpaRepository.findByUsername("totpuser")
+            .orElseThrow().getId().toString();
+        CustomUserDetails totpPrincipal = new CustomUserDetails(
+            java.util.UUID.fromString(totpUserId), Role.USER, "totpuser@test.com");
+
+        mockMvc.perform(get("/api/auth/2fa/status").with(user(totpPrincipal)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totpEnabled").value(true));
     }
 
     @Test
