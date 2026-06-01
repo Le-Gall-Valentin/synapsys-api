@@ -8,10 +8,14 @@ import com.synapsys.api.identity.domain.port.out.MfaAdminResetTotpPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import com.synapsys.api.shared.service.RoleHierarchy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 @ApplicationService
 public class AdminResetTotpHandler implements AdminResetTotpUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminResetTotpHandler.class);
 
     private final UserRepository userRepository;
     private final MfaAdminResetTotpPort mfaResetTotp;
@@ -33,5 +37,6 @@ public class AdminResetTotpHandler implements AdminResetTotpUseCase {
             throw new IdentityException.InsufficientPermissions();
         }
         mfaResetTotp.disableTotpIfEnabled(command.targetUserId());
+        log.info("TOTP reset for user {} by caller {}", command.targetUserId(), command.callerId());
     }
 }

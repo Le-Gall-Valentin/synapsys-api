@@ -21,22 +21,22 @@ public class IdentityExceptionHandler {
     public ResponseEntity<ProblemDetail> handle(IdentityException e, HttpServletRequest request) {
         IdentityErrorResponse response = switch (e) {
             case IdentityException.UserNotFound ex ->
-                    response(404, ex, ex.getMessage());
+                    response(404, ex, "User not found.");
 
             case IdentityException.UserNotActive ex ->
                     response(403, ex, "User account is not active.");
 
             case IdentityException.InsufficientPermissions ex ->
-                    response(403, ex, "Insufficient permissions");
+                    response(403, ex, "Insufficient permissions.");
 
             case IdentityException.UserAlreadyInactive ex ->
-                    response(409, ex, ex.getMessage());
+                    response(409, ex, "User account is already inactive.");
 
             case IdentityException.UsernameAlreadyExists ex ->
-                    response(409, ex, ex.getMessage());
+                    response(409, ex, "Username already taken.");
 
             case IdentityException.EmailAlreadyExists ex ->
-                    response(409, ex, ex.getMessage());
+                    response(409, ex, "Email already registered.");
 
             case IdentityException.DataIntegrityError ex -> {
                 log.error("Data integrity violation on {}", request.getRequestURI(), ex);

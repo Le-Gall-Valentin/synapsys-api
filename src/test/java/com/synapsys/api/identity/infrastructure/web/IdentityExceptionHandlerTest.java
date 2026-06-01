@@ -45,7 +45,7 @@ class IdentityExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("Insufficient permissions");
+        assertThat(response.getBody().getDetail()).isEqualTo("Insufficient permissions.");
         assertThat(response.getBody().getTitle()).isEqualTo("InsufficientPermissions");
     }
 

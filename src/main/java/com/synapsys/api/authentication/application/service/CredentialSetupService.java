@@ -18,6 +18,7 @@ public class CredentialSetupService implements CredentialSetupUseCase {
         this.userCredentialPort = userCredentialPort;
     }
 
+    @Override
     public void setup(UUID userId, String rawPassword) {
         String hash = passwordHasher.hash(rawPassword);
         userCredentialPort.saveCredential(userId, hash);
