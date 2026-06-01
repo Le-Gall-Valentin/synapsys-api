@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,5 +51,7 @@ public class TotpChallengeController {
         return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
     }
 
-    record VerifyRequest(@NotBlank String code) {}
+    record VerifyRequest(
+        @NotBlank @Pattern(regexp = "\\d{6}", message = "must be a 6-digit number") String code
+    ) {}
 }

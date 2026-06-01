@@ -7,4 +7,9 @@ public record RegisterCommand(String username, String email, String rawPassword,
     public RegisterCommand {
         email = email == null ? null : email.toLowerCase(Locale.ROOT);
     }
+
+    @Override
+    public String toString() {
+        return "RegisterCommand[username=" + username + ", email=" + email + ", role=" + role + "]";
+    }
 }

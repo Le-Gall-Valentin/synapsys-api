@@ -88,13 +88,15 @@ class RedisTotpChallengeStoreTest {
     }
 
     @Test
-    void incrementFailedAttempts_subsequentAttempts_doNotResetTtl() {
+    void incrementFailedAttempts_subsequentAttempts_alsoSetsTtl() {
+        // expire() is called unconditionally to avoid the non-atomic window where
+        // a crash between increment and expire would leave a key without TTL.
         String challengeId = UUID.randomUUID().toString();
         when(valueOps.increment("totp:attempts:" + challengeId)).thenReturn(3L);
 
         int count = store.incrementFailedAttempts(challengeId);
 
         assertThat(count).isEqualTo(3);
-        verify(redisTemplate, never()).expire(any(), any(Duration.class));
+        verify(redisTemplate).expire(eq("totp:attempts:" + challengeId), eq(Duration.ofMinutes(15)));
     }
 }

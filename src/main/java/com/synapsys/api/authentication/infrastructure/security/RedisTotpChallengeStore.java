@@ -44,9 +44,9 @@ public class RedisTotpChallengeStore implements TotpChallengeStorePort {
         String key = "totp:attempts:" + challengeId;
         Long count = redisTemplate.opsForValue().increment(key);
         long attempts = count != null ? count : 1L;
-        if (attempts == 1) {
-            redisTemplate.expire(key, CHALLENGE_TTL);
-        }
+        // expire() is called unconditionally to avoid the non-atomic increment+expire window:
+        // if the process crashes after increment but before expire, the key would leak forever.
+        redisTemplate.expire(key, CHALLENGE_TTL);
         return (int) attempts;
     }
 }

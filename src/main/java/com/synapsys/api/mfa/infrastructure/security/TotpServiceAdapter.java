@@ -37,8 +37,8 @@ public class TotpServiceAdapter implements TotpSecretGeneratorPort, TotpCodeVali
 
     @Override
     public String buildOtpauthUri(String secret, String email) {
-        String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
-        String encodedIssuer = URLEncoder.encode(ISSUER, StandardCharsets.UTF_8);
+        String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8).replace("+", "%20");
+        String encodedIssuer = URLEncoder.encode(ISSUER, StandardCharsets.UTF_8).replace("+", "%20");
         return "otpauth://totp/" + encodedIssuer + ":" + encodedEmail
             + "?secret=" + secret
             + "&issuer=" + encodedIssuer
