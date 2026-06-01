@@ -40,6 +40,7 @@
     "error": {
       "invalid_code": "Enter the 6-digit code shown by your application.",
       "setup_failed": "Unable to generate QR code. Please try again.",
+      "max_attempts": "Too many failed attempts. Setup has been cancelled, please try again.",
       "rate_limit": "Too many attempts. Please wait before trying again.",
       "network": "Network unavailable. Please check your connection.",
       "server": "A server error occurred. Please try again."

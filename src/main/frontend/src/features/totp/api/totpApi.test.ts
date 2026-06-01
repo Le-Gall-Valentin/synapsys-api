@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios, { type AxiosError } from 'axios'
 import { totpApi } from './totpApi'
 import { client } from '@/shared/api'
-import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError } from '../model/errors'
+import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError, TotpConfirmMaxAttemptsError } from '../model/errors'
 import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 
 vi.mock('@/shared/api', () => ({
@@ -162,7 +162,14 @@ describe('totpApi', () => {
 
   // confirm
   describe('confirm', () => {
-    it('throws RateLimitError on 429', async () => {
+    it('throws TotpConfirmMaxAttemptsError on 429 with TotpConfirmMaxAttemptsExceeded title', async () => {
+      mockedClient.post.mockRejectedValue(
+        makeAxiosError(429, 'Too Many Requests', {}, { title: 'TotpConfirmMaxAttemptsExceeded' }),
+      )
+      await expect(totpApi.confirm('000000')).rejects.toBeInstanceOf(TotpConfirmMaxAttemptsError)
+    })
+
+    it('throws RateLimitError on 429 without TotpConfirmMaxAttemptsExceeded title', async () => {
       mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '30' }))
       const caught = await totpApi.confirm('123456').catch((e) => e)
       expect(caught).toBeInstanceOf(RateLimitError)

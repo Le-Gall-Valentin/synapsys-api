@@ -4,7 +4,7 @@ import type { User } from '@/entities/user'
 import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
-import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpMaxAttemptsError } from '../model/errors'
+import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpConfirmMaxAttemptsError, TotpMaxAttemptsError } from '../model/errors'
 import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
 
 function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<number, () => never>>): never {
@@ -72,6 +72,11 @@ export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
     try {
       await client.post('/auth/2fa/confirm', { code })
     } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 429) {
+        if (error.response.data?.title === 'TotpConfirmMaxAttemptsExceeded') {
+          throw new TotpConfirmMaxAttemptsError()
+        }
+      }
       handleTotpApiError(error, {
         401: () => { throw new TotpCodeError() },
       })
