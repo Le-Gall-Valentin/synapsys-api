@@ -170,6 +170,25 @@ class RefreshTokenHandlerTest {
     }
 
     @Test
+    void refresh_generateThrows_propagatesException() {
+        String raw = "valid-raw-token";
+        RefreshToken stored = new RefreshToken(
+            UUID.randomUUID(), activeUser.id(), TestHashUtils.sha256(raw),
+            Instant.now().plusSeconds(3600), false, Instant.now(), null
+        );
+        when(refreshTokenRepository.findByTokenHash(TestHashUtils.sha256(raw))).thenReturn(Optional.of(stored));
+        when(userCredentialsPort.findById(activeUser.id())).thenReturn(Optional.of(activeUser));
+        when(revocationPort.tryMarkUsedAndRevoke(stored.id())).thenReturn(true);
+        when(accessTokenPort.generate(activeUser)).thenReturn("new_jwt");
+        when(refreshTokenPort.generate(eq(activeUser), anyInt()))
+            .thenThrow(new RuntimeException("token store unavailable"));
+
+        assertThatThrownBy(() -> handler.refresh(raw))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("token store unavailable");
+    }
+
+    @Test
     void refresh_inactiveUser_throwsUserNotActive() {
         String raw = "valid-raw-token";
         UserCredentials inactiveUser = new UserCredentials(
