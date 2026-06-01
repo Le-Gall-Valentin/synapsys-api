@@ -203,6 +203,18 @@ describe('TotpVerifyStep', () => {
     expect(onBack).toHaveBeenCalledTimes(1)
   })
 
+  it('shows rate_limit_timed error with seconds when RateLimitError has retryAfterSeconds', async () => {
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new RateLimitError(42)) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+    await waitFor(() => expect(getByText('verify.error.rate_limit_timed:{"seconds":42}')).toBeTruthy())
+  })
+
   it('shows rate_limit error on RateLimitError', async () => {
     const api = makeApi({ verify: vi.fn().mockRejectedValue(new RateLimitError()) })
     const { container, getByRole, getByText } = render(

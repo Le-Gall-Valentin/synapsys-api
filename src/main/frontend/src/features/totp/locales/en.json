@@ -13,6 +13,7 @@
       "max_attempts": "Too many incorrect attempts. Please log in again.",
       "incomplete": "Please enter all 6 digits.",
       "rate_limit": "Too many attempts. Please wait before trying again.",
+      "rate_limit_timed": "Too many attempts. Please wait {{seconds}} seconds before trying again.",
       "network": "Network unavailable. Please check your connection.",
       "server": "A server error occurred. Please try again."
     }
