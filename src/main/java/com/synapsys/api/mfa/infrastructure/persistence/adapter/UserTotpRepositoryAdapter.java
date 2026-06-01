@@ -1,8 +1,10 @@
 package com.synapsys.api.mfa.infrastructure.persistence.adapter;
 
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
-import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpInitPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpLifecyclePort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpSetupPort;
 import com.synapsys.api.mfa.infrastructure.config.TotpEncryptorFactory;
 import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
@@ -11,7 +13,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class UserTotpRepositoryAdapter implements UserTotpPort, UserTotpQueryPort {
+public class UserTotpRepositoryAdapter
+        implements UserTotpInitPort, UserTotpSetupPort, UserTotpLifecyclePort, UserTotpQueryPort {
 
     private final UserTotpJpaRepository jpa;
     private final TotpEncryptorFactory encryptorFactory;
@@ -36,11 +39,6 @@ public class UserTotpRepositoryAdapter implements UserTotpPort, UserTotpQueryPor
         UserTotpEntity e = new UserTotpEntity();
         e.setUserId(userId);
         jpa.save(e);
-    }
-
-    @Override
-    public void saveTotpSecret(UUID userId, String secret) {
-        jpa.saveTotpSecretById(userId, encryptorFactory.forUser(userId).encrypt(secret));
     }
 
     @Override

@@ -11,16 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class DisableTotpHandler implements DisableTotpUseCase {
 
     private final UserTotpQueryPort userTotpQuery;
-    private final UserTotpPort userTotpPort;
+    private final UserTotpLifecyclePort userTotpLifecyclePort;
     private final TotpCodeValidatorPort codeValidator;
     private final TotpCodeReplayPort codeReplay;
 
     public DisableTotpHandler(UserTotpQueryPort userTotpQuery,
-                              UserTotpPort userTotpPort,
+                              UserTotpLifecyclePort userTotpLifecyclePort,
                               TotpCodeValidatorPort codeValidator,
                               TotpCodeReplayPort codeReplay) {
         this.userTotpQuery = userTotpQuery;
-        this.userTotpPort = userTotpPort;
+        this.userTotpLifecyclePort = userTotpLifecyclePort;
         this.codeValidator = codeValidator;
         this.codeReplay = codeReplay;
     }
@@ -36,6 +36,6 @@ public class DisableTotpHandler implements DisableTotpUseCase {
         if (!codeValidator.isValid(secret, command.code())) throw new MfaException.TotpCodeInvalid();
         if (!codeReplay.markCodeUsedIfAbsent(command.userId(), command.code())) throw new MfaException.TotpCodeInvalid();
 
-        userTotpPort.disableTotp(command.userId());
+        userTotpLifecyclePort.disableTotp(command.userId());
     }
 }

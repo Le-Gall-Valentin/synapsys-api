@@ -11,10 +11,6 @@ import java.util.UUID;
 public interface UserTotpJpaRepository extends JpaRepository<UserTotpEntity, UUID> {
 
     @Modifying(clearAutomatically = true) @Transactional
-    @Query("UPDATE UserTotpEntity u SET u.totpSecret = :secret WHERE u.userId = :id")
-    void saveTotpSecretById(@Param("id") UUID id, @Param("secret") String secret);
-
-    @Modifying(clearAutomatically = true) @Transactional
     @Query("UPDATE UserTotpEntity u SET u.totpSecret = :secret WHERE u.userId = :id AND u.totpSecret IS NULL")
     int saveTotpSecretIfAbsent(@Param("id") UUID id, @Param("secret") String secret);
 

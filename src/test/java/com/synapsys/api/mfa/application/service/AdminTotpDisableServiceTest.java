@@ -1,7 +1,7 @@
 package com.synapsys.api.mfa.application.service;
 
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
-import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpLifecyclePort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 class AdminTotpDisableServiceTest {
 
     @Mock UserTotpQueryPort userTotpQuery;
-    @Mock UserTotpPort userTotpPort;
+    @Mock UserTotpLifecyclePort userTotpLifecyclePort;
 
     private AdminTotpDisableService service;
 
@@ -26,7 +26,7 @@ class AdminTotpDisableServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AdminTotpDisableService(userTotpQuery, userTotpPort);
+        service = new AdminTotpDisableService(userTotpQuery, userTotpLifecyclePort);
     }
 
     @Test
@@ -36,7 +36,7 @@ class AdminTotpDisableServiceTest {
 
         service.disableIfEnabled(userId);
 
-        verify(userTotpPort).disableTotp(userId);
+        verify(userTotpLifecyclePort).disableTotp(userId);
     }
 
     @Test
@@ -46,7 +46,7 @@ class AdminTotpDisableServiceTest {
 
         service.disableIfEnabled(userId);
 
-        verify(userTotpPort, never()).disableTotp(any());
+        verify(userTotpLifecyclePort, never()).disableTotp(any());
     }
 
     @Test
@@ -55,6 +55,6 @@ class AdminTotpDisableServiceTest {
 
         service.disableIfEnabled(userId);
 
-        verify(userTotpPort, never()).disableTotp(any());
+        verify(userTotpLifecyclePort, never()).disableTotp(any());
     }
 }

@@ -5,7 +5,7 @@ import com.synapsys.api.mfa.domain.model.MfaException;
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.TotpCodeReplayPort;
 import com.synapsys.api.mfa.domain.port.out.TotpCodeValidatorPort;
-import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpLifecyclePort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 class DisableTotpHandlerTest {
 
     @Mock UserTotpQueryPort userTotpQuery;
-    @Mock UserTotpPort userTotpPort;
+    @Mock UserTotpLifecyclePort userTotpLifecyclePort;
     @Mock TotpCodeValidatorPort codeValidator;
     @Mock TotpCodeReplayPort codeReplay;
 
@@ -35,7 +35,7 @@ class DisableTotpHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new DisableTotpHandler(userTotpQuery, userTotpPort, codeValidator, codeReplay);
+        handler = new DisableTotpHandler(userTotpQuery, userTotpLifecyclePort, codeValidator, codeReplay);
     }
 
     @Test
@@ -48,7 +48,7 @@ class DisableTotpHandlerTest {
         assertThatCode(() -> handler.disable(new DisableTotpCommand(userId, "123456")))
             .doesNotThrowAnyException();
 
-        verify(userTotpPort).disableTotp(userId);
+        verify(userTotpLifecyclePort).disableTotp(userId);
     }
 
     @Test

@@ -72,16 +72,6 @@ class UserTotpRepositoryAdapterTest {
     }
 
     @Test
-    void saveTotpSecret_encryptsAndDelegatesToJpa() {
-        when(encryptorFactory.forUser(userId)).thenReturn(encryptor);
-        when(encryptor.encrypt("plain-secret")).thenReturn("encrypted-secret");
-
-        adapter.saveTotpSecret(userId, "plain-secret");
-
-        verify(jpa).saveTotpSecretById(userId, "encrypted-secret");
-    }
-
-    @Test
     void saveTotpSecretIfAbsent_rowsUpdated_returnsTrue() {
         when(encryptorFactory.forUser(userId)).thenReturn(encryptor);
         when(encryptor.encrypt("plain-secret")).thenReturn("encrypted-secret");

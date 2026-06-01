@@ -13,16 +13,16 @@ public class SetupTotpHandler implements SetupTotpUseCase {
     private final UserTotpQueryPort userTotpQuery;
     private final TotpSecretGeneratorPort secretGenerator;
     private final TotpUriBuilderPort uriBuilder;
-    private final UserTotpPort userTotpPort;
+    private final UserTotpSetupPort userTotpSetupPort;
 
     public SetupTotpHandler(UserTotpQueryPort userTotpQuery,
                             TotpSecretGeneratorPort secretGenerator,
                             TotpUriBuilderPort uriBuilder,
-                            UserTotpPort userTotpPort) {
+                            UserTotpSetupPort userTotpSetupPort) {
         this.userTotpQuery = userTotpQuery;
         this.secretGenerator = secretGenerator;
         this.uriBuilder = uriBuilder;
-        this.userTotpPort = userTotpPort;
+        this.userTotpSetupPort = userTotpSetupPort;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class SetupTotpHandler implements SetupTotpUseCase {
         if (user.totpEnabled()) throw new MfaException.TotpAlreadyEnabled();
 
         String candidate = secretGenerator.generateSecret();
-        boolean saved = userTotpPort.saveTotpSecretIfAbsent(command.userId(), candidate);
+        boolean saved = userTotpSetupPort.saveTotpSecretIfAbsent(command.userId(), candidate);
 
         if (!saved) {
             UserTotpProfile refreshed = userTotpQuery.findById(command.userId())

@@ -12,16 +12,16 @@ public class ConfirmTotpHandler implements ConfirmTotpUseCase {
 
     private final UserTotpQueryPort userTotpQuery;
     private final TotpCodeValidatorPort codeValidator;
-    private final UserTotpPort userTotpPort;
+    private final UserTotpLifecyclePort userTotpLifecyclePort;
     private final TotpCodeReplayPort codeReplay;
 
     public ConfirmTotpHandler(UserTotpQueryPort userTotpQuery,
                               TotpCodeValidatorPort codeValidator,
-                              UserTotpPort userTotpPort,
+                              UserTotpLifecyclePort userTotpLifecyclePort,
                               TotpCodeReplayPort codeReplay) {
         this.userTotpQuery = userTotpQuery;
         this.codeValidator = codeValidator;
-        this.userTotpPort = userTotpPort;
+        this.userTotpLifecyclePort = userTotpLifecyclePort;
         this.codeReplay = codeReplay;
     }
 
@@ -35,6 +35,6 @@ public class ConfirmTotpHandler implements ConfirmTotpUseCase {
         if (!codeValidator.isValid(secret, command.code())) throw new MfaException.TotpCodeInvalid();
         if (!codeReplay.markCodeUsedIfAbsent(command.userId(), command.code())) throw new MfaException.TotpCodeInvalid();
 
-        userTotpPort.enableTotp(command.userId());
+        userTotpLifecyclePort.enableTotp(command.userId());
     }
 }

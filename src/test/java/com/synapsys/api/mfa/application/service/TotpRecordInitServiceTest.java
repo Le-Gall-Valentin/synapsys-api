@@ -1,6 +1,6 @@
 package com.synapsys.api.mfa.application.service;
 
-import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpInitPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,8 +14,11 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TotpRecordInitServiceTest {
 
-    @Mock UserTotpPort userTotpPort;
-    @InjectMocks TotpRecordInitService service;
+    @Mock UserTotpInitPort userTotpInitPort;
+    private TotpRecordInitService service;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() { service = new TotpRecordInitService(userTotpInitPort); }
 
     @Test
     void initForNewUser_delegatesCreateDefaultRecord() {
@@ -23,6 +26,6 @@ class TotpRecordInitServiceTest {
 
         service.initForNewUser(userId);
 
-        verify(userTotpPort).createDefaultRecord(userId);
+        verify(userTotpInitPort).createDefaultRecord(userId);
     }
 }

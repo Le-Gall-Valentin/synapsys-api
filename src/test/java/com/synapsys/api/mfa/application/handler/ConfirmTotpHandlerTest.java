@@ -5,7 +5,7 @@ import com.synapsys.api.mfa.domain.model.MfaException;
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.TotpCodeReplayPort;
 import com.synapsys.api.mfa.domain.port.out.TotpCodeValidatorPort;
-import com.synapsys.api.mfa.domain.port.out.UserTotpPort;
+import com.synapsys.api.mfa.domain.port.out.UserTotpLifecyclePort;
 import com.synapsys.api.mfa.domain.port.out.UserTotpQueryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ class ConfirmTotpHandlerTest {
 
     @Mock UserTotpQueryPort userTotpQuery;
     @Mock TotpCodeValidatorPort codeValidator;
-    @Mock UserTotpPort userTotpPort;
+    @Mock UserTotpLifecyclePort userTotpLifecyclePort;
     @Mock TotpCodeReplayPort codeReplay;
 
     private ConfirmTotpHandler handler;
@@ -35,7 +35,7 @@ class ConfirmTotpHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new ConfirmTotpHandler(userTotpQuery, codeValidator, userTotpPort, codeReplay);
+        handler = new ConfirmTotpHandler(userTotpQuery, codeValidator, userTotpLifecyclePort, codeReplay);
     }
 
     @Test
@@ -48,7 +48,7 @@ class ConfirmTotpHandlerTest {
         assertThatCode(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
             .doesNotThrowAnyException();
 
-        verify(userTotpPort).enableTotp(userId);
+        verify(userTotpLifecyclePort).enableTotp(userId);
     }
 
     @Test
