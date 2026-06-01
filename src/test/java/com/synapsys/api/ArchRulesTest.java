@@ -241,6 +241,16 @@ class ArchRulesTest {
             .check(classes);
     }
 
+    @Test
+    void identity_infrastructure_should_not_depend_on_authentication_domain() {
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("com.synapsys.api.authentication.domain..")
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
 
     @Test
     void configuration_classes_should_not_implement_domain_ports() {
