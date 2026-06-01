@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,7 +60,7 @@ class RedisTotpCodeReplayStoreTest {
         store.markCodeUsedIfAbsent(userId, "654321");
 
         verify(valueOps).setIfAbsent(
-            contains(userId.toString()),
+            argThat(key -> key.contains(userId.toString()) && key.contains("654321")),
             eq("1"),
             any(Duration.class)
         );

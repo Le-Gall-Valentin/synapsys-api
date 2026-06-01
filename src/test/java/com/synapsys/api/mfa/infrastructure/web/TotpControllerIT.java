@@ -169,6 +169,14 @@ class TotpControllerIT {
     // ─── /api/auth/2fa/confirm ────────────────────────────────────────────────
 
     @Test
+    void confirm_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(post("/api/auth/2fa/confirm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"123456\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void confirm_invalidCode_returns401() throws Exception {
         Cookie access = loginAs("testuser", "password");
 

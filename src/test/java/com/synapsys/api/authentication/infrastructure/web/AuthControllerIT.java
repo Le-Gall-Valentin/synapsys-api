@@ -276,6 +276,36 @@ class AuthControllerIT {
     }
 
     @Test
+    void verifyTotp_withNonDigitCode_returns400() throws Exception {
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("totpuser", "totppass"))))
+            .andReturn();
+        Cookie challenge = loginResult.getResponse().getCookie("totp_challenge");
+
+        mockMvc.perform(post("/api/auth/2fa/verify")
+                .cookie(challenge)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"ABCDEF\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void verifyTotp_withTooLongCode_returns400() throws Exception {
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("totpuser", "totppass"))))
+            .andReturn();
+        Cookie challenge = loginResult.getResponse().getCookie("totp_challenge");
+
+        mockMvc.perform(post("/api/auth/2fa/verify")
+                .cookie(challenge)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"1234567\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void verifyTotp_withoutChallengeCookie_returns401() throws Exception {
         mockMvc.perform(post("/api/auth/2fa/verify")
                 .contentType(MediaType.APPLICATION_JSON)

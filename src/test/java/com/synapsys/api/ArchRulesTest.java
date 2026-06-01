@@ -100,9 +100,8 @@ class ArchRulesTest {
     @Test
     void ports_in_should_be_interfaces() {
         classes()
-            .that().resideInAPackage("..domain.port.in..")
+            .that().resideInAPackage("..application.port.in..")
             .should().beInterfaces()
-            .allowEmptyShould(true)
             .check(classes);
     }
 
