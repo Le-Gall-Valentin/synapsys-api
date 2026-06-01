@@ -52,6 +52,11 @@ public class UserTotpRepositoryAdapter
     }
 
     @Override
+    public void clearPendingSecret(UUID userId) {
+        jpa.clearPendingSecretById(userId);
+    }
+
+    @Override
     public void enableTotp(UUID userId) { jpa.enableTotpById(userId); }
 
     @Override

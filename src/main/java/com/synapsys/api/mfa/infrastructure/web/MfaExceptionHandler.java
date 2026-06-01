@@ -15,12 +15,13 @@ public class MfaExceptionHandler {
     @ExceptionHandler(MfaException.class)
     public ResponseEntity<ProblemDetail> handle(MfaException e, HttpServletRequest request) {
         int status = switch (e) {
-            case MfaException.UserNotFound ex            -> 404;
-            case MfaException.TotpAlreadyEnabled ex      -> 409;
-            case MfaException.TotpNotEnabled ex          -> 409;
-            case MfaException.TotpSetupNotStarted ex     -> 422;
-            case MfaException.TotpCodeInvalid ex         -> 401;
-            case MfaException.InsufficientPermissions ex -> 403;
+            case MfaException.UserNotFound ex                     -> 404;
+            case MfaException.TotpAlreadyEnabled ex               -> 409;
+            case MfaException.TotpNotEnabled ex                   -> 409;
+            case MfaException.TotpSetupNotStarted ex              -> 422;
+            case MfaException.TotpCodeInvalid ex                  -> 401;
+            case MfaException.TotpConfirmMaxAttemptsExceeded ex   -> 429;
+            case MfaException.InsufficientPermissions ex          -> 403;
         };
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), e.getMessage());
         problem.setTitle(e.getClass().getSimpleName());

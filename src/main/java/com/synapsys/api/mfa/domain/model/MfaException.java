@@ -3,7 +3,8 @@ package com.synapsys.api.mfa.domain.model;
 public abstract sealed class MfaException extends RuntimeException
     permits MfaException.UserNotFound, MfaException.TotpAlreadyEnabled,
             MfaException.TotpNotEnabled, MfaException.TotpSetupNotStarted,
-            MfaException.TotpCodeInvalid, MfaException.InsufficientPermissions {
+            MfaException.TotpCodeInvalid, MfaException.TotpConfirmMaxAttemptsExceeded,
+            MfaException.InsufficientPermissions {
 
     private MfaException(String message) { super(message); }
 
@@ -21,6 +22,9 @@ public abstract sealed class MfaException extends RuntimeException
     }
     public static final class TotpCodeInvalid extends MfaException {
         public TotpCodeInvalid() { super("Invalid or expired TOTP code"); }
+    }
+    public static final class TotpConfirmMaxAttemptsExceeded extends MfaException {
+        public TotpConfirmMaxAttemptsExceeded() { super("Too many failed confirmation attempts. Please restart the setup."); }
     }
     public static final class InsufficientPermissions extends MfaException {
         public InsufficientPermissions() { super("Insufficient permissions"); }

@@ -75,6 +75,15 @@ class MfaExceptionHandlerTest {
     }
 
     @Test
+    void handle_totpConfirmMaxAttemptsExceeded_returns429() {
+        var response = handler.handle(new MfaException.TotpConfirmMaxAttemptsExceeded(), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getTitle()).isEqualTo("TotpConfirmMaxAttemptsExceeded");
+    }
+
+    @Test
     void handle_setsInstanceUri() {
         var response = handler.handle(new MfaException.TotpSetupNotStarted(), request);
 

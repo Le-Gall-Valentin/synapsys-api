@@ -4,4 +4,5 @@ import java.util.UUID;
 
 public interface UserTotpSetupPort {
     boolean saveTotpSecretIfAbsent(UUID userId, String secret);
+    void clearPendingSecret(UUID userId);
 }

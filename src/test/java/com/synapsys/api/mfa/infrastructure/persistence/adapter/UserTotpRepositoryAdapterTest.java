@@ -102,6 +102,13 @@ class UserTotpRepositoryAdapterTest {
     }
 
     @Test
+    void clearPendingSecret_delegatesToJpa() {
+        adapter.clearPendingSecret(userId);
+
+        verify(jpa).clearPendingSecretById(userId);
+    }
+
+    @Test
     void createDefaultRecord_concurrentDuplicate_completesNormally() {
         when(jpa.save(any())).thenThrow(new DataIntegrityViolationException("duplicate key"));
 
