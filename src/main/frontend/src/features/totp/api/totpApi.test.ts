@@ -142,6 +142,13 @@ describe('totpApi', () => {
       expect((caught as RateLimitError).retryAfterSeconds).toBe(10)
     })
 
+    it('throws RateLimitError with null retryAfterSeconds when retry-after header absent', async () => {
+      mockedClient.get.mockRejectedValue(makeAxiosError(429))
+      const caught = await totpApi.getStatus().catch((e) => e)
+      expect(caught).toBeInstanceOf(RateLimitError)
+      expect((caught as RateLimitError).retryAfterSeconds).toBeNull()
+    })
+
     it('returns totpEnabled status on success', async () => {
       mockedClient.get.mockResolvedValue({ data: { totpEnabled: true } })
 
