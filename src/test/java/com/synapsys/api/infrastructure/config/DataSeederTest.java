@@ -1,6 +1,7 @@
 package com.synapsys.api.infrastructure.config;
 
 import com.synapsys.api.identity.application.port.in.SeedUseCase;
+import com.synapsys.api.identity.domain.model.IdentityException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -10,6 +11,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -32,6 +35,35 @@ class DataSeederTest {
         DataSeeder seeder = new DataSeeder(properties("secret"), seedUseCase);
         assertThatNoException().isThrownBy(seeder::seed);
         verify(seedUseCase).seedInitialSuperAdmin("user", "user@test.com", "secret");
+    }
+
+    @Test
+    void seed_usernameAlreadyExists_completesNormally() {
+        doThrow(new IdentityException.UsernameAlreadyExists())
+            .when(seedUseCase).seedInitialSuperAdmin(anyString(), anyString(), anyString());
+
+        DataSeeder seeder = new DataSeeder(properties("secret"), seedUseCase);
+        assertThatNoException().isThrownBy(seeder::seed);
+    }
+
+    @Test
+    void seed_emailAlreadyExists_completesNormally() {
+        doThrow(new IdentityException.EmailAlreadyExists())
+            .when(seedUseCase).seedInitialSuperAdmin(anyString(), anyString(), anyString());
+
+        DataSeeder seeder = new DataSeeder(properties("secret"), seedUseCase);
+        assertThatNoException().isThrownBy(seeder::seed);
+    }
+
+    @Test
+    void seed_infraFailure_propagatesException() {
+        doThrow(new RuntimeException("DB unavailable"))
+            .when(seedUseCase).seedInitialSuperAdmin(anyString(), anyString(), anyString());
+
+        DataSeeder seeder = new DataSeeder(properties("secret"), seedUseCase);
+        assertThatThrownBy(seeder::seed)
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("DB unavailable");
     }
 
     private SynapsysProperties properties(String password) {

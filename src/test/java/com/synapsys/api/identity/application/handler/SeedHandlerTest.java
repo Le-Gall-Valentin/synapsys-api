@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
@@ -62,22 +63,25 @@ class SeedHandlerTest {
     }
 
     @Test
-    void seedInitialSuperAdmin_concurrentDuplicate_completesNormally() {
+    void seedInitialSuperAdmin_concurrentDuplicate_propagatesException() {
         when(userAdminPort.isEmpty()).thenReturn(true);
         when(userCommandPort.createProfile(any())).thenThrow(new IdentityException.UsernameAlreadyExists());
 
-        assertThatNoException().isThrownBy(() ->
+        assertThatThrownBy(() ->
             handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret")
-        );
+        ).isInstanceOf(IdentityException.UsernameAlreadyExists.class);
     }
 
     @Test
-    void seedInitialSuperAdmin_emailAlreadyExists_completesNormally() {
+    void seedInitialSuperAdmin_infraFailure_propagatesException() {
         when(userAdminPort.isEmpty()).thenReturn(true);
-        when(userCommandPort.createProfile(any())).thenThrow(new IdentityException.EmailAlreadyExists());
+        UUID userId = UUID.randomUUID();
+        when(userCommandPort.createProfile(any())).thenReturn(userId);
+        doThrow(new RuntimeException("DB unavailable")).when(credentialSetupPort).setup(userId, "secret");
 
-        assertThatNoException().isThrownBy(() ->
+        assertThatThrownBy(() ->
             handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret")
-        );
+        ).isInstanceOf(RuntimeException.class)
+         .hasMessage("DB unavailable");
     }
 }
