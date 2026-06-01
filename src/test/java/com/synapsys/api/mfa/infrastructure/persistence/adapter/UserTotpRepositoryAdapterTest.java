@@ -14,8 +14,13 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,6 +99,14 @@ class UserTotpRepositoryAdapterTest {
         adapter.createDefaultRecord(userId);
 
         verify(jpa).save(argThat(e -> userId.equals(e.getUserId())));
+    }
+
+    @Test
+    void createDefaultRecord_concurrentDuplicate_completesNormally() {
+        when(jpa.save(any())).thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+        assertThatCode(() -> adapter.createDefaultRecord(userId))
+            .doesNotThrowAnyException();
     }
 
     @Test

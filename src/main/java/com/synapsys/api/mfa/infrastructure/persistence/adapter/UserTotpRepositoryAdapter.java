@@ -8,6 +8,7 @@ import com.synapsys.api.mfa.domain.port.out.UserTotpSetupPort;
 import com.synapsys.api.mfa.infrastructure.config.TotpEncryptorFactory;
 import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,9 +37,13 @@ public class UserTotpRepositoryAdapter
 
     @Override
     public void createDefaultRecord(UUID userId) {
-        UserTotpEntity e = new UserTotpEntity();
-        e.setUserId(userId);
-        jpa.save(e);
+        try {
+            UserTotpEntity e = new UserTotpEntity();
+            e.setUserId(userId);
+            jpa.save(e);
+        } catch (DataIntegrityViolationException ignored) {
+            // Concurrent call already created the record — idempotent
+        }
     }
 
     @Override

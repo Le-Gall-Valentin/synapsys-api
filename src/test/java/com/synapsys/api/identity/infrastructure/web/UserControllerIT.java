@@ -261,6 +261,14 @@ class UserControllerIT {
             .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void resetTotp_nonExistentUser_returns404() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/users/" + UUID.randomUUID() + "/2fa/reset").cookie(access))
+            .andExpect(status().isNotFound());
+    }
+
     private void saveCredential(UUID userId, String rawPassword) {
         UserCredentialEntity cred = new UserCredentialEntity();
         cred.setUserId(userId);
