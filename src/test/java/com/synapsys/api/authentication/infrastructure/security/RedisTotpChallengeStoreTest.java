@@ -65,12 +65,13 @@ class RedisTotpChallengeStoreTest {
     }
 
     @Test
-    void invalidateChallenge_deletesKey() {
+    void invalidateChallenge_deletesChallengeAndAttemptsKeys() {
         String challengeId = UUID.randomUUID().toString();
 
         store.invalidateChallenge(challengeId);
 
         verify(redisTemplate).delete("totp:challenge:" + challengeId);
+        verify(redisTemplate).delete("totp:attempts:" + challengeId);
     }
 
     @Test

@@ -37,6 +37,7 @@ public class RedisTotpChallengeStore implements TotpChallengeStorePort {
     @Override
     public void invalidateChallenge(String challengeId) {
         redisTemplate.delete(CHALLENGE_PREFIX + challengeId);
+        redisTemplate.delete("totp:attempts:" + challengeId);
     }
 
     @Override
