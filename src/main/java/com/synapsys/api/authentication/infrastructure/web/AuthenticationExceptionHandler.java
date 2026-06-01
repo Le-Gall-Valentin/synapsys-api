@@ -24,7 +24,7 @@ public class AuthenticationExceptionHandler {
                     response(401, ex, "Invalid credentials");
 
             case AuthenticationException.UserNotActive ex ->
-                    response(403, ex, "User account is not active.");
+                    response(401, ex, "Authentication required");
 
             case AuthenticationException.UserNotFound ex ->
                     response(401, ex, "Authentication required");

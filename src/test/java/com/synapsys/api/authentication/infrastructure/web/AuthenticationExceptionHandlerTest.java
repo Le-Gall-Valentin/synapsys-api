@@ -30,12 +30,12 @@ class AuthenticationExceptionHandlerTest {
     }
 
     @Test
-    void handle_userNotActive_returns403WithGenericMessage() {
+    void handle_userNotActive_returns401WithGenericMessage() {
         var response = handler.handle(new AuthenticationException.UserNotActive(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetail()).isEqualTo("User account is not active.");
+        assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
         assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
     }
 
