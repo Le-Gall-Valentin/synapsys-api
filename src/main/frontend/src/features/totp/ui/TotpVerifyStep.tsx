@@ -111,6 +111,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
         <button
           type="button"
           onClick={onBack}
+          disabled={isLoading}
           className="w-full mt-2 bg-transparent border-0 text-fg-2 text-xs cursor-pointer py-1.5 hover:text-fg-0 text-center"
         >
           {t('verify.back')}

@@ -172,6 +172,26 @@ describe('TotpVerifyStep', () => {
     await act(async () => { await verifyPromise })
   })
 
+  it('back button is disabled while isLoading', async () => {
+    let resolveVerify!: (v: unknown) => void
+    const verifyPromise = new Promise(res => { resolveVerify = res })
+    const api = makeApi({ verify: vi.fn().mockReturnValue(verifyPromise) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+
+    const backButton = getByText('verify.back').closest('button')!
+    expect((backButton as HTMLButtonElement).disabled).toBe(true)
+
+    resolveVerify({ id: '1', username: 'alice', role: 'USER' })
+    await act(async () => { await verifyPromise })
+  })
+
   it('calls onBack when back link is clicked', () => {
     const api = makeApi()
     const onBack = vi.fn()
