@@ -1,8 +1,8 @@
 import { render, fireEvent, act } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { TotpSetupFlow } from './TotpSetupFlow'
 import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
-import { TotpCodeError } from '../model/errors'
+import { TotpCodeError, TotpConfirmMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 
 vi.mock('qrcode.react', () => {
@@ -36,6 +36,8 @@ function fillCode(container: HTMLElement, code: string) {
 }
 
 describe('TotpSetupFlow', () => {
+  afterEach(() => { vi.useRealTimers() })
+
   it('shows loading spinner while setup is pending', () => {
     const api = makeApi({ setup: vi.fn().mockReturnValue(new Promise(() => {})) })
     const { getByRole } = render(<TotpSetupFlow api={api} onSuccess={vi.fn()} />)
@@ -224,6 +226,68 @@ describe('TotpSetupFlow', () => {
     })
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('setup.error.network')
+  })
+
+  it('shows max_attempts error on TotpConfirmMaxAttemptsError', async () => {
+    const api = makeApi({ confirm: vi.fn().mockRejectedValue(new TotpConfirmMaxAttemptsError()) })
+    const { findByTestId, container, getByRole, findByRole } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+    '123456'.split('').forEach((d, i) =>
+      fireEvent.change(container.querySelectorAll('input[inputmode="numeric"]')[i]!, { target: { value: d } })
+    )
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /setup\.submit/i }).closest('form')!)
+    })
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('setup.error.max_attempts')
+  })
+
+  it('restarts setup automatically 2s after TotpConfirmMaxAttemptsError', async () => {
+    const setup = vi.fn().mockResolvedValue(SETUP_DATA)
+    const api = makeApi({ setup, confirm: vi.fn().mockRejectedValue(new TotpConfirmMaxAttemptsError()) })
+    const { findByTestId, container, getByRole } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+    expect(setup).toHaveBeenCalledTimes(1)
+
+    // Switch to fake timers BEFORE submit so the setTimeout(2000) in catch is fake
+    vi.useFakeTimers()
+
+    '123456'.split('').forEach((d, i) =>
+      fireEvent.change(container.querySelectorAll('input[inputmode="numeric"]')[i]!, { target: { value: d } })
+    )
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /setup\.submit/i }).closest('form')!)
+    })
+
+    // Advance fake timer — triggers restart
+    await act(async () => { vi.advanceTimersByTime(2000) })
+    // Flush api.setup() promise from restart
+    await act(async () => {})
+
+    expect(setup).toHaveBeenCalledTimes(2)
+  })
+
+  it('auto-hides secret after 5 minutes when visible', async () => {
+    const api = makeApi()
+    const { findByTestId, getByRole, queryByText } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+
+    // Switch to fake timers AFTER async setup — click show triggers the timer
+    vi.useFakeTimers()
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'setup.show_secret' }))
+    })
+    expect(queryByText('ABCD EFGH IJKL MNOP')).toBeTruthy()
+
+    act(() => { vi.advanceTimersByTime(5 * 60 * 1000) })
+    expect(queryByText('ABCD EFGH IJKL MNOP')).toBeNull()
+    vi.useRealTimers()
   })
 
   it('shows server error on ServerError from confirm', async () => {

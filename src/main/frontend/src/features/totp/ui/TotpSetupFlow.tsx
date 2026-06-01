@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Button, Spinner, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
-import { TotpCodeError } from '../model/errors'
+import { TotpCodeError, TotpConfirmMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
@@ -26,6 +26,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const [isSecretVisible, setIsSecretVisible] = useState(false)
+  const [setupRestartKey, setSetupRestartKey] = useState(0)
   const isSubmittingRef = useRef(false)
   const digitInputRef = useRef<TotpDigitInputHandle>(null)
   // Ref persists across StrictMode's simulated unmount/remount — prevents two concurrent
@@ -33,9 +34,10 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   const setupCalledRef = useRef(false)
 
   useEffect(() => {
+    if (!isSecretVisible) return
     const timer = setTimeout(() => setIsSecretVisible(false), 5 * 60 * 1000)
     return () => clearTimeout(timer)
-  }, [])
+  }, [isSecretVisible])
 
   // setupCalledRef ensures setup() runs at most once per component lifetime,
   // preventing concurrent calls in React StrictMode (double-invoke) or if api
@@ -50,7 +52,7 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
         setSetupData(data)
       })
       .catch(() => setSetupError(true))
-  }, [api])
+  }, [api, setupRestartKey])
 
   const groupedSecret = setupData?.secret.match(/.{1,4}/g)?.join(' ') ?? ''
 
@@ -64,7 +66,16 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
       await api.confirm(code)
       onSuccess()
     } catch (error) {
-      if (error instanceof TotpCodeError) {
+      if (error instanceof TotpConfirmMaxAttemptsError) {
+        setErrorKey('setup.error.max_attempts')
+        setCode('')
+        setTimeout(() => {
+          setupCalledRef.current = false
+          setSetupData(null)
+          setErrorKey(null)
+          setSetupRestartKey(k => k + 1)
+        }, 2000)
+      } else if (error instanceof TotpCodeError) {
         setErrorKey('setup.error.invalid_code')
         setCode('')
         digitInputRef.current?.focusFirst()
