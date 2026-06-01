@@ -39,6 +39,7 @@ public class SetupTotpHandler implements SetupTotpUseCase {
         if (!saved) {
             UserTotpProfile refreshed = userTotpQuery.findById(command.userId())
                 .orElseThrow(MfaException.UserNotFound::new);
+            if (refreshed.totpEnabled()) throw new MfaException.TotpAlreadyEnabled();
             String existing = refreshed.totpSecret().orElseThrow(MfaException.TotpSetupNotStarted::new);
             return new TotpSetupResult(existing, uriBuilder.buildOtpauthUri(existing, command.email()));
         }

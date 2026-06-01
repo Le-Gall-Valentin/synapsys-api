@@ -71,6 +71,16 @@ class ConfirmTotpHandlerTest {
     }
 
     @Test
+    void confirm_totpAlreadyEnabled_throwsTotpAlreadyEnabled() {
+        UserTotpProfile profile = new UserTotpProfile(userId, true, Optional.of(secret));
+        when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));
+
+        assertThatThrownBy(() -> handler.confirm(new ConfirmTotpCommand(userId, "123456")))
+            .isInstanceOf(MfaException.TotpAlreadyEnabled.class);
+        verifyNoInteractions(codeValidator, codeReplay, userTotpLifecyclePort);
+    }
+
+    @Test
     void confirm_replayedCode_throwsTotpCodeInvalid() {
         UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.of(secret));
         when(userTotpQuery.findById(userId)).thenReturn(Optional.of(profile));

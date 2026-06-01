@@ -71,6 +71,20 @@ class SetupTotpHandlerTest {
     }
 
     @Test
+    void setup_concurrent_saveFails_refreshedTotpEnabled_throwsTotpAlreadyEnabled() {
+        UserTotpProfile profile = new UserTotpProfile(userId, false, Optional.empty());
+        UserTotpProfile refreshed = new UserTotpProfile(userId, true, Optional.of("EXISTING"));
+        when(userTotpQuery.findById(userId))
+            .thenReturn(Optional.of(profile))
+            .thenReturn(Optional.of(refreshed));
+        when(secretGenerator.generateSecret()).thenReturn("CANDIDATE");
+        when(userTotpSetupPort.saveTotpSecretIfAbsent(userId, "CANDIDATE")).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.setup(new SetupTotpCommand(userId, email)))
+            .isInstanceOf(MfaException.TotpAlreadyEnabled.class);
+    }
+
+    @Test
     void setup_concurrent_saveFails_returnsExistingSecret() {
         UserTotpProfile profile = new UserTotpProfile(userId,false, Optional.empty());
         UserTotpProfile refreshed = new UserTotpProfile(userId,false, Optional.of("EXISTING"));
