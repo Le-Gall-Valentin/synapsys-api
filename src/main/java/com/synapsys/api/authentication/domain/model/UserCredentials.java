@@ -11,4 +11,11 @@ public record UserCredentials(
     boolean isActive,
     Role role,
     boolean totpEnabled
-) {}
+) {
+    @Override
+    public String toString() {
+        return "UserCredentials[id=" + id + ", username=" + username +
+               ", email=" + email + ", isActive=" + isActive +
+               ", role=" + role + ", totpEnabled=" + totpEnabled + "]";
+    }
+}

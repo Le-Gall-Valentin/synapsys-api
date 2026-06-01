@@ -36,7 +36,7 @@ class AuthenticationExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("User account is not active.");
-        assertThat(response.getBody().getTitle()).isEqualTo("UserNotActive");
+        assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
     }
 
     @Test
@@ -46,7 +46,7 @@ class AuthenticationExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
-        assertThat(response.getBody().getTitle()).isEqualTo("UserNotFound");
+        assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
     }
 
     @Test
@@ -83,7 +83,7 @@ class AuthenticationExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
-        assertThat(response.getBody().getTitle()).isEqualTo("TotpCodeInvalid");
+        assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
     }
 
     @Test
@@ -93,7 +93,7 @@ class AuthenticationExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
-        assertThat(response.getBody().getTitle()).isEqualTo("TotpChallengeExpired");
+        assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
     }
 
     @Test
@@ -103,7 +103,7 @@ class AuthenticationExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
-        assertThat(response.getBody().getTitle()).isEqualTo("TotpMaxAttemptsExceeded");
+        assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
     }
 
     @Test

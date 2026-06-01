@@ -62,7 +62,7 @@ public class AuthenticationExceptionHandler {
     private static AuthErrorResponse response(int status, AuthenticationException e, String detail) {
         return new AuthErrorResponse(
                 status,
-                e.getClass().getSimpleName(),
+                "AuthenticationError",
                 detail
         );
     }
