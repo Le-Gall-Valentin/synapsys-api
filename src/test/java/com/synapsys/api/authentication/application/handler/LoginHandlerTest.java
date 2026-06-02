@@ -31,16 +31,17 @@ class LoginHandlerTest {
     @Mock RefreshTokenIssuerPort refreshTokenPort;
     @Mock RefreshTokenConfigPort tokenConfig;
     @Mock TotpChallengeStorePort totpChallengeStore;
+    @Mock TotpStatusQueryPort totpStatusQuery;
 
     private LoginHandler handler;
     private ListAppender<ILoggingEvent> logAppender;
 
     private final UserCredentials activeUser = new UserCredentials(
-        UUID.randomUUID(), "user1", "user1@test.com", "hashed_pw", true, Role.USER, false
+        UUID.randomUUID(), "user1", "user1@test.com", "hashed_pw", true, Role.USER
     );
 
-    private final UserCredentials totpUser = new UserCredentials(
-        UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", true, Role.USER, true
+    private final UserCredentials activeUser2 = new UserCredentials(
+        UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", true, Role.USER
     );
 
     @BeforeEach
@@ -62,7 +63,7 @@ class LoginHandlerTest {
         // Constructor calls passwordHasher.hash() to precompute the dummy hash — stub it first
         lenient().when(passwordHasher.hash(anyString())).thenReturn("$2a$12$stubbed-dummy-hash-for-tests");
         when(tokenConfig.refreshTokenExpiryDays()).thenReturn(30);
-        handler = new LoginHandler(userCredentialsPort, passwordHasher, passwordVerifier, accessTokenPort, refreshTokenPort, tokenConfig, totpChallengeStore);
+        handler = new LoginHandler(userCredentialsPort, passwordHasher, passwordVerifier, accessTokenPort, refreshTokenPort, tokenConfig, totpChallengeStore, totpStatusQuery);
     }
 
     @Test
@@ -114,7 +115,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_throwsUserNotActive() {
         UserCredentials inactive = new UserCredentials(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role(), false);
+            activeUser.passwordHash(), false, activeUser.role());
         when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("password", inactive.passwordHash())).thenReturn(true);
 
@@ -125,7 +126,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_doesNotLogUsername() {
         UserCredentials inactive = new UserCredentials(activeUser.id(), "alice", activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role(), false);
+            activeUser.passwordHash(), false, activeUser.role());
         when(userCredentialsPort.findByUsername("alice")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("password", inactive.passwordHash())).thenReturn(true);
 
@@ -141,7 +142,7 @@ class LoginHandlerTest {
     void login_wrongPassword_doesNotLogUsername() {
         when(userCredentialsPort.findByUsername("bob")).thenReturn(Optional.of(
             new UserCredentials(activeUser.id(), "bob", activeUser.email(),
-                activeUser.passwordHash(), true, activeUser.role(), false)
+                activeUser.passwordHash(), true, activeUser.role())
         ));
         when(passwordVerifier.matches("wrong", activeUser.passwordHash())).thenReturn(false);
 
@@ -156,7 +157,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_correctPassword_throwsUserNotActive() {
         UserCredentials inactive = new UserCredentials(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role(), false);
+            activeUser.passwordHash(), false, activeUser.role());
         when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("correctpassword", inactive.passwordHash())).thenReturn(true);
 
@@ -169,7 +170,7 @@ class LoginHandlerTest {
         // Password is checked before isActive to prevent account status info disclosure.
         // An attacker who doesn't know the password must not learn the account exists and is inactive.
         UserCredentials inactive = new UserCredentials(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role(), false);
+            activeUser.passwordHash(), false, activeUser.role());
         when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("wrongpassword", inactive.passwordHash())).thenReturn(false);
 
@@ -180,13 +181,34 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_totpEnabled_throwsUserNotActive() {
         UserCredentials inactiveTotpUser = new UserCredentials(
-            UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", false, Role.USER, true);
+            UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", false, Role.USER);
         when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(inactiveTotpUser));
         when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
 
         assertThatThrownBy(() -> handler.login(new LoginCommand("user2", "password")))
             .isInstanceOf(AuthenticationException.UserNotActive.class);
-        verifyNoInteractions(totpChallengeStore, accessTokenPort, refreshTokenPort);
+        verifyNoInteractions(totpChallengeStore, accessTokenPort, refreshTokenPort, totpStatusQuery);
+    }
+
+    @Test
+    void login_totpStatusQuery_notCalledOnUnknownUser() {
+        when(userCredentialsPort.findByUsername("unknown")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("unknown", "password")))
+            .isInstanceOf(AuthenticationException.InvalidCredentials.class);
+
+        verifyNoInteractions(totpStatusQuery);
+    }
+
+    @Test
+    void login_totpStatusQuery_notCalledOnWrongPassword() {
+        when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(activeUser));
+        when(passwordVerifier.matches("wrong", "hashed_pw")).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.login(new LoginCommand("user1", "wrong")))
+            .isInstanceOf(AuthenticationException.InvalidCredentials.class);
+
+        verifyNoInteractions(totpStatusQuery);
     }
 
     @Test
@@ -216,9 +238,10 @@ class LoginHandlerTest {
 
     @Test
     void login_totpEnabled_returnsTotpRequired_andStoresChallenge() {
-        when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(totpUser));
+        when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(activeUser2));
         when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
-        when(totpChallengeStore.createChallenge(totpUser.id())).thenReturn("challenge-uuid");
+        when(totpStatusQuery.isTotpEnabled(activeUser2.id())).thenReturn(true);
+        when(totpChallengeStore.createChallenge(activeUser2.id())).thenReturn("challenge-uuid");
 
         LoginResult result = handler.login(new LoginCommand("user2", "password"));
 
@@ -229,9 +252,10 @@ class LoginHandlerTest {
 
     @Test
     void login_totpEnabled_doesNotIssueTokens() {
-        when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(totpUser));
+        when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(activeUser2));
         when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
-        when(totpChallengeStore.createChallenge(totpUser.id())).thenReturn("challenge-uuid");
+        when(totpStatusQuery.isTotpEnabled(activeUser2.id())).thenReturn(true);
+        when(totpChallengeStore.createChallenge(activeUser2.id())).thenReturn("challenge-uuid");
 
         handler.login(new LoginCommand("user2", "password"));
 

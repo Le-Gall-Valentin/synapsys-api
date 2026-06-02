@@ -9,13 +9,12 @@ public record UserCredentials(
     String email,
     String passwordHash,
     boolean isActive,
-    Role role,
-    boolean totpEnabled
+    Role role
 ) {
     @Override
     public String toString() {
         return "UserCredentials[id=" + id + ", username=" + username +
                ", email=" + email + ", isActive=" + isActive +
-               ", role=" + role + ", totpEnabled=" + totpEnabled + "]";
+               ", role=" + role + "]";
     }
 }

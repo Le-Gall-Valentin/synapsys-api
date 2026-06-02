@@ -13,7 +13,7 @@ class UserCredentialsTest {
     void toString_doesNotExpose_passwordHash() {
         UserCredentials creds = new UserCredentials(
             UUID.randomUUID(), "alice", "alice@test.com",
-            "$2a$12$very-sensitive-hash", true, Role.USER, false
+            "$2a$12$very-sensitive-hash", true, Role.USER
         );
 
         assertThat(creds.toString()).doesNotContain("very-sensitive-hash");
@@ -23,7 +23,7 @@ class UserCredentialsTest {
     void toString_containsUsernameAndRole() {
         UserCredentials creds = new UserCredentials(
             UUID.randomUUID(), "alice", "alice@test.com",
-            "$2a$12$hash", true, Role.USER, false
+            "$2a$12$hash", true, Role.USER
         );
 
         assertThat(creds.toString()).contains("alice");

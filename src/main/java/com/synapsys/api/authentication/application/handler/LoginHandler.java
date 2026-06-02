@@ -20,6 +20,7 @@ public class LoginHandler implements LoginUseCase {
     private final AccessTokenPort accessTokenPort;
     private final RefreshTokenIssuerPort refreshTokenPort;
     private final TotpChallengeStorePort totpChallengeStore;
+    private final TotpStatusQueryPort totpStatusQuery;
     private final int refreshTokenExpiryDays;
     private final String dummyHash;
 
@@ -29,13 +30,15 @@ public class LoginHandler implements LoginUseCase {
                         AccessTokenPort accessTokenPort,
                         RefreshTokenIssuerPort refreshTokenPort,
                         RefreshTokenConfigPort tokenConfig,
-                        TotpChallengeStorePort totpChallengeStore) {
+                        TotpChallengeStorePort totpChallengeStore,
+                        TotpStatusQueryPort totpStatusQuery) {
         this.userCredentialsPort = userCredentialsPort;
         this.passwordHasher = passwordHasher;
         this.passwordVerifier = passwordVerifier;
         this.accessTokenPort = accessTokenPort;
         this.refreshTokenPort = refreshTokenPort;
         this.totpChallengeStore = totpChallengeStore;
+        this.totpStatusQuery = totpStatusQuery;
         this.refreshTokenExpiryDays = tokenConfig.refreshTokenExpiryDays();
         // Precomputed hash for constant-time dummy comparison — prevents timing-based username enumeration
         this.dummyHash = passwordHasher.hash("synapsys-timing-sentinel");
@@ -65,7 +68,7 @@ public class LoginHandler implements LoginUseCase {
             throw new AuthenticationException.UserNotActive();
         }
 
-        if (creds.totpEnabled()) {
+        if (totpStatusQuery.isTotpEnabled(creds.id())) {
             String challengeId = totpChallengeStore.createChallenge(creds.id());
             log.info("TOTP challenge created for user: {}", creds.id());
             return new LoginResult.TotpRequired(challengeId);

@@ -2,7 +2,6 @@ package com.synapsys.api.authentication.infrastructure.persistence.adapter;
 
 import com.synapsys.api.authentication.domain.model.UserCredentials;
 import com.synapsys.api.authentication.domain.model.UserProfile;
-import com.synapsys.api.authentication.domain.port.out.TotpStatusQueryPort;
 import com.synapsys.api.authentication.domain.port.out.UserProfilePort;
 import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCredentialEntity;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
@@ -24,7 +23,6 @@ class UserCredentialsRepositoryAdapterTest {
 
     @Mock UserProfilePort userProfilePort;
     @Mock UserCredentialJpaRepository credentialRepo;
-    @Mock TotpStatusQueryPort totpStatusQuery;
 
     private UserCredentialsRepositoryAdapter adapter;
 
@@ -34,7 +32,7 @@ class UserCredentialsRepositoryAdapterTest {
 
     @BeforeEach
     void setUp() {
-        adapter = new UserCredentialsRepositoryAdapter(userProfilePort, credentialRepo, totpStatusQuery);
+        adapter = new UserCredentialsRepositoryAdapter(userProfilePort, credentialRepo);
     }
 
     private UserCredentialEntity entityWithHash(String hash) {
@@ -47,7 +45,6 @@ class UserCredentialsRepositoryAdapterTest {
     void findByUsername_userFound_credentialFound_returnsUserCredentials() {
         when(userProfilePort.findByUsername("alice")).thenReturn(Optional.of(userProfile));
         when(credentialRepo.findById(userId)).thenReturn(Optional.of(entityWithHash("hashed_pw")));
-        when(totpStatusQuery.isTotpEnabled(userId)).thenReturn(false);
 
         Optional<UserCredentials> result = adapter.findByUsername("alice");
 
@@ -59,7 +56,6 @@ class UserCredentialsRepositoryAdapterTest {
         assertThat(creds.passwordHash()).isEqualTo("hashed_pw");
         assertThat(creds.isActive()).isTrue();
         assertThat(creds.role()).isEqualTo(Role.USER);
-        assertThat(creds.totpEnabled()).isFalse();
     }
 
     @Test
@@ -82,15 +78,13 @@ class UserCredentialsRepositoryAdapterTest {
     }
 
     @Test
-    void findById_userFound_totpEnabled_returnsUserCredentialsWithTotpTrue() {
+    void findById_userFound_credentialFound_returnsUserCredentials() {
         when(userProfilePort.findById(userId)).thenReturn(Optional.of(userProfile));
         when(credentialRepo.findById(userId)).thenReturn(Optional.of(entityWithHash("hashed_pw")));
-        when(totpStatusQuery.isTotpEnabled(userId)).thenReturn(true);
 
         Optional<UserCredentials> result = adapter.findById(userId);
 
         assertThat(result).isPresent();
-        assertThat(result.get().totpEnabled()).isTrue();
         assertThat(result.get().id()).isEqualTo(userId);
         assertThat(result.get().passwordHash()).isEqualTo("hashed_pw");
     }

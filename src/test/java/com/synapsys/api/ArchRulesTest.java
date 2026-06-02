@@ -259,4 +259,37 @@ class ArchRulesTest {
             .should().implement(com.synapsys.api.authentication.domain.port.out.RefreshTokenConfigPort.class)
             .check(classes);
     }
+
+    @Test
+    void identity_infrastructure_should_not_depend_on_authentication_application_ports_except_credentialSetupAdapter() {
+        // CredentialSetupAdapter bridges identity.infra → authentication.application.port.in.CredentialSetupUseCase.
+        // This cross-BC dependency on a stable port interface is accepted: identity needs to trigger
+        // credential creation without owning the authentication logic. No other identity infra class
+        // may take this same shortcut without review.
+        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
+            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
+            .and(excludeTests)
+            .and().doNotHaveSimpleName("CredentialSetupAdapter")
+            .should().dependOnClassesThat()
+            .resideInAPackage("com.synapsys.api.authentication.application.port.in..")
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    @Test
+    void authentication_infrastructure_should_not_depend_on_identity_application_ports_except_userProfileAdapter() {
+        // UserProfileAdapter bridges authentication.infra → identity.application.port.in.FindUserUseCase.
+        // This cross-BC read-only query dependency is accepted: authentication needs user profile
+        // data without duplicating the identity store. No other authentication infra class may
+        // take this same shortcut without review.
+        noClasses()
+            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
+            .and().doNotHaveSimpleName("UserProfileAdapter")
+            .should().dependOnClassesThat()
+            .resideInAPackage("com.synapsys.api.identity.application.port.in..")
+            .allowEmptyShould(false)
+            .check(classes);
+    }
 }
