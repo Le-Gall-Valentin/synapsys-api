@@ -37,13 +37,13 @@ describe('AuthStoreProvider', () => {
     api.getMe.mockReturnValue(new Promise(() => {}))
     mockedHasSessionHint.mockReturnValue(true)
 
-    const { container } = render(
+    render(
       <AuthStoreProvider api={api}>
         <div>content</div>
       </AuthStoreProvider>,
     )
 
-    expect(container.querySelector('[role="status"]')).not.toBeNull()
+    expect(screen.queryByRole('status')).not.toBeNull()
     expect(screen.queryByText('content')).toBeNull()
   })
 
@@ -52,14 +52,14 @@ describe('AuthStoreProvider', () => {
     // No session hint → initialize skips getMe and sets isInitializing: false immediately
     mockedHasSessionHint.mockReturnValue(false)
 
-    const { container } = render(
+    render(
       <AuthStoreProvider api={api}>
         <div>content</div>
       </AuthStoreProvider>,
     )
 
     await waitFor(() => {
-      expect(container.querySelector('[role="status"]')).toBeNull()
+      expect(screen.queryByRole('status')).toBeNull()
     })
     expect(screen.queryByText('content')).not.toBeNull()
   })
@@ -85,14 +85,14 @@ describe('AuthStoreProvider', () => {
     const api = createApiMock()
     mockedHasSessionHint.mockReturnValue(false)
 
-    const { container } = render(
+    render(
       <AuthStoreProvider api={api}>
         <div>content</div>
       </AuthStoreProvider>,
     )
 
     await waitFor(() => {
-      expect(container.querySelector('[role="status"]')).toBeNull()
+      expect(screen.queryByRole('status')).toBeNull()
     })
 
     expect(api.getMe).not.toHaveBeenCalled()
@@ -123,20 +123,37 @@ describe('AuthStoreProvider', () => {
 
   it('calls api.getMe when there is a session hint', async () => {
     const api = createApiMock()
-    api.getMe.mockResolvedValue({ id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false })
+    api.getMe.mockResolvedValue({ id: '1', username: 'alice', role: 'USER' as const })
     mockedHasSessionHint.mockReturnValue(true)
 
-    const { container } = render(
+    render(
       <AuthStoreProvider api={api}>
         <div>content</div>
       </AuthStoreProvider>,
     )
 
     await waitFor(() => {
-      expect(container.querySelector('[role="status"]')).toBeNull()
+      expect(screen.queryByRole('status')).toBeNull()
     })
 
     expect(api.getMe).toHaveBeenCalledOnce()
     expect(screen.queryByText('content')).not.toBeNull()
+  })
+
+  it('when getMe rejects, isInitializing becomes false and content is rendered', async () => {
+    const api = createApiMock()
+    api.getMe.mockRejectedValue(new Error('network error'))
+    mockedHasSessionHint.mockReturnValue(true)
+
+    render(
+      <AuthStoreProvider api={api}>
+        <div>content</div>
+      </AuthStoreProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).toBeNull()
+    })
+    expect(screen.getByText('content')).not.toBeNull()
   })
 })

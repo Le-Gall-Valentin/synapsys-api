@@ -19,6 +19,7 @@ export interface AuthActions {
 }
 
 export function createAuthStore(api: IAuthApi) {
+  // Aborted via signal on StrictMode remount — reset ensures the next mount can re-enter initialize().
   let initializationStarted = false
 
   return create<AuthState & AuthActions>((set) => ({
@@ -31,15 +32,7 @@ export function createAuthStore(api: IAuthApi) {
         return { kind: 'totp_required', username: credentials.username }
       }
       const { user } = result
-      // Credentials are verified — notify interceptor so session expiry flag is reset.
-      notifyLoginSuccess()
-      if (!user.totpEnabled) {
-        // Authenticated but enrollment not yet done; don't set user or session hint yet.
-        return { kind: 'enrollment_proposed', user }
-      }
-      setSessionHint()
-      set({ user })
-      return { kind: 'authenticated' }
+      return { kind: 'enrollment_proposed', user }
     },
 
     finalizeLogin(user: User): void {

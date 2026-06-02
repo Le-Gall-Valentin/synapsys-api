@@ -1,12 +1,28 @@
 import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
 import type { User } from '@/entities/user'
-import type { ITotpApi } from './ITotpApi'
+import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
+import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
-import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpMaxAttemptsError } from '../model/errors'
-import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
+import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpConfirmMaxAttemptsError, TotpMaxAttemptsError } from '../model/errors'
+import { NetworkError, ServerError, RateLimitError, parseRetryAfter } from '@/shared/lib'
 
-export const totpApi: ITotpApi = {
+function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<number, () => never>>): never {
+  if (isAxiosError(error)) {
+    const status = error.response?.status
+    if (status !== undefined) {
+      const handler = statusHandlers[status]
+      if (handler) handler()
+      if (status === 429) {
+        throw new RateLimitError(parseRetryAfter(error.response?.headers))
+      }
+      throw new ServerError()
+    }
+  }
+  throw new NetworkError()
+}
+
+export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
   async verify(code: string): Promise<User> {
     try {
       const { data } = await client.post<User>('/auth/2fa/verify', { code })
@@ -15,23 +31,18 @@ export const totpApi: ITotpApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) {
-          // Backend ProblemDetail title distinguishes challenge expiry from wrong code.
-          // 'TotpChallengeExpired' is set in AuthExceptionHandler for TotpChallengeExpired exception.
-          // Any other 401 title (or absent title) maps to a wrong code.
-          // Backend title distinguishes the three 401 cases:
-          // 'TotpChallengeExpired'     → session timeout
-          // 'TotpMaxAttemptsExceeded'  → brute-force lockout after 5 failures
-          // anything else / absent     → wrong code
-          const title = error.response?.data?.title as string | undefined
-          if (title === 'TotpChallengeExpired') throw new TotpChallengeExpiredError()
-          if (title === 'TotpMaxAttemptsExceeded') throw new TotpMaxAttemptsError()
+          // error_code is a stable backend field (not tied to Java class names).
+          // 'totp_challenge_expired' → TOTP session timed out, user must restart login.
+          // absent                  → wrong or replayed code (catch-all).
+          const errorCode = error.response?.data?.error_code as string | undefined
+          if (errorCode === 'totp_challenge_expired') throw new TotpChallengeExpiredError()
           throw new TotpCodeError()
         }
         if (status === 429) {
-          const retryAfter = error.response?.headers?.['retry-after']
-          const parsed = retryAfter ? parseInt(retryAfter, 10) : NaN
-          const seconds = Number.isFinite(parsed) ? parsed : null
-          throw new RateLimitError(seconds)
+          // retry-after present → global rate limiter; absent → TOTP attempt lockout.
+          const retryAfterSeconds = parseRetryAfter(error.response?.headers)
+          if (retryAfterSeconds === null) throw new TotpMaxAttemptsError()
+          throw new RateLimitError(retryAfterSeconds)
         }
         if (status !== undefined) throw new ServerError()
       }
@@ -44,12 +55,9 @@ export const totpApi: ITotpApi = {
       const { data } = await client.post<TotpSetupData>('/auth/2fa/setup')
       return data
     } catch (error) {
-      if (isAxiosError(error)) {
-        const status = error.response?.status
-        if (status === 409) throw new TotpAlreadyEnabledError()
-        if (status !== undefined) throw new ServerError()
-      }
-      throw new NetworkError()
+      handleTotpApiError(error, {
+        409: () => { throw new TotpAlreadyEnabledError() },
+      })
     }
   },
 
@@ -57,12 +65,23 @@ export const totpApi: ITotpApi = {
     try {
       await client.post('/auth/2fa/confirm', { code })
     } catch (error) {
-      if (isAxiosError(error)) {
-        const status = error.response?.status
-        if (status === 401) throw new TotpCodeError()
-        if (status !== undefined) throw new ServerError()
+      if (isAxiosError(error) && error.response?.status === 429) {
+        const retryAfter = parseRetryAfter(error.response.headers)
+        if (retryAfter === null) throw new TotpConfirmMaxAttemptsError()
+        throw new RateLimitError(retryAfter)
       }
-      throw new NetworkError()
+      handleTotpApiError(error, {
+        401: () => { throw new TotpCodeError() },
+      })
+    }
+  },
+
+  async getStatus(): Promise<{ totpEnabled: boolean }> {
+    try {
+      const { data } = await client.get<{ totpEnabled: boolean }>('/auth/2fa/status')
+      return data
+    } catch (error) {
+      handleTotpApiError(error, {})
     }
   },
 }

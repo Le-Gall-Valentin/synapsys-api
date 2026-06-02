@@ -1,6 +1,6 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useAuth } from '@/features/auth/model/authStoreContext'
+import { useAuth } from '@/features/auth'
 import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
 import { LoginForm } from './LoginForm'
 
@@ -148,7 +148,7 @@ describe('LoginForm', () => {
   })
 
   it('calls onLoginOutcome when login returns enrollment_proposed', async () => {
-    const user = { id: '1', username: 'alice', role: 'USER', totpEnabled: false }
+    const user = { id: '1', username: 'alice', role: 'USER' }
     const mockLogin = vi.fn().mockResolvedValue({ kind: 'enrollment_proposed', user })
     const onLoginOutcome = vi.fn()
     const { getByLabelText } = setup(mockLogin, { onLoginOutcome })

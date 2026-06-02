@@ -1,4 +1,5 @@
-export type { ITotpApi } from './api/ITotpApi'
+export type { ITotpVerifyApi } from './model/ITotpVerifyApi'
+export type { ITotpEnrollApi } from './model/ITotpEnrollApi'
 export type { TotpSetupData } from './model/types'
 export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError } from './model/errors'
 export { totpTranslations } from './locales'

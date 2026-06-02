@@ -6,12 +6,12 @@ import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
 import { TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
-import type { ITotpApi } from '../api/ITotpApi'
+import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import type { User } from '@/entities/user'
 
 interface TotpVerifyStepProps {
   username: string
-  api: ITotpApi
+  api: ITotpVerifyApi
   onVerified: (user: User) => void
   onBack: () => void
 }
@@ -22,6 +22,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
+  const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null)
   const [autoBack, setAutoBack] = useState(false)
   const isSubmittingRef = useRef(false)
   const digitInputRef = useRef<TotpDigitInputHandle>(null)
@@ -50,7 +51,12 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
       } else if (error instanceof TotpChallengeExpiredError) {
         setErrorKey('verify.error.challenge_expired')
       } else if (error instanceof RateLimitError) {
-        setErrorKey('verify.error.rate_limit')
+        if (error.retryAfterSeconds !== null) {
+          setErrorKey('verify.error.rate_limit_timed')
+          setRateLimitSeconds(error.retryAfterSeconds)
+        } else {
+          setErrorKey('verify.error.rate_limit')
+        }
       } else if (error instanceof NetworkError) {
         setErrorKey('verify.error.network')
       } else if (error instanceof ServerError) {
@@ -94,7 +100,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
             className="flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red mb-3"
           >
             <AlertTriangle className="size-3.5 shrink-0" />
-            {t(errorKey)}
+            {t(errorKey, rateLimitSeconds !== null ? { seconds: rateLimitSeconds } : undefined)}
           </div>
         )}
 
@@ -111,6 +117,7 @@ export function TotpVerifyStep({ username, api, onVerified, onBack }: TotpVerify
         <button
           type="button"
           onClick={onBack}
+          disabled={isLoading}
           className="w-full mt-2 bg-transparent border-0 text-fg-2 text-xs cursor-pointer py-1.5 hover:text-fg-0 text-center"
         >
           {t('verify.back')}

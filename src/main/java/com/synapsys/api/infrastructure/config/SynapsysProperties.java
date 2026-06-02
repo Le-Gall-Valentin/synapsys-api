@@ -19,7 +19,8 @@ public record SynapsysProperties(
     @Valid SeedProperties seed,
     CorsProperties cors,
     RateLimitProperties rateLimit,
-    @Valid EncryptionProperties encryption
+    @Valid EncryptionProperties encryption,
+    SecurityProperties security
 ) {
 
     public record JwtProperties(
@@ -41,7 +42,7 @@ public record SynapsysProperties(
     public record SeedProperties(
         @NotBlank String username,
         @NotBlank String email,
-        @NotBlank String password
+        @NotBlank @Size(min = 8, message = "Seed password must be at least 8 characters") String password
     ) {}
 
     public record CorsProperties(
@@ -54,5 +55,9 @@ public record SynapsysProperties(
 
     public record EncryptionProperties(
         @NotBlank @Size(min = 32, message = "Encryption secret must be at least 32 characters for sufficient entropy") String secret
+    ) {}
+
+    public record SecurityProperties(
+        @Positive @DefaultValue("15") int challengeTtlMinutes
     ) {}
 }

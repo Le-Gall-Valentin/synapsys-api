@@ -13,3 +13,7 @@ export class TotpAlreadyEnabledError extends Error {
 export class TotpMaxAttemptsError extends Error {
   constructor() { super('Too many incorrect TOTP attempts'); this.name = 'TotpMaxAttemptsError' }
 }
+
+export class TotpConfirmMaxAttemptsError extends Error {
+  constructor() { super('Too many failed confirmation attempts'); this.name = 'TotpConfirmMaxAttemptsError' }
+}

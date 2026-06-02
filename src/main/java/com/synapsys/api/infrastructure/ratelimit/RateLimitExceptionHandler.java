@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.ratelimit;
 
+import com.synapsys.api.shared.infrastructure.web.ProblemDetailFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,12 +16,10 @@ public class RateLimitExceptionHandler {
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ProblemDetail> handle(RateLimitExceededException e, HttpServletRequest request) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-            HttpStatus.TOO_MANY_REQUESTS,
-            "Too many requests. Please try again later."
-        );
-        problem.setTitle("RateLimitExceeded");
-        problem.setInstance(URI.create(request.getRequestURI()));
+        ProblemDetail problem = ProblemDetailFactory.of(
+            HttpStatus.TOO_MANY_REQUESTS, "RateLimitExceeded",
+            "Too many requests. Please try again later.",
+            URI.create(request.getRequestURI()));
         return ResponseEntity.status(429)
             .header("X-RateLimit-Limit",     String.valueOf(e.getLimit()))
             .header("X-RateLimit-Remaining", "0")

@@ -1,59 +1,29 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LoginForm, useAuth } from '@/features/auth'
-import type { LoginOutcome } from '@/features/auth'
-import { TotpVerifyStep, TotpEnrollProposal, TotpSetupFlow, totpApi } from '@/features/totp'
-import type { User } from '@/entities/user'
+import { LoginForm } from '@/features/auth'
+import { TotpVerifyStep, TotpEnrollProposal, TotpSetupFlow, totpApi as defaultTotpApi } from '@/features/totp'
+import type { ITotpVerifyApi } from '@/features/totp'
+import type { ITotpEnrollApi } from '@/features/totp'
 import { LoginBrandPanel } from './LoginBrandPanel'
+import { useLoginFlow } from './useLoginFlow'
 
-type LoginStep = 'credentials' | 'totp' | 'enroll' | 'setup'
+type TotpApi = ITotpVerifyApi & ITotpEnrollApi
 
 const TITLE_ID = 'login-title'
 
-export function LoginPage() {
+export function LoginPage({ totpApi = defaultTotpApi }: { totpApi?: TotpApi } = {}) {
   const { t } = useTranslation('login')
-  const finalizeLogin = useAuth(s => s.finalizeLogin)
-
-  const [step, setStep] = useState<LoginStep>('credentials')
-  const [pendingUser, setPendingUser] = useState<User | null>(null)
-  const [pendingUsername, setPendingUsername] = useState('')
-
-  function handleLoginOutcome(outcome: Exclude<LoginOutcome, { kind: 'authenticated' }>) {
-    if (outcome.kind === 'totp_required') {
-      setPendingUsername(outcome.username)
-      setStep('totp')
-    } else {
-      // enrollment_proposed
-      setPendingUser(outcome.user)
-      setStep('enroll')
-    }
-  }
-
-  function handleVerified(user: User) {
-    finalizeLogin(user)
-  }
-
-  function handleBack() {
-    setStep('credentials')
-    setPendingUser(null)
-    setPendingUsername('')
-  }
-
-  function handleActivate() {
-    setStep('setup')
-  }
-
-  function handleSkip() {
-    if (pendingUser) finalizeLogin(pendingUser)
-  }
-
-  function handleSetupSuccess() {
-    if (pendingUser) finalizeLogin({ ...pendingUser, totpEnabled: true })
-  }
-
-  function handleSetupDismiss() {
-    if (pendingUser) finalizeLogin(pendingUser)
-  }
+  const {
+    step,
+    pendingUser,
+    pendingUsername,
+    handleLoginOutcome,
+    handleVerified,
+    handleBack,
+    handleActivate,
+    handleSkip,
+    handleSetupSuccess,
+    handleSetupDismiss,
+  } = useLoginFlow()
 
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[1fr_1fr] lg:grid-cols-[1.1fr_1fr]">

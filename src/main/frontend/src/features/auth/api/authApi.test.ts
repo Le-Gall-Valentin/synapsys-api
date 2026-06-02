@@ -36,7 +36,7 @@ describe('authApi', () => {
 
   it('login posts credentials and returns user from response', async () => {
     const credentials: LoginCredentials = { username: 'user', password: 'secret' }
-    const user = { id: '1', username: 'user', role: 'USER', totpEnabled: false }
+    const user = { id: '1', username: 'user', role: 'USER' }
     mockedClient.post.mockResolvedValue({ data: user })
 
     await expect(authApi.login(credentials)).resolves.toEqual({ type: 'success', user })
@@ -50,13 +50,6 @@ describe('authApi', () => {
     expect(result).toEqual({ type: 'totp_required' })
   })
 
-  it('login returns { type: success, user } on normal 200', async () => {
-    const user = { id: '1', username: 'user', role: 'USER', totpEnabled: false }
-    mockedClient.post.mockResolvedValue({ data: user })
-    const result = await authApi.login({ username: 'u', password: 'p' })
-    expect(result).toEqual({ type: 'success', user })
-  })
-
   it('logout calls logout endpoint', async () => {
     mockedClient.post.mockResolvedValue({})
 
@@ -67,7 +60,7 @@ describe('authApi', () => {
   })
 
   it('getMe reads current user endpoint', async () => {
-    const user = { id: '1', username: 'user', role: 'ADMIN', totpEnabled: false }
+    const user = { id: '1', username: 'user', role: 'ADMIN' }
     mockedClient.get.mockResolvedValue({ data: user })
 
     await expect(authApi.getMe()).resolves.toEqual(user)

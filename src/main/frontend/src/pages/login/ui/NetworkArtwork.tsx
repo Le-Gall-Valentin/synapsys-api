@@ -1,3 +1,5 @@
+import './NetworkArtwork.css'
+
 const nodes = [
   { cx: 60, cy: 60, delay: '0s' },
   { cx: 260, cy: 50, delay: '0.4s' },
@@ -14,16 +16,6 @@ const particles = [
   { x1: 280, y1: 170, delay: '2.1s' },
 ] as const
 
-const SVG_STYLES = `
-  @media (prefers-reduced-motion: reduce) { .network-artwork * { animation: none !important; transition: none !important; } }
-  .na-edges { stroke: var(--brand-node-stroke); stroke-width: 1; fill: none; }
-  .na-pulse { fill: var(--brand-node-glow-sm); }
-  .na-dot { fill: var(--brand-node-fill); }
-  .na-hub-halo { fill: var(--brand-node-glow-lg); }
-  .na-hub-core { fill: var(--brand-node-fill); }
-  .na-hub-label { fill: var(--brand-hub-text); font-size: 14px; font-weight: 700; font-family: ui-monospace, monospace; }
-  .na-particle { fill: var(--brand-node-fill); }
-`
 
 export function NetworkArtwork() {
   return (
@@ -33,7 +25,6 @@ export function NetworkArtwork() {
       className="h-auto w-full network-artwork"
       aria-hidden="true"
     >
-      <style>{SVG_STYLES}</style>
       <g className="na-edges">
         {nodes.map((n) => (
           <line key={n.delay} x1="160" y1="120" x2={n.cx} y2={n.cy} />

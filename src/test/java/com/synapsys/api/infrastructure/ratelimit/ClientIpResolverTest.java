@@ -14,7 +14,7 @@ class ClientIpResolverTest {
         SynapsysProperties.RateLimitProperties rateLimit =
             new SynapsysProperties.RateLimitProperties(List.of(trustedProxies));
         SynapsysProperties props = new SynapsysProperties(
-            null, null, null, null, null, rateLimit, null
+            null, null, null, null, null, rateLimit, null, null
         );
         return new ClientIpResolver(props);
     }

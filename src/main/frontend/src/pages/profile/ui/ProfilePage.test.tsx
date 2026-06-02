@@ -13,8 +13,15 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@/shared/ui', () => ({
-  Button: ({ children, onClick }: { children: ReactNode; onClick: () => void }) => (
-    <button onClick={onClick}>{children}</button>
+  Button: ({ children, onClick, isLoading, disabled }: {
+    children: ReactNode
+    onClick: () => void
+    isLoading?: boolean
+    disabled?: boolean
+  }) => (
+    <button onClick={onClick} disabled={disabled || isLoading} aria-busy={isLoading ? 'true' : undefined}>
+      {children}
+    </button>
   ),
 }))
 
@@ -42,7 +49,7 @@ describe('ProfilePage', () => {
 
   it('renders username and role when user is present', () => {
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false } })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const } })
     )
     const { getByText } = render(<ProfilePage />)
     expect(getByText('alice')).toBeDefined()
@@ -51,7 +58,7 @@ describe('ProfilePage', () => {
 
   it('renders fallback initials when username is empty', () => {
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: '', role: 'USER' as const, totpEnabled: false } })
+      selector({ ...baseState, user: { id: '1', username: '', role: 'USER' as const } })
     )
     const { container } = render(<ProfilePage />)
     const avatar = container.querySelector('[role="img"]')
@@ -61,7 +68,7 @@ describe('ProfilePage', () => {
   it('renders logout error alert when logout fails', async () => {
     const failingLogout = vi.fn().mockRejectedValue(new Error('Server error'))
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false }, logout: failingLogout })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout: failingLogout })
     )
     const { getByRole } = render(<ProfilePage />)
 
@@ -76,7 +83,7 @@ describe('ProfilePage', () => {
   it('calls logout once and shows no alert on successful logout', async () => {
     const logout = vi.fn().mockResolvedValue(undefined)
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false }, logout })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
     )
     const { getByRole, queryByRole } = render(<ProfilePage />)
 
@@ -88,12 +95,33 @@ describe('ProfilePage', () => {
     })
   })
 
+  it('button is disabled and aria-busy during logout', async () => {
+    let resolveLogout!: () => void
+    const pendingLogout = new Promise<void>((resolve) => { resolveLogout = resolve })
+    const logout = vi.fn().mockReturnValue(pendingLogout)
+    mockUseAuth.mockImplementation((selector) =>
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
+    )
+    const { getByRole } = render(<ProfilePage />)
+    const btn = getByRole('button')
+
+    fireEvent.click(btn)
+
+    await waitFor(() => {
+      expect((btn as HTMLButtonElement).disabled).toBe(true)
+      expect(btn.getAttribute('aria-busy')).toBe('true')
+    })
+
+    resolveLogout()
+    await waitFor(() => expect((btn as HTMLButtonElement).disabled).toBe(false))
+  })
+
   it('prevents double-submit — logout called only once on concurrent clicks', async () => {
     let resolveLogout!: () => void
     const pendingLogout = new Promise<void>((resolve) => { resolveLogout = resolve })
     const logout = vi.fn().mockReturnValue(pendingLogout)
     mockUseAuth.mockImplementation((selector) =>
-      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: false }, logout })
+      selector({ ...baseState, user: { id: '1', username: 'alice', role: 'USER' as const }, logout })
     )
     const { getByRole } = render(<ProfilePage />)
     const btn = getByRole('button')

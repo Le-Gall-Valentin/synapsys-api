@@ -1,6 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
-import com.synapsys.api.auth.infrastructure.security.JwtAuthenticationFilter;
+import com.synapsys.api.authentication.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -61,7 +61,15 @@ public class SecurityConfig {
             )
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(
-                    "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")))
+                    "default-src 'self'; " +
+                    "style-src 'self' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "object-src 'none'; " +
+                    "img-src 'self' data:; " +
+                    "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"))
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .build();

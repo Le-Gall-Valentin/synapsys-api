@@ -1,9 +1,9 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { TotpVerifyStep } from './TotpVerifyStep'
-import type { ITotpApi } from '../api/ITotpApi'
+import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import { TotpCodeError, TotpChallengeExpiredError, TotpMaxAttemptsError } from '../model/errors'
-import { RateLimitError, NetworkError, ServerError } from '@/features/auth'
+import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -12,11 +12,9 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-function makeApi(overrides: Partial<ITotpApi> = {}): ITotpApi {
+function makeApi(overrides: Partial<ITotpVerifyApi> = {}): ITotpVerifyApi {
   return {
     verify: vi.fn(),
-    setup: vi.fn(),
-    confirm: vi.fn(),
     ...overrides,
   }
 }
@@ -43,7 +41,7 @@ describe('TotpVerifyStep', () => {
   })
 
   it('calls api.verify with the entered code on submit', async () => {
-    const api = makeApi({ verify: vi.fn().mockResolvedValue({ id: '1', username: 'alice', role: 'USER', totpEnabled: true }) })
+    const api = makeApi({ verify: vi.fn().mockResolvedValue({ id: '1', username: 'alice', role: 'USER' }) })
     const { container, getByRole } = render(
       <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
     )
@@ -57,7 +55,7 @@ describe('TotpVerifyStep', () => {
   })
 
   it('calls onVerified with user on success', async () => {
-    const user = { id: '1', username: 'alice', role: 'USER' as const, totpEnabled: true }
+    const user = { id: '1', username: 'alice', role: 'USER' as const }
     const api = makeApi({ verify: vi.fn().mockResolvedValue(user) })
     const onVerified = vi.fn()
     const { container, getByRole } = render(
@@ -146,7 +144,7 @@ describe('TotpVerifyStep', () => {
       fireEvent.submit(form)
     })
 
-    resolveVerify({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })
+    resolveVerify({ id: '1', username: 'alice', role: 'USER' })
     await act(async () => { await verifyPromise })
 
     expect(api.verify).toHaveBeenCalledTimes(1)
@@ -170,7 +168,27 @@ describe('TotpVerifyStep', () => {
     expect(button.getAttribute('aria-busy')).toBe('true')
     expect((button as HTMLButtonElement).disabled).toBe(true)
 
-    resolveVerify({ id: '1', username: 'alice', role: 'USER', totpEnabled: true })
+    resolveVerify({ id: '1', username: 'alice', role: 'USER' })
+    await act(async () => { await verifyPromise })
+  })
+
+  it('back button is disabled while isLoading', async () => {
+    let resolveVerify!: (v: unknown) => void
+    const verifyPromise = new Promise(res => { resolveVerify = res })
+    const api = makeApi({ verify: vi.fn().mockReturnValue(verifyPromise) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+
+    const backButton = getByText('verify.back').closest('button')!
+    expect((backButton as HTMLButtonElement).disabled).toBe(true)
+
+    resolveVerify({ id: '1', username: 'alice', role: 'USER' })
     await act(async () => { await verifyPromise })
   })
 
@@ -183,6 +201,18 @@ describe('TotpVerifyStep', () => {
 
     fireEvent.click(getByText('verify.back'))
     expect(onBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows rate_limit_timed error with seconds when RateLimitError has retryAfterSeconds', async () => {
+    const api = makeApi({ verify: vi.fn().mockRejectedValue(new RateLimitError(42)) })
+    const { container, getByRole, getByText } = render(
+      <TotpVerifyStep username="alice" api={api} onVerified={vi.fn()} onBack={vi.fn()} />
+    )
+    fillCode(container, '123456')
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /verify\.submit/i }).closest('form')!)
+    })
+    await waitFor(() => expect(getByText('verify.error.rate_limit_timed:{"seconds":42}')).toBeTruthy())
   })
 
   it('shows rate_limit error on RateLimitError', async () => {
@@ -233,6 +263,8 @@ describe('TotpVerifyStep', () => {
     await waitFor(() => expect(getByText('verify.error.max_attempts')).toBeTruthy())
   })
 
+  afterEach(() => { vi.useRealTimers() })
+
   it('calls onBack automatically after max_attempts lockout', async () => {
     vi.useFakeTimers()
     const api = makeApi({ verify: vi.fn().mockRejectedValue(new TotpMaxAttemptsError()) })
@@ -251,6 +283,5 @@ describe('TotpVerifyStep', () => {
     expect(onBack).not.toHaveBeenCalled()
     act(() => { vi.runAllTimers() })
     expect(onBack).toHaveBeenCalledTimes(1)
-    vi.useRealTimers()
   })
 })

@@ -1,17 +1,17 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
-import { AlertTriangle, Check } from 'lucide-react'
+import { AlertTriangle, Check, Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import { Button, Spinner, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { TotpDigitInput } from './TotpDigitInput'
 import type { TotpDigitInputHandle } from './TotpDigitInput'
-import { TotpCodeError } from '../model/errors'
+import { TotpCodeError, TotpConfirmMaxAttemptsError } from '../model/errors'
 import { RateLimitError, NetworkError, ServerError } from '@/shared/lib'
-import type { ITotpApi } from '../api/ITotpApi'
+import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
 
 interface TotpSetupFlowProps {
-  api: ITotpApi
+  api: ITotpEnrollApi
   onSuccess: () => void
   onDismiss?: () => void
   dismissLabel?: string
@@ -25,26 +25,38 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
+  const [isSecretVisible, setIsSecretVisible] = useState(false)
+  const [setupRestartKey, setSetupRestartKey] = useState(0)
   const isSubmittingRef = useRef(false)
   const digitInputRef = useRef<TotpDigitInputHandle>(null)
-  // Ref persists across StrictMode's simulated unmount/remount — prevents two concurrent
-  // setup() calls that would store different secrets while the QR shows the wrong one.
-  const setupCalledRef = useRef(false)
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const apiRef = useRef(api)
 
-  // setupCalledRef ensures setup() runs at most once per component lifetime,
-  // preventing concurrent calls in React StrictMode (double-invoke) or if api
-  // identity ever changes. The ref returning early is safe: the single pending
-  // promise will still resolve and update state.
+  useEffect(() => { apiRef.current = api }, [api])
+
   useEffect(() => {
-    if (setupCalledRef.current) return
-    setupCalledRef.current = true
-    api.setup()
+    return () => {
+      if (restartTimerRef.current !== null) clearTimeout(restartTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isSecretVisible) return
+    const timer = setTimeout(() => setIsSecretVisible(false), 5 * 60 * 1000)
+    return () => clearTimeout(timer)
+  }, [isSecretVisible])
+
+  useEffect(() => {
+    let cancelled = false
+    apiRef.current.setup()
       .then(data => {
+        if (cancelled) return
         if (!data.secret?.trim()) { setSetupError(true); return }
         setSetupData(data)
       })
-      .catch(() => setSetupError(true))
-  }, [api])
+      .catch(() => { if (!cancelled) setSetupError(true) })
+    return () => { cancelled = true }
+  }, [setupRestartKey])
 
   const groupedSecret = setupData?.secret.match(/.{1,4}/g)?.join(' ') ?? ''
 
@@ -58,7 +70,16 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
       await api.confirm(code)
       onSuccess()
     } catch (error) {
-      if (error instanceof TotpCodeError) {
+      if (error instanceof TotpConfirmMaxAttemptsError) {
+        setErrorKey('setup.error.max_attempts')
+        setCode('')
+        restartTimerRef.current = setTimeout(() => {
+          restartTimerRef.current = null
+          setSetupData(null)
+          setErrorKey(null)
+          setSetupRestartKey(k => k + 1)
+        }, 2000)
+      } else if (error instanceof TotpCodeError) {
         setErrorKey('setup.error.invalid_code')
         setCode('')
         digitInputRef.current?.focusFirst()
@@ -108,8 +129,24 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
           <div className="text-[10px] uppercase tracking-[0.08em] text-fg-3 font-semibold mb-1.5">
             {t('setup.manual_label')}
           </div>
-          <div className="text-[13px] text-fg-0 bg-bg-3 border border-border rounded p-2 break-words leading-relaxed font-mono">
-            {groupedSecret}
+          <div className="relative">
+            <div
+              // select-none prevents accidental clipboard access when hidden.
+              // When visible, the secret IS in the DOM as plain text (unavoidable for
+              // copy-paste UX). JS/extensions can access it — accepted trade-off.
+              className={`text-[13px] text-fg-0 bg-bg-3 border border-border rounded p-2 break-words leading-relaxed font-mono${isSecretVisible ? '' : ' select-none'}`}
+              aria-label={t('setup.manual_label')}
+            >
+              {isSecretVisible ? groupedSecret : '••••••••••••••••'}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSecretVisible(v => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-2 hover:text-fg-0"
+              aria-label={isSecretVisible ? t('setup.hide_secret') : t('setup.show_secret')}
+            >
+              {isSecretVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
           </div>
         </div>
       </div>

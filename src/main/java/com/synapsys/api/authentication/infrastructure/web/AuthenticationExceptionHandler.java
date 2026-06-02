@@ -1,0 +1,72 @@
+package com.synapsys.api.authentication.infrastructure.web;
+
+import com.synapsys.api.authentication.domain.model.AuthenticationException;
+import com.synapsys.api.shared.infrastructure.web.ProblemDetailFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.net.URI;
+
+@RestControllerAdvice
+public class AuthenticationExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationExceptionHandler.class);
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ProblemDetail> handle(AuthenticationException e, HttpServletRequest request) {
+        AuthErrorResponse response = switch (e) {
+            case AuthenticationException.InvalidCredentials ex ->
+                    response(401, ex, "Invalid credentials");
+
+            case AuthenticationException.UserNotActive ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthenticationException.UserNotFound ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthenticationException.TokenExpired ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthenticationException.TokenNotFound ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthenticationException.TokenRevoked ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthenticationException.TotpCodeInvalid ex ->
+                    response(401, ex, "Authentication required");
+
+            case AuthenticationException.TotpChallengeExpired ex ->
+                    response(401, ex, "Authentication required", "totp_challenge_expired");
+
+            case AuthenticationException.TotpMaxAttemptsExceeded ex ->
+                    response(429, ex, "Authentication required", null);
+        };
+
+        ProblemDetail problem = ProblemDetailFactory.of(
+                HttpStatus.valueOf(response.status()), response.title(), response.detail(),
+                URI.create(request.getRequestURI()));
+
+        if (response.errorCode() != null) {
+            problem.setProperty("error_code", response.errorCode());
+        }
+
+        return ResponseEntity.status(response.status()).body(problem);
+    }
+
+    private static AuthErrorResponse response(int status, AuthenticationException e, String detail) {
+        return new AuthErrorResponse(status, "AuthenticationError", detail, null);
+    }
+
+    private static AuthErrorResponse response(int status, AuthenticationException e, String detail, String errorCode) {
+        return new AuthErrorResponse(status, "AuthenticationError", detail, errorCode);
+    }
+
+    private record AuthErrorResponse(int status, String title, String detail, String errorCode) {}
+}
