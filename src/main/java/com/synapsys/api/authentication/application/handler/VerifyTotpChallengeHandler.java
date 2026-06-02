@@ -5,6 +5,7 @@ import com.synapsys.api.authentication.application.port.in.VerifyTotpChallengeUs
 import com.synapsys.api.authentication.domain.model.*;
 import com.synapsys.api.authentication.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
+import com.synapsys.api.shared.model.TotpPolicy;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
@@ -14,8 +15,6 @@ import java.util.UUID;
 // on JPA failure — this is an accepted trade-off documented in the architecture decisions.
 @ApplicationService
 public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
-
-    private static final int MAX_FAILED_ATTEMPTS = 5;
 
     private final TotpChallengeStorePort challengeStore;
     private final MfaTotpVerifierPort mfaVerifier;
@@ -53,7 +52,7 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
             case REPLAYED -> throw new AuthenticationException.TotpCodeInvalid();
             case INVALID -> {
                 int attempts = challengeStore.incrementFailedAttempts(command.challengeId());
-                if (attempts >= MAX_FAILED_ATTEMPTS) {
+                if (attempts >= TotpPolicy.MAX_ATTEMPTS) {
                     challengeStore.invalidateChallenge(command.challengeId());
                     throw new AuthenticationException.TotpMaxAttemptsExceeded();
                 }

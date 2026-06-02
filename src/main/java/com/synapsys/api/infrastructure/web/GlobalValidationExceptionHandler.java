@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.web;
 
+import com.synapsys.api.shared.infrastructure.web.ProblemDetailFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -19,9 +20,9 @@ public class GlobalValidationExceptionHandler {
         String details = e.getBindingResult().getFieldErrors().stream()
             .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
             .collect(Collectors.joining(", "));
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, details);
-        problem.setTitle("Validation failed");
-        problem.setInstance(URI.create(request.getRequestURI()));
+        ProblemDetail problem = ProblemDetailFactory.of(
+            HttpStatus.BAD_REQUEST, "Validation failed", details,
+            URI.create(request.getRequestURI()));
         return ResponseEntity.badRequest().body(problem);
     }
 }

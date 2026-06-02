@@ -1,6 +1,7 @@
 package com.synapsys.api.authentication.infrastructure.web;
 
 import com.synapsys.api.authentication.domain.model.AuthenticationException;
+import com.synapsys.api.shared.infrastructure.web.ProblemDetailFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,13 +49,9 @@ public class AuthenticationExceptionHandler {
                     response(401, ex, "Authentication required");
         };
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.valueOf(response.status()),
-                response.detail()
-        );
-
-        problem.setTitle(response.title());
-        problem.setInstance(URI.create(request.getRequestURI()));
+        ProblemDetail problem = ProblemDetailFactory.of(
+                HttpStatus.valueOf(response.status()), response.title(), response.detail(),
+                URI.create(request.getRequestURI()));
 
         return ResponseEntity.status(response.status()).body(problem);
     }

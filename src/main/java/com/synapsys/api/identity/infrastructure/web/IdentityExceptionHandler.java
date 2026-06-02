@@ -1,6 +1,7 @@
 package com.synapsys.api.identity.infrastructure.web;
 
 import com.synapsys.api.identity.domain.model.IdentityException;
+import com.synapsys.api.shared.infrastructure.web.ProblemDetailFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,12 +45,9 @@ public class IdentityExceptionHandler {
             }
         };
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.valueOf(response.status()),
-                response.detail()
-        );
-        problem.setTitle(response.title());
-        problem.setInstance(URI.create(request.getRequestURI()));
+        ProblemDetail problem = ProblemDetailFactory.of(
+                HttpStatus.valueOf(response.status()), response.title(), response.detail(),
+                URI.create(request.getRequestURI()));
 
         return ResponseEntity.status(response.status()).body(problem);
     }

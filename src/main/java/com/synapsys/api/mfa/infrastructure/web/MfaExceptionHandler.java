@@ -1,6 +1,7 @@
 package com.synapsys.api.mfa.infrastructure.web;
 
 import com.synapsys.api.mfa.domain.model.MfaException;
+import com.synapsys.api.shared.infrastructure.web.ProblemDetailFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -23,9 +24,9 @@ public class MfaExceptionHandler {
             case MfaException.TotpConfirmMaxAttemptsExceeded ex   -> 429;
             case MfaException.InsufficientPermissions ex          -> 403;
         };
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), e.getMessage());
-        problem.setTitle(e.getClass().getSimpleName());
-        problem.setInstance(URI.create(request.getRequestURI()));
+        ProblemDetail problem = ProblemDetailFactory.of(
+            HttpStatus.valueOf(status), e.getClass().getSimpleName(), e.getMessage(),
+            URI.create(request.getRequestURI()));
         return ResponseEntity.status(status).body(problem);
     }
 }

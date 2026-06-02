@@ -5,12 +5,11 @@ import com.synapsys.api.mfa.domain.model.*;
 import com.synapsys.api.mfa.application.dto.*;
 import com.synapsys.api.mfa.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
+import com.synapsys.api.shared.model.TotpPolicy;
 import org.springframework.transaction.annotation.Transactional;
 
 @ApplicationService
 public class ConfirmTotpHandler implements ConfirmTotpUseCase {
-
-    private static final int MAX_ATTEMPTS = 5;
 
     private final UserTotpQueryPort userTotpQuery;
     private final TotpCodeValidatorPort codeValidator;
@@ -44,7 +43,7 @@ public class ConfirmTotpHandler implements ConfirmTotpUseCase {
 
         if (!codeValidator.isValid(secret, command.code())) {
             int attempts = confirmAttemptPort.incrementAndGetAttempts(command.userId());
-            if (attempts >= MAX_ATTEMPTS) {
+            if (attempts >= TotpPolicy.MAX_ATTEMPTS) {
                 userTotpSetupPort.clearPendingSecret(command.userId());
                 confirmAttemptPort.clearAttempts(command.userId());
                 throw new MfaException.TotpConfirmMaxAttemptsExceeded();
