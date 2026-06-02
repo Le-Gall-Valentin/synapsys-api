@@ -29,9 +29,16 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
   const [setupRestartKey, setSetupRestartKey] = useState(0)
   const isSubmittingRef = useRef(false)
   const digitInputRef = useRef<TotpDigitInputHandle>(null)
-  // Ref persists across StrictMode's simulated unmount/remount — prevents two concurrent
-  // setup() calls that would store different secrets while the QR shows the wrong one.
-  const setupCalledRef = useRef(false)
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const apiRef = useRef(api)
+
+  useEffect(() => { apiRef.current = api }, [api])
+
+  useEffect(() => {
+    return () => {
+      if (restartTimerRef.current !== null) clearTimeout(restartTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isSecretVisible) return
@@ -39,20 +46,17 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
     return () => clearTimeout(timer)
   }, [isSecretVisible])
 
-  // setupCalledRef ensures setup() runs at most once per component lifetime,
-  // preventing concurrent calls in React StrictMode (double-invoke) or if api
-  // identity ever changes. The ref returning early is safe: the single pending
-  // promise will still resolve and update state.
   useEffect(() => {
-    if (setupCalledRef.current) return
-    setupCalledRef.current = true
-    api.setup()
+    let cancelled = false
+    apiRef.current.setup()
       .then(data => {
+        if (cancelled) return
         if (!data.secret?.trim()) { setSetupError(true); return }
         setSetupData(data)
       })
-      .catch(() => setSetupError(true))
-  }, [api, setupRestartKey])
+      .catch(() => { if (!cancelled) setSetupError(true) })
+    return () => { cancelled = true }
+  }, [setupRestartKey])
 
   const groupedSecret = setupData?.secret.match(/.{1,4}/g)?.join(' ') ?? ''
 
@@ -69,8 +73,8 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
       if (error instanceof TotpConfirmMaxAttemptsError) {
         setErrorKey('setup.error.max_attempts')
         setCode('')
-        setTimeout(() => {
-          setupCalledRef.current = false
+        restartTimerRef.current = setTimeout(() => {
+          restartTimerRef.current = null
           setSetupData(null)
           setErrorKey(null)
           setSetupRestartKey(k => k + 1)

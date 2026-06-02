@@ -244,6 +244,29 @@ describe('TotpSetupFlow', () => {
     expect(alert.textContent).toContain('setup.error.max_attempts')
   })
 
+  it('does not restart setup if unmounted within 2s of TotpConfirmMaxAttemptsError', async () => {
+    const setup = vi.fn().mockResolvedValue(SETUP_DATA)
+    const api = makeApi({ setup, confirm: vi.fn().mockRejectedValue(new TotpConfirmMaxAttemptsError()) })
+    const { findByTestId, container, getByRole, unmount } = render(
+      <TotpSetupFlow api={api} onSuccess={vi.fn()} />
+    )
+    await findByTestId('qr-code')
+    vi.useFakeTimers()
+
+    '123456'.split('').forEach((d, i) =>
+      fireEvent.change(container.querySelectorAll('input[inputmode="numeric"]')[i]!, { target: { value: d } })
+    )
+    await act(async () => {
+      fireEvent.submit(getByRole('button', { name: /setup\.submit/i }).closest('form')!)
+    })
+
+    unmount()
+    await act(async () => { vi.advanceTimersByTime(2000) })
+
+    // Timer was cancelled on unmount — setup should not be called again
+    expect(setup).toHaveBeenCalledTimes(1)
+  })
+
   it('restarts setup automatically 2s after TotpConfirmMaxAttemptsError', async () => {
     const setup = vi.fn().mockResolvedValue(SETUP_DATA)
     const api = makeApi({ setup, confirm: vi.fn().mockRejectedValue(new TotpConfirmMaxAttemptsError()) })

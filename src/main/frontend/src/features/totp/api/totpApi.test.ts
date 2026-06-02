@@ -169,14 +169,17 @@ describe('totpApi', () => {
 
   // confirm
   describe('confirm', () => {
-    it('throws TotpConfirmMaxAttemptsError on 429 with TotpConfirmMaxAttemptsExceeded title', async () => {
-      mockedClient.post.mockRejectedValue(
-        makeAxiosError(429, 'Too Many Requests', {}, { title: 'TotpConfirmMaxAttemptsExceeded' }),
-      )
+    it('throws TotpConfirmMaxAttemptsError on 429 without retry-after header', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests'))
       await expect(totpApi.confirm('000000')).rejects.toBeInstanceOf(TotpConfirmMaxAttemptsError)
     })
 
-    it('throws RateLimitError on 429 without TotpConfirmMaxAttemptsExceeded title', async () => {
+    it('throws TotpConfirmMaxAttemptsError on 429 even when body is absent', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', {}, {}))
+      await expect(totpApi.confirm('000000')).rejects.toBeInstanceOf(TotpConfirmMaxAttemptsError)
+    })
+
+    it('throws RateLimitError on 429 with retry-after header (global rate limiter)', async () => {
       mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '30' }))
       const caught = await totpApi.confirm('123456').catch((e) => e)
       expect(caught).toBeInstanceOf(RateLimitError)

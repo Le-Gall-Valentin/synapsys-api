@@ -32,9 +32,6 @@ export function createAuthStore(api: IAuthApi) {
         return { kind: 'totp_required', username: credentials.username }
       }
       const { user } = result
-      // Credentials are verified — notify interceptor so session expiry flag is reset.
-      // Enrollment is always proposed; session/user are only committed after finalizeLogin.
-      notifyLoginSuccess()
       return { kind: 'enrollment_proposed', user }
     },
 

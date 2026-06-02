@@ -41,7 +41,7 @@ describe('authStore', () => {
     mockedNotifyLoginSuccess.mockReset()
   })
 
-  it('login always returns enrollment_proposed and calls notifyLoginSuccess', async () => {
+  it('login returns enrollment_proposed without calling notifyLoginSuccess', async () => {
     const api = createApiMock()
     const user = { id: '1', username: 'user', role: 'USER' as const }
     vi.mocked(api.login).mockResolvedValue({ type: 'success', user })
@@ -50,7 +50,7 @@ describe('authStore', () => {
     const outcome = await store.getState().login({ username: 'user', password: 'secret' })
 
     expect(api.login).toHaveBeenCalledWith({ username: 'user', password: 'secret' })
-    expect(mockedNotifyLoginSuccess).toHaveBeenCalledTimes(1)
+    expect(mockedNotifyLoginSuccess).not.toHaveBeenCalled()
     expect(mockedSetSessionHint).not.toHaveBeenCalled()
     expect(store.getState().user).toBeNull()
     expect(outcome).toEqual({ kind: 'enrollment_proposed', user })

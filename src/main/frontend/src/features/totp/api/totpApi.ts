@@ -5,7 +5,7 @@ import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
 import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpConfirmMaxAttemptsError, TotpMaxAttemptsError } from '../model/errors'
-import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
+import { NetworkError, ServerError, RateLimitError, parseRetryAfter } from '@/shared/lib'
 
 function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<number, () => never>>): never {
   if (isAxiosError(error)) {
@@ -14,9 +14,7 @@ function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<numbe
       const handler = statusHandlers[status]
       if (handler) handler()
       if (status === 429) {
-        const retryAfter = error.response?.headers?.['retry-after']
-        const parsed = retryAfter ? parseInt(retryAfter, 10) : NaN
-        throw new RateLimitError(Number.isFinite(parsed) ? parsed : null)
+        throw new RateLimitError(parseRetryAfter(error.response?.headers))
       }
       throw new ServerError()
     }
@@ -46,10 +44,7 @@ export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
           throw new TotpCodeError()
         }
         if (status === 429) {
-          const retryAfter = error.response?.headers?.['retry-after']
-          const parsed = retryAfter ? parseInt(retryAfter, 10) : NaN
-          const seconds = Number.isFinite(parsed) ? parsed : null
-          throw new RateLimitError(seconds)
+          throw new RateLimitError(parseRetryAfter(error.response?.headers))
         }
         if (status !== undefined) throw new ServerError()
       }
@@ -73,9 +68,9 @@ export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
       await client.post('/auth/2fa/confirm', { code })
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 429) {
-        if (error.response.data?.title === 'TotpConfirmMaxAttemptsExceeded') {
-          throw new TotpConfirmMaxAttemptsError()
-        }
+        const retryAfter = parseRetryAfter(error.response.headers)
+        if (retryAfter === null) throw new TotpConfirmMaxAttemptsError()
+        throw new RateLimitError(retryAfter)
       }
       handleTotpApiError(error, {
         401: () => { throw new TotpCodeError() },

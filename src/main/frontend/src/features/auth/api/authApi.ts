@@ -4,6 +4,7 @@ import type { User } from '@/entities/user'
 import type { LoginApiResult, LoginCredentials } from '../model/types'
 import type { IAuthApi } from '../model/IAuthApi'
 import { CredentialsError, NetworkError, RateLimitError, ServerError } from '../model/errors'
+import { parseRetryAfter } from '@/shared/lib'
 
 export const authApi: IAuthApi = {
   async login(credentials: LoginCredentials): Promise<LoginApiResult> {
@@ -15,12 +16,7 @@ export const authApi: IAuthApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) throw new CredentialsError()
-        if (status === 429) {
-          const retryAfter = error.response?.headers?.['retry-after']
-          const parsed = retryAfter ? parseInt(retryAfter, 10) : NaN
-          const seconds = Number.isFinite(parsed) ? parsed : null
-          throw new RateLimitError(seconds)
-        }
+        if (status === 429) throw new RateLimitError(parseRetryAfter(error.response?.headers))
         if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
