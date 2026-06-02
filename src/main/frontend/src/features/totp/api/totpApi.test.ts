@@ -49,37 +49,28 @@ describe('totpApi', () => {
       expect(mockedClient.post).toHaveBeenCalledWith('/auth/2fa/verify', { code: '123456' })
     })
 
-    it('throws TotpCodeError on 401 with non-challenge title', async () => {
-      mockedClient.post.mockRejectedValue(makeAxiosError(401, 'Unauthorized', {}, { title: 'InvalidCode' }))
+    it('throws TotpCodeError on 401 without error_code', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(401, 'Unauthorized', {}, { title: 'AuthenticationError' }))
       await expect(totpApi.verify('000000')).rejects.toBeInstanceOf(TotpCodeError)
     })
 
-    it('throws TotpChallengeExpiredError on 401 with TotpChallengeExpired title', async () => {
+    it('throws TotpChallengeExpiredError on 401 with error_code totp_challenge_expired', async () => {
       mockedClient.post.mockRejectedValue(
-        makeAxiosError(401, 'Unauthorized', {}, { title: 'TotpChallengeExpired' }),
+        makeAxiosError(401, 'Unauthorized', {}, { title: 'AuthenticationError', error_code: 'totp_challenge_expired' }),
       )
       await expect(totpApi.verify('123456')).rejects.toBeInstanceOf(TotpChallengeExpiredError)
     })
 
-    it('throws TotpMaxAttemptsError on 401 with TotpMaxAttemptsExceeded title', async () => {
-      mockedClient.post.mockRejectedValue(
-        makeAxiosError(401, 'Unauthorized', {}, { title: 'TotpMaxAttemptsExceeded' }),
-      )
+    it('throws TotpMaxAttemptsError on 429 without retry-after header', async () => {
+      mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests'))
       await expect(totpApi.verify('123456')).rejects.toBeInstanceOf(TotpMaxAttemptsError)
     })
 
-    it('throws RateLimitError on 429', async () => {
+    it('throws RateLimitError on 429 with retry-after header', async () => {
       mockedClient.post.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '30' }))
       const caught = await totpApi.verify('123456').catch((e) => e)
       expect(caught).toBeInstanceOf(RateLimitError)
       expect((caught as RateLimitError).retryAfterSeconds).toBe(30)
-    })
-
-    it('throws RateLimitError with null retryAfterSeconds when header absent', async () => {
-      mockedClient.post.mockRejectedValue(makeAxiosError(429))
-      const caught = await totpApi.verify('123456').catch((e) => e)
-      expect(caught).toBeInstanceOf(RateLimitError)
-      expect((caught as RateLimitError).retryAfterSeconds).toBeNull()
     })
 
     it('throws ServerError on 500', async () => {

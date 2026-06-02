@@ -131,6 +131,9 @@ export function TotpSetupFlow({ api, onSuccess, onDismiss, dismissLabel }: TotpS
           </div>
           <div className="relative">
             <div
+              // select-none prevents accidental clipboard access when hidden.
+              // When visible, the secret IS in the DOM as plain text (unavoidable for
+              // copy-paste UX). JS/extensions can access it — accepted trade-off.
               className={`text-[13px] text-fg-0 bg-bg-3 border border-border rounded p-2 break-words leading-relaxed font-mono${isSecretVisible ? '' : ' select-none'}`}
               aria-label={t('setup.manual_label')}
             >

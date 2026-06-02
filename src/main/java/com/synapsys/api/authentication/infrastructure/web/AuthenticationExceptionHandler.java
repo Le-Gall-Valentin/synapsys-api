@@ -43,30 +43,30 @@ public class AuthenticationExceptionHandler {
                     response(401, ex, "Authentication required");
 
             case AuthenticationException.TotpChallengeExpired ex ->
-                    response(401, ex, "Authentication required");
+                    response(401, ex, "Authentication required", "totp_challenge_expired");
 
             case AuthenticationException.TotpMaxAttemptsExceeded ex ->
-                    response(401, ex, "Authentication required");
+                    response(429, ex, "Authentication required", null);
         };
 
         ProblemDetail problem = ProblemDetailFactory.of(
                 HttpStatus.valueOf(response.status()), response.title(), response.detail(),
                 URI.create(request.getRequestURI()));
 
+        if (response.errorCode() != null) {
+            problem.setProperty("error_code", response.errorCode());
+        }
+
         return ResponseEntity.status(response.status()).body(problem);
     }
 
     private static AuthErrorResponse response(int status, AuthenticationException e, String detail) {
-        return new AuthErrorResponse(
-                status,
-                "AuthenticationError",
-                detail
-        );
+        return new AuthErrorResponse(status, "AuthenticationError", detail, null);
     }
 
-    private record AuthErrorResponse(
-            int status,
-            String title,
-            String detail
-    ) {}
+    private static AuthErrorResponse response(int status, AuthenticationException e, String detail, String errorCode) {
+        return new AuthErrorResponse(status, "AuthenticationError", detail, errorCode);
+    }
+
+    private record AuthErrorResponse(int status, String title, String detail, String errorCode) {}
 }

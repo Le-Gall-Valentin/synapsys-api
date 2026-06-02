@@ -31,20 +31,18 @@ export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 401) {
-          // Backend ProblemDetail title distinguishes challenge expiry from wrong code.
-          // 'TotpChallengeExpired' is set in AuthExceptionHandler for TotpChallengeExpired exception.
-          // Any other 401 title (or absent title) maps to a wrong code.
-          // Backend title distinguishes the three 401 cases:
-          // 'TotpChallengeExpired'     → session timeout
-          // 'TotpMaxAttemptsExceeded'  → brute-force lockout after 5 failures
-          // anything else / absent     → wrong code
-          const title = error.response?.data?.title as string | undefined
-          if (title === 'TotpChallengeExpired') throw new TotpChallengeExpiredError()
-          if (title === 'TotpMaxAttemptsExceeded') throw new TotpMaxAttemptsError()
+          // error_code is a stable backend field (not tied to Java class names).
+          // 'totp_challenge_expired' → TOTP session timed out, user must restart login.
+          // absent                  → wrong or replayed code (catch-all).
+          const errorCode = error.response?.data?.error_code as string | undefined
+          if (errorCode === 'totp_challenge_expired') throw new TotpChallengeExpiredError()
           throw new TotpCodeError()
         }
         if (status === 429) {
-          throw new RateLimitError(parseRetryAfter(error.response?.headers))
+          // retry-after present → global rate limiter; absent → TOTP attempt lockout.
+          const retryAfterSeconds = parseRetryAfter(error.response?.headers)
+          if (retryAfterSeconds === null) throw new TotpMaxAttemptsError()
+          throw new RateLimitError(retryAfterSeconds)
         }
         if (status !== undefined) throw new ServerError()
       }

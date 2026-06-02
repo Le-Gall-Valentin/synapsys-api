@@ -87,20 +87,21 @@ class AuthenticationExceptionHandlerTest {
     }
 
     @Test
-    void handle_totpChallengeExpired_returns401WithGenericMessage() {
+    void handle_totpChallengeExpired_returns401WithStableErrorCode() {
         var response = handler.handle(new AuthenticationException.TotpChallengeExpired(), request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
         assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
+        assertThat(response.getBody().getProperties()).containsEntry("error_code", "totp_challenge_expired");
     }
 
     @Test
-    void handle_totpMaxAttemptsExceeded_returns401WithGenericMessage() {
+    void handle_totpMaxAttemptsExceeded_returns429() {
         var response = handler.handle(new AuthenticationException.TotpMaxAttemptsExceeded(), request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDetail()).isEqualTo("Authentication required");
         assertThat(response.getBody().getTitle()).isEqualTo("AuthenticationError");
