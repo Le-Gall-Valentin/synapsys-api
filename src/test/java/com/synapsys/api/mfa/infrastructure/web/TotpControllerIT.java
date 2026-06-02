@@ -225,12 +225,12 @@ class TotpControllerIT {
                 .andExpect(status().isUnauthorized());
         }
 
-        // 5th attempt exhausts the counter, invalidates the challenge, and returns TotpMaxAttemptsExceeded
+        // 5th attempt exhausts the counter, invalidates the challenge, and returns TotpMaxAttemptsExceeded (429)
         mockMvc.perform(post("/api/auth/2fa/verify")
                 .cookie(challenge)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"code\":\"000005\"}"))
-            .andExpect(status().isUnauthorized())
+            .andExpect(status().isTooManyRequests())
             .andExpect(jsonPath("$.title").value("AuthenticationError"));
     }
 
