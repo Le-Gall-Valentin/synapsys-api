@@ -21,7 +21,7 @@ See the [README](README.md) for prerequisites and local setup instructions.
 ## Workflow
 
 1. Fork the repository
-2. Create a branch from `main`:
+2. Create a branch from `master`:
    ```bash
    git checkout -b feat/your-feature-name
    # or
@@ -30,7 +30,7 @@ See the [README](README.md) for prerequisites and local setup instructions.
 3. Make your changes
 4. Add or update tests if applicable
 5. Commit with a clear message (see below)
-6. Push and open a Pull Request against `main`
+6. Push and open a Pull Request against `master`
 
 ---
 

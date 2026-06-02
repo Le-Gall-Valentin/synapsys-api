@@ -1,70 +1,120 @@
 # Architecture
 
-## Backend — Architecture Hexagonale
+## Backend — Architecture Hexagonale (Ports & Adapters)
 
-Le backend suit une **architecture hexagonale** (Ports & Adapters). La règle fondamentale : les dépendances ne pointent que vers l'intérieur.
+Le backend suit une **architecture hexagonale** stricte. Les dépendances ne pointent que vers l'intérieur :
 
 ```
 Infrastructure  →  Application  →  Domain
      (jamais l'inverse)
 ```
 
-### Structure des packages
+Les règles sont vérifiées automatiquement à chaque build par ArchUnit (voir `ArchRulesTest`).
+
+---
+
+### Bounded Contexts
+
+Le domaine est découpé en trois BCs isolés. Aucun BC ne dépend du domaine ou de l'application d'un autre.
 
 ```
 com.synapsys.api/
-├── auth/
-│   ├── domain/              ← Cœur métier pur (zéro dépendance Spring)
-│   │   ├── model/           ← Records immuables : User, RefreshToken, AuthTokens…
-│   │   ├── port/
-│   │   │   ├── in/          ← Ports entrants (UseCase interfaces) : LoginUseCase, RegisterUseCase…
-│   │   │   └── out/         ← Ports sortants : UserRepository, AccessTokenPort…
-│   │   └── model/AuthException.java  ← Sealed class, 9 sous-types typés
-│   │
-│   ├── application/         ← Handlers (use cases) : @ApplicationService
-│   │   ├── LoginHandler.java
-│   │   ├── RegisterHandler.java
-│   │   ├── RefreshTokenHandler.java
-│   │   ├── LogoutHandler.java
-│   │   └── GetCurrentUserHandler.java
-│   │
-│   └── infrastructure/      ← Adapters (Spring, JPA, JWT, BCrypt…)
-│       ├── persistence/      ← Entités JPA, adapters repository
-│       ├── security/         ← JwtService, BcryptPasswordHasher, CookieService…
-│       └── web/              ← AuthController, LoginRateLimitFilter, DTOs
+├── authentication/          ← Login, refresh token, JWT, cookies
+│   ├── domain/
+│   │   ├── model/           ← UserCredentials, AuthTokens, LoginResult, AuthenticationException…
+│   │   └── port/out/        ← UserCredentialsPort, AccessTokenPort, TotpStatusQueryPort…
+│   ├── application/
+│   │   ├── handler/         ← LoginHandler, RefreshTokenHandler, VerifyTotpChallengeHandler…
+│   │   └── port/in/         ← LoginUseCase, VerifyTotpChallengeUseCase, CredentialSetupUseCase…
+│   └── infrastructure/
+│       ├── persistence/     ← UserCredentialsRepositoryAdapter, RefreshTokenRepositoryAdapter…
+│       ├── security/        ← JwtService, BcryptPasswordHasher, RedisTotpChallengeStore…
+│       └── web/             ← AuthController, TotpChallengeController, AuthenticationExceptionHandler
 │
-└── infrastructure/
-    └── config/              ← SecurityConfig, TransactionConfig, DataSeeder…
+├── identity/                ← Profil utilisateur, registration, seed
+│   ├── domain/
+│   │   ├── model/           ← User, RegisterCommand, IdentityException…
+│   │   └── port/out/        ← UserCommandPort, UserRepository, CredentialSetupPort…
+│   ├── application/
+│   │   ├── handler/         ← RegisterHandler, SeedHandler, DeactivateUserHandler…
+│   │   └── port/in/         ← RegisterUseCase, FindUserUseCase, SeedUseCase…
+│   └── infrastructure/
+│       ├── persistence/     ← UserIdentityRepositoryAdapter
+│       ├── security/        ← CredentialSetupAdapter, TotpRecordInitAdapter…
+│       └── web/             ← UserController, IdentityExceptionHandler
+│
+├── mfa/                     ← TOTP : setup, confirm, disable, admin reset
+│   ├── domain/
+│   │   ├── model/           ← UserTotpProfile, MfaException…
+│   │   └── port/out/        ← TotpCodeValidatorPort, TotpCodeReplayPort, UserTotpQueryPort…
+│   ├── application/
+│   │   ├── handler/         ← SetupTotpHandler, ConfirmTotpHandler, DisableTotpHandler…
+│   │   ├── service/         ← TotpCodeVerificationService, TotpStatusService…
+│   │   ├── port/in/         ← SetupTotpUseCase, ConfirmTotpUseCase, VerifyTotpCodeUseCase…
+│   │   └── dto/             ← TotpCodeVerifyResult (résultat ACL inter-BC)
+│   └── infrastructure/
+│       ├── persistence/     ← UserTotpRepositoryAdapter
+│       ├── security/        ← TotpServiceAdapter, RedisTotpCodeReplayStore…
+│       ├── config/          ← TotpEncryptionConfig (chiffrement AES-256/GCM par userId)
+│       └── web/             ← TotpController, MfaExceptionHandler
+│
+├── shared/                  ← Types transverses uniquement
+│   ├── model/               ← Role (enum), TotpPolicy (MAX_ATTEMPTS)
+│   ├── annotation/          ← @ApplicationService
+│   └── infrastructure/web/  ← ProblemDetailFactory
+│
+└── infrastructure/          ← Config Spring Boot globale
+    ├── config/              ← SecurityConfig, SynapsysProperties, DataSeeder
+    └── ratelimit/           ← RateLimitMethodInterceptor, Bucket4j + Redis
 ```
 
-### Ports & Adapters
+---
 
-| Port (interface domain) | Adapter (infrastructure) |
-|---|---|
-| `UserRepository` | `UserRepositoryAdapter` + `UserJpaRepository` |
-| `RefreshTokenRepository` / `RefreshTokenPort` | `RefreshTokenRepositoryAdapter` |
-| `AccessTokenPort` | `JwtService` |
-| `PasswordHasherPort` | `BcryptPasswordHasher` |
-| `TokenHashPort` | `Sha256TokenHasher` |
+### Dépendances cross-BC acceptées (adaptateurs uniquement)
 
-### Règles vérifiées automatiquement (ArchUnit)
+Les seules dépendances infra → application d'un autre BC sont documentées et contraintes par ArchUnit :
 
-- Le domaine ne dépend pas de Spring
+| Adaptateur | Dépendance cross-BC | Raison |
+|---|---|---|
+| `UserProfileAdapter` | `authentication.infra` → `identity.application.port.in` | Lecture profil sans dupliquer le store identity |
+| `MfaTotpVerifierAdapter` | `authentication.infra` → `mfa.application.port.in + dto` | ACL : mappe `TotpCodeVerifyResult` → `TotpVerificationResult` |
+| `TotpStatusAdapter` | `authentication.infra` → `mfa.application.port.in` | Query statut TOTP depuis LoginHandler |
+| `CredentialSetupAdapter` | `identity.infra` → `authentication.application.port.in` | Création credentials après registration |
+| `TotpRecordInitAdapter` | `identity.infra` → `mfa.application.port.in` | Init enregistrement TOTP à la registration |
+| `MfaAdminResetTotpAdapter` | `identity.infra` → `mfa.application.port.in` | Reset TOTP admin depuis identity |
+
+Toute autre dépendance cross-BC dans les couches infra ou application casse le build (ArchUnit).
+
+---
+
+### Règles ArchUnit vérifiées automatiquement
+
+- Le domaine ne dépend ni de Spring ni de l'infrastructure
 - L'application ne dépend pas de l'infrastructure
-- Les controllers ne dépendent pas de l'application (passent par les ports)
-- Tout `@ApplicationService` est dans le package `application`
-- Tout handler implémente un port entrant
+- Les controllers ne dépendent pas des handlers (passent par les ports `port/in`)
+- Chaque BC : `domain + application` isolé des autres BCs
+- Chaque BC : `infrastructure` ne dépend pas de l'infrastructure d'un autre BC
+- Tout `@ApplicationService` est dans un package `application`
+- Tout `@Component` Adapter implémente un port `domain.port.out`
+- Les ports entrants (`application.port.in`) ne contiennent que des interfaces
+- Les ports sortants (`domain.port.out`) ne contiennent que des interfaces
+
+---
 
 ### Transactions
 
-Les transactions sont gérées par AOP via `TransactionConfig` : toute méthode d'un bean `@ApplicationService` s'exécute dans une transaction. Les `@Transactional` sur les méthodes `@Modifying` des JPA repositories sont conservés — ils sont requis par Spring Data JPA pour les opérations de modification en dehors d'un contexte transactionnel.
+`@Transactional` est posé directement sur les méthodes des handlers qui modifient l'état. `RefreshTokenGenerator` utilise `Propagation.MANDATORY` (doit s'exécuter dans une transaction parente). Les opérations Redis (challenge store, replay store) ne participent pas à la transaction JPA — trade-off documenté.
+
+---
 
 ### Sécurité
 
-- **JWT** (access token) : HttpOnly cookie, 15 min, HMAC SHA-256
+- **JWT** (access token) : HttpOnly cookie, 15 min par défaut, HMAC SHA-256
 - **Refresh token** : rotation à chaque usage, hash SHA-256 en base, révocation cascade si réutilisation détectée
-- **Rate limiting** : 10 tentatives / 60 s / IP via Caffeine (`LoginRateLimitFilter`)
-- **Cookies** : HttpOnly, Secure, SameSite=Strict, paths séparés (`/api` vs `/api/auth`)
+- **Rate limiting** : Bucket4j + Redis, configurable par endpoint via `@RateLimiting`
+- **TOTP** : secret chiffré AES-256/GCM (clé maître `SYNAPSYS_ENCRYPTION_SECRET`, sel par userId), anti-replay Redis SETNX, lockout 429 après 5 échecs
+- **Cookies** : HttpOnly, Secure, SameSite=Strict, paths séparés (`/api/auth` vs `/api/auth/2fa`)
+- **Timing attack** : dummy BCrypt hash précompilé pour les usernames inconnus
 
 ---
 
@@ -82,54 +132,46 @@ app  →  pages  →  features  →  entities  →  shared
 ```
 src/
 ├── app/              ← Bootstrap, providers, router, i18n
-├── pages/            ← Assemblage de features : LoginPage, ProfilePage
+├── pages/
+│   ├── login/        ← LoginPage (orchestration multi-step : credentials → TOTP → enrollment)
+│   └── profile/      ← ProfilePage
 ├── features/
-│   └── auth/
-│       ├── api/      ← IAuthApi (interface), authApi.ts (impl)
-│       ├── model/    ← authStore.ts (Zustand), useAuth.ts, types.ts
-│       ├── ui/       ← LoginForm.tsx
+│   ├── auth/
+│   │   ├── api/      ← IAuthApi (interface), authApi.ts (impl axios)
+│   │   ├── model/    ← authStore.ts (Zustand), types.ts, errors.ts
+│   │   ├── ui/       ← LoginForm.tsx, AuthStoreProvider.tsx
+│   │   ├── locales/  ← Traductions EN/FR
+│   │   └── index.ts  ← Exports publics uniquement
+│   └── totp/
+│       ├── api/      ← ITotpVerifyApi, ITotpEnrollApi, totpApi.ts
+│       ├── model/    ← types.ts, errors.ts
+│       ├── ui/       ← TotpDigitInput, TotpVerifyStep, TotpEnrollProposal, TotpSetupFlow
 │       ├── locales/  ← Traductions EN/FR
-│       └── index.ts  ← Exports publics uniquement
+│       └── index.ts
 ├── entities/
-│   └── user/         ← Type UserDTO
+│   └── user/         ← Type User { id, username, role }
 └── shared/
-    ├── api/          ← client axios, refreshInterceptor
-    ├── lib/          ← sessionHint, logoutCallback
-    ├── ui/           ← Button, Input, Spinner (composants génériques)
-    └── types/
+    ├── api/          ← client axios, refreshInterceptor, notifyLoginSuccess
+    ├── lib/          ← sessionHint, parseRetryAfter, sessionCallbacks, apiErrors
+    └── ui/           ← Button, Input, Spinner (composants génériques)
 ```
 
-### Règles enforced par ESLint (`eslint-plugin-boundaries`)
+### Flux d'authentification
 
-- Chaque couche ne peut importer que les couches en dessous
-- Les imports internes d'un slice (hors `index.ts`) sont interdits depuis un autre slice
-- Toute feature exporte via son `index.ts`
+```
+login(credentials)
+  ├─ totp_required       → step = 'totp'    → TotpVerifyStep → finalizeLogin(user)
+  └─ enrollment_proposed → step = 'enroll'  → TotpEnrollProposal
+                               ├─ onActivate → step = 'setup' → TotpSetupFlow → finalizeLogin(user)
+                               └─ onSkip     → finalizeLogin(pendingUser)
+
+finalizeLogin(user)      → set store + sessionHint + notifyLoginSuccess → /profile
+
+refreshInterceptor
+  └─ 401 détecté         → POST /api/auth/refresh → retry requête originale
+  └─ refresh échoue      → triggerSessionExpired()
+```
 
 ### Injection de dépendances
 
-`createAuthStore(api: IAuthApi)` accepte n'importe quelle implémentation de `IAuthApi`. En production, `authApi` (axios). En test, un mock. Aucun composant n'importe `authApi` directement.
-
-### Authentification
-
-```
-AuthProvider (app)
-  └── initialize()           → GET /api/auth/me (vérification session au reload)
-
-login(credentials)           → POST /api/auth/login → retourne UserDTO + set cookies
-logout()                     → POST /api/auth/logout → clear cookies + store
-
-refreshInterceptor (axios)
-  └── 401 détecté            → POST /api/auth/refresh → retry requête originale
-  └── refresh échoue         → triggerLogout()
-```
-
-### Tests
-
-| Fichier | Couverture |
-|---|---|
-| `authStore.test.ts` | login, logout (fail graceful), initialize (success + failure) |
-| `authApi.test.ts` | login (single POST), logout, getMe |
-| `refreshInterceptor.test.ts` | retry 401, cascade logout, exclusions /auth/* |
-| `sessionHint.test.ts` | persist/clear, localStorage unavailable |
-| `ProfilePage.test.tsx` | null user guard, render avec user |
-| `Button.test.tsx` | aria-hidden spinner, sr-only label |
+`createAuthStore(api: IAuthApi)` et `TotpSetupFlow({ api: ITotpEnrollApi })` acceptent n'importe quelle implémentation. En test, des mocks. Aucun composant n'importe les implémentations directement.

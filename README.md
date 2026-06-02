@@ -33,13 +33,14 @@ The API acts as the central hub. Agents ([synapsys-agent](https://github.com/Le-
 
 ## Features
 
-- **User management** — `ADMIN` and `USER` roles with fine-grained permission scoping
+- **User management** — `SUPER_ADMIN`, `ADMIN`, and `USER` roles with fine-grained permission scoping
 - **Applications** — logical groupings of routines, with descriptions, statuses, and notes
 - **Routines** — shell script (`.sh`) or Makefile targets, tied to specific agents
 - **Permissions** — per-application and per-routine access control (launch, edit, delete, status change)
 - **Execution history** — global and per-routine logs, filtered by permissions
 - **Agent enrollment** — admin-approved onboarding with mTLS certificate issuance
 - **Real-time streaming** — execution logs streamed live via SSE
+- **Two-factor authentication** — optional TOTP/2FA (Google Authenticator, 1Password…), enrollment flow, admin reset
 
 ---
 
@@ -48,6 +49,7 @@ The API acts as the central hub. Agents ([synapsys-agent](https://github.com/Le-
 - Java 21+
 - Maven 3.9+
 - PostgreSQL 15+
+- Redis 7+ (rate limiting + TOTP challenge store)
 - Node.js 20+ (for the frontend build)
 
 ---
@@ -76,12 +78,14 @@ Key variables:
 | `SYNAPSYS_DB_URL` | PostgreSQL JDBC URL |
 | `SYNAPSYS_DB_USERNAME` | Database user |
 | `SYNAPSYS_DB_PASSWORD` | Database password |
-| `SYNAPSYS_JWT_SECRET` | JWT signing secret (min 256 bits) |
-| `SYNAPSYS_JWT_EXPIRY_HOURS` | JWT token validity in hours |
-| `SYNAPSYS_CA_KEYSTORE_PATH` | Path to the internal CA keystore |
-| `SYNAPSYS_CA_KEYSTORE_PASSWORD` | CA keystore password |
-| `SYNAPSYS_ENROLLMENT_TOKEN_TTL_MINUTES` | Enrollment token validity |
-| `SYNAPSYS_SEED_PASSWORD` | Initial admin password — required when `SYNAPSYS_SEED_ENABLED=true` |
+| `SYNAPSYS_JWT_SECRET` | JWT signing secret (min 32 chars) |
+| `SYNAPSYS_JWT_EXPIRY_MINUTES` | JWT token validity in minutes (default: 15) |
+| `SYNAPSYS_ENCRYPTION_SECRET` | Master secret for TOTP encryption (min 32 chars) |
+| `SYNAPSYS_SEED_USERNAME` | Initial super-admin username |
+| `SYNAPSYS_SEED_EMAIL` | Initial super-admin email |
+| `SYNAPSYS_SEED_PASSWORD` | Initial super-admin password (min 8 chars) |
+| `SYNAPSYS_CA_KEYSTORE_PATH` | Path to the internal CA keystore *(agent enrollment — planned)* |
+| `SYNAPSYS_CA_KEYSTORE_PASSWORD` | CA keystore password *(agent enrollment — planned)* |
 
 ### 3. Run with Docker Compose (recommended)
 
