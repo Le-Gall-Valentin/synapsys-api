@@ -5,17 +5,35 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.lang.ArchRule;
 import jakarta.persistence.Entity;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 class ArchRulesTest {
 
+    private static final String BASE = "com.synapsys.api.";
+    private static final List<String> BCS = List.of("authentication", "identity", "mfa");
+
     private final JavaClasses classes = new ClassFileImporter()
         .importPackages("com.synapsys.api");
+
+    private static DescribedPredicate<JavaClass> excludeTests() {
+        return DescribedPredicate.describe("excluding tests",
+            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
+    }
+
+    // -------------------------------------------------------------------------
+    // Generic hexagonal architecture rules
+    // -------------------------------------------------------------------------
 
     @Test
     void domain_should_not_depend_on_infrastructure() {
@@ -39,8 +57,7 @@ class ArchRulesTest {
     void application_should_not_depend_on_infrastructure() {
         noClasses()
             .that().resideInAPackage("..application..")
-            .and(DescribedPredicate.describe("excluding tests",
-                c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT")))
+            .and(excludeTests())
             .should().dependOnClassesThat()
             .resideInAPackage("..infrastructure..")
             .check(classes);
@@ -55,16 +72,13 @@ class ArchRulesTest {
         );
         noClasses()
             .that().resideInAPackage("..application..")
-            .and(DescribedPredicate.describe("excluding tests",
-                c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT")))
+            .and(excludeTests())
             .should().dependOnClassesThat(springExceptTransactions)
             .check(classes);
     }
 
     @Test
     void web_layer_should_not_instantiate_handler_implementations() {
-        // Controllers may import UseCase interfaces from application/port/in/
-        // and Commands from application/dto/, but must never depend on Handler implementations.
         noClasses()
             .that().resideInAPackage("..infrastructure.web..")
             .should().dependOnClassesThat()
@@ -114,111 +128,6 @@ class ArchRulesTest {
     }
 
     @Test
-    void mfa_domain_and_application_should_not_depend_on_authentication_or_identity() {
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.mfa.domain..")
-            .or().resideInAPackage("com.synapsys.api.mfa.application..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.authentication..",
-                "com.synapsys.api.identity..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void identity_domain_and_application_should_not_depend_on_authentication_or_mfa() {
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.identity.domain..")
-            .or().resideInAPackage("com.synapsys.api.identity.application..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.authentication..",
-                "com.synapsys.api.mfa..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void authentication_domain_and_application_should_not_depend_on_identity_or_mfa() {
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.authentication.domain..")
-            .or().resideInAPackage("com.synapsys.api.authentication.application..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.identity..",
-                "com.synapsys.api.mfa..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void global_infrastructure_should_not_depend_on_bc_infrastructure() {
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.infrastructure..")
-            .and(DescribedPredicate.describe("excluding tests and SecurityConfig",
-                c -> !c.getSimpleName().endsWith("Test")
-                  && !c.getSimpleName().endsWith("IT")
-                  && !c.getSimpleName().equals("SecurityConfig")))
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.authentication.infrastructure..",
-                "com.synapsys.api.identity.infrastructure..",
-                "com.synapsys.api.mfa.infrastructure..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void bc_infrastructure_should_not_depend_on_other_bc_infrastructure() {
-        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
-            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
-
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
-            .and(excludeTests)
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.identity.infrastructure..",
-                "com.synapsys.api.mfa.infrastructure..")
-            .allowEmptyShould(false)
-            .check(classes);
-
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
-            .and(excludeTests)
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.authentication.infrastructure..",
-                "com.synapsys.api.mfa.infrastructure..")
-            .allowEmptyShould(false)
-            .check(classes);
-
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.mfa.infrastructure..")
-            .and(excludeTests)
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.authentication.infrastructure..",
-                "com.synapsys.api.identity.infrastructure..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void authentication_infrastructure_should_not_depend_on_mfa_concrete_services() {
-        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
-            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
-            .and(excludeTests)
-            .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.mfa.application.service..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
     void outbound_adapters_should_implement_a_domain_port() {
         classes()
             .that().resideInAPackage("..infrastructure..")
@@ -232,70 +141,6 @@ class ArchRulesTest {
     }
 
     @Test
-    void identity_infrastructure_should_not_depend_on_authentication_application_handlers() {
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
-            .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.authentication.application.handler..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void identity_infrastructure_should_not_depend_on_authentication_domain() {
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
-            .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.authentication.domain..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-
-    @Test
-    void authentication_infrastructure_should_not_depend_on_mfa_application_except_dedicated_adapters() {
-        // TotpStatusAdapter and MfaTotpVerifierAdapter are the only accepted bridges from
-        // authentication.infra to mfa.application (port.in + dto). All other authentication
-        // infra classes must go through authentication's own domain ports.
-        // Note: getName() is used (not getSimpleName()) to also exclude synthetic switch-table
-        // inner classes like MfaTotpVerifierAdapter$1 generated by the JVM.
-        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
-            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
-        DescribedPredicate<JavaClass> excludeDedicatedAdapters = DescribedPredicate.describe(
-            "excluding TotpStatusAdapter and MfaTotpVerifierAdapter (and their synthetic inner classes)",
-            c -> !c.getName().contains("TotpStatusAdapter") && !c.getName().contains("MfaTotpVerifierAdapter"));
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
-            .and(excludeTests)
-            .and(excludeDedicatedAdapters)
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(
-                "com.synapsys.api.mfa.application.port.in..",
-                "com.synapsys.api.mfa.application.dto.."
-            )
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
-    void identity_infrastructure_should_not_depend_on_mfa_application_except_dedicated_adapters() {
-        // TotpRecordInitAdapter and MfaAdminResetTotpAdapter are the only accepted bridges from
-        // identity.infra to mfa.application (port.in). All other identity infra classes must not
-        // depend on mfa application layer without review.
-        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
-            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
-        noClasses()
-            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
-            .and(excludeTests)
-            .and().doNotHaveSimpleName("TotpRecordInitAdapter")
-            .and().doNotHaveSimpleName("MfaAdminResetTotpAdapter")
-            .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.mfa.application.port.in..")
-            .allowEmptyShould(false)
-            .check(classes);
-    }
-
-    @Test
     void configuration_classes_should_not_implement_domain_ports() {
         noClasses()
             .that().haveSimpleName("SynapsysProperties")
@@ -303,35 +148,185 @@ class ArchRulesTest {
             .check(classes);
     }
 
-    @Test
-    void identity_infrastructure_should_not_depend_on_authentication_application_ports_except_credentialSetupAdapter() {
-        // CredentialSetupAdapter bridges identity.infra → authentication.application.port.in.CredentialSetupUseCase.
-        // This cross-BC dependency on a stable port interface is accepted: identity needs to trigger
-        // credential creation without owning the authentication logic. No other identity infra class
-        // may take this same shortcut without review.
-        DescribedPredicate<JavaClass> excludeTests = DescribedPredicate.describe("excluding tests",
-            c -> !c.getSimpleName().endsWith("Test") && !c.getSimpleName().endsWith("IT"));
+    // -------------------------------------------------------------------------
+    // BC isolation — domain + application layer
+    // Each BC's domain and application must not depend on any other BC at all.
+    // -------------------------------------------------------------------------
+
+    @ParameterizedTest(name = "{0}: domain+application must not depend on other BCs")
+    @MethodSource("bcIsolationSource")
+    void each_bc_domain_and_application_should_not_depend_on_other_bcs(
+            String bc, String[] otherBcPackages) {
         noClasses()
-            .that().resideInAPackage("com.synapsys.api.identity.infrastructure..")
-            .and(excludeTests)
-            .and().doNotHaveSimpleName("CredentialSetupAdapter")
+            .that().resideInAPackage(BASE + bc + ".domain..")
+            .or().resideInAPackage(BASE + bc + ".application..")
             .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.authentication.application.port.in..")
+            .resideInAnyPackage(otherBcPackages)
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    static Stream<Arguments> bcIsolationSource() {
+        return BCS.stream().map(bc -> {
+            String[] others = BCS.stream()
+                .filter(b -> !b.equals(bc))
+                .map(b -> BASE + b + "..")
+                .toArray(String[]::new);
+            return Arguments.of(bc, others);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // BC isolation — infrastructure layer
+    // No BC's infra may depend on another BC's infra.
+    // -------------------------------------------------------------------------
+
+    @ParameterizedTest(name = "{0}: infrastructure must not depend on other BCs infrastructure")
+    @MethodSource("bcInfraIsolationSource")
+    void each_bc_infrastructure_should_not_depend_on_other_bc_infrastructure(
+            String bc, String[] otherBcInfraPackages) {
+        noClasses()
+            .that().resideInAPackage(BASE + bc + ".infrastructure..")
+            .and(excludeTests())
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(otherBcInfraPackages)
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    static Stream<Arguments> bcInfraIsolationSource() {
+        return BCS.stream().map(bc -> {
+            String[] others = BCS.stream()
+                .filter(b -> !b.equals(bc))
+                .map(b -> BASE + b + ".infrastructure..")
+                .toArray(String[]::new);
+            return Arguments.of(bc, others);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Global infra isolation
+    // -------------------------------------------------------------------------
+
+    @Test
+    void global_infrastructure_should_not_depend_on_bc_infrastructure() {
+        noClasses()
+            .that().resideInAPackage(BASE + "infrastructure..")
+            .and(DescribedPredicate.describe("excluding tests and SecurityConfig",
+                c -> !c.getSimpleName().endsWith("Test")
+                  && !c.getSimpleName().endsWith("IT")
+                  && !c.getSimpleName().equals("SecurityConfig")))
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(
+                BASE + "authentication.infrastructure..",
+                BASE + "identity.infrastructure..",
+                BASE + "mfa.infrastructure..")
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    // -------------------------------------------------------------------------
+    // Cross-BC application layer dependencies — whitelisted adapters only
+    //
+    // BC infra adapters may bridge to another BC's application layer ONLY when
+    // explicitly listed here. Any unlisted class touching a foreign application
+    // package will break the build.
+    //
+    // Uses getName() (not getSimpleName()) to also catch JVM-generated synthetic
+    // inner classes (e.g. MfaTotpVerifierAdapter$1 from switch expressions).
+    // -------------------------------------------------------------------------
+
+    /**
+     * Declares a permitted cross-BC infra → application dependency.
+     *
+     * @param sourceBc       the BC whose infrastructure contains the adapter
+     * @param targetPackages the foreign application package(s) the adapter may use
+     * @param allowedAdapters the adapter class names (and their synthetic inner classes) allowed
+     */
+    private record CrossBcAppDep(String sourceBc, String[] targetPackages, Set<String> allowedAdapters) {}
+
+    private static final List<CrossBcAppDep> CROSS_BC_APP_DEPS = List.of(
+        // authentication.infra → identity.application.port.in
+        new CrossBcAppDep("authentication",
+            new String[]{BASE + "identity.application.port.in.."},
+            Set.of("UserProfileAdapter")),
+
+        // authentication.infra → mfa.application (port.in + dto)
+        new CrossBcAppDep("authentication",
+            new String[]{BASE + "mfa.application.port.in..", BASE + "mfa.application.dto.."},
+            Set.of("TotpStatusAdapter", "MfaTotpVerifierAdapter")),
+
+        // identity.infra → authentication.application.port.in
+        new CrossBcAppDep("identity",
+            new String[]{BASE + "authentication.application.port.in.."},
+            Set.of("CredentialSetupAdapter")),
+
+        // identity.infra → mfa.application.port.in
+        new CrossBcAppDep("identity",
+            new String[]{BASE + "mfa.application.port.in.."},
+            Set.of("TotpRecordInitAdapter", "MfaAdminResetTotpAdapter"))
+    );
+
+    @ParameterizedTest(name = "{0}.infra → {1}: only whitelisted adapters allowed")
+    @MethodSource("crossBcAppDepSource")
+    void only_whitelisted_adapters_may_depend_on_other_bc_application_layer(
+            String sourceBc, String targetDesc, String[] targetPackages, Set<String> allowedAdapters) {
+        DescribedPredicate<JavaClass> excludeAllowed = DescribedPredicate.describe(
+            "excluding whitelisted adapters and their synthetic inner classes",
+            c -> allowedAdapters.stream().noneMatch(name -> c.getName().contains(name)));
+        noClasses()
+            .that().resideInAPackage(BASE + sourceBc + ".infrastructure..")
+            .and(excludeTests())
+            .and(excludeAllowed)
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(targetPackages)
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    static Stream<Arguments> crossBcAppDepSource() {
+        return CROSS_BC_APP_DEPS.stream().map(dep -> Arguments.of(
+            dep.sourceBc(),
+            String.join(", ", dep.targetPackages()),
+            dep.targetPackages(),
+            dep.allowedAdapters()
+        ));
+    }
+
+    // -------------------------------------------------------------------------
+    // Specific guards — kept explicit because they address known past violations
+    // or unique concerns not covered by the generic rules above.
+    // -------------------------------------------------------------------------
+
+    @Test
+    void authentication_infrastructure_should_not_depend_on_mfa_concrete_services() {
+        // Adapters may use mfa.application.port.in (interfaces) but never mfa.application.service
+        // (concrete implementations) — doing so would bypass the port abstraction entirely.
+        noClasses()
+            .that().resideInAPackage(BASE + "authentication.infrastructure..")
+            .and(excludeTests())
+            .should().dependOnClassesThat()
+            .resideInAPackage(BASE + "mfa.application.service..")
             .allowEmptyShould(false)
             .check(classes);
     }
 
     @Test
-    void authentication_infrastructure_should_not_depend_on_identity_application_ports_except_userProfileAdapter() {
-        // UserProfileAdapter bridges authentication.infra → identity.application.port.in.FindUserUseCase.
-        // This cross-BC read-only query dependency is accepted: authentication needs user profile
-        // data without duplicating the identity store. No other authentication infra class may
-        // take this same shortcut without review.
+    void identity_infrastructure_should_not_depend_on_authentication_application_handlers() {
         noClasses()
-            .that().resideInAPackage("com.synapsys.api.authentication.infrastructure..")
-            .and().doNotHaveSimpleName("UserProfileAdapter")
+            .that().resideInAPackage(BASE + "identity.infrastructure..")
             .should().dependOnClassesThat()
-            .resideInAPackage("com.synapsys.api.identity.application.port.in..")
+            .resideInAPackage(BASE + "authentication.application.handler..")
+            .allowEmptyShould(false)
+            .check(classes);
+    }
+
+    @Test
+    void identity_infrastructure_should_not_depend_on_authentication_domain() {
+        noClasses()
+            .that().resideInAPackage(BASE + "identity.infrastructure..")
+            .should().dependOnClassesThat()
+            .resideInAPackage(BASE + "authentication.domain..")
             .allowEmptyShould(false)
             .check(classes);
     }
