@@ -1,6 +1,6 @@
-export function parseRetryAfter(headers: Record<string, string> | undefined): number | null {
+export function parseRetryAfter(headers?: Record<string, unknown>): number | null {
   const value = headers?.['retry-after']
-  if (!value) return null
-  const parsed = parseInt(value, 10)
+  if (value == null || value === '') return null
+  const parsed = parseInt(String(value), 10)
   return Number.isFinite(parsed) ? parsed : null
 }
