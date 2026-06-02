@@ -2,11 +2,14 @@ package com.synapsys.api.authentication.domain.port.out;
 
 import java.util.UUID;
 
+import com.synapsys.api.authentication.domain.model.TotpVerificationResult;
+
 /**
  * Port inter-BC : authentication définit, mfa implémente via authentication.infrastructure.
  * Valide le code TOTP et le consomme atomiquement (anti-replay).
- * Retourne false si invalide, expiré, ou déjà utilisé. Ne propage jamais d'exception mfa.
+ * REPLAYED = code valide mais déjà utilisé (ne pas incrémenter les tentatives).
+ * INVALID = code incorrect ou profil introuvable.
  */
 public interface MfaTotpVerifierPort {
-    boolean verifyAndConsume(UUID userId, String code);
+    TotpVerificationResult verifyAndConsume(UUID userId, String code);
 }

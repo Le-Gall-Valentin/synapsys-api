@@ -1,6 +1,7 @@
 package com.synapsys.api.mfa.application.service;
 
 import com.synapsys.api.mfa.application.port.in.VerifyTotpCodeUseCase;
+import com.synapsys.api.mfa.application.dto.TotpCodeVerifyResult;
 import com.synapsys.api.mfa.domain.model.UserTotpProfile;
 import com.synapsys.api.mfa.domain.port.out.*;
 import com.synapsys.api.shared.annotation.ApplicationService;
@@ -22,13 +23,15 @@ public class TotpCodeVerificationService implements VerifyTotpCodeUseCase {
         this.codeReplay = codeReplay;
     }
 
-    public boolean verifyAndConsume(UUID userId, String code) {
+    public TotpCodeVerifyResult verifyAndConsume(UUID userId, String code) {
         Optional<UserTotpProfile> profileOpt = userTotpQuery.findById(userId);
-        if (profileOpt.isEmpty()) return false;
+        if (profileOpt.isEmpty()) return TotpCodeVerifyResult.INVALID;
         UserTotpProfile profile = profileOpt.get();
-        if (!profile.totpEnabled()) return false;
-        if (profile.totpSecret().isEmpty()) return false;
-        if (!codeValidator.isValid(profile.totpSecret().get(), code)) return false;
-        return codeReplay.markCodeUsedIfAbsent(userId, code);
+        if (!profile.totpEnabled()) return TotpCodeVerifyResult.INVALID;
+        if (profile.totpSecret().isEmpty()) return TotpCodeVerifyResult.INVALID;
+        if (!codeValidator.isValid(profile.totpSecret().get(), code)) return TotpCodeVerifyResult.INVALID;
+        return codeReplay.markCodeUsedIfAbsent(userId, code)
+            ? TotpCodeVerifyResult.SUCCESS
+            : TotpCodeVerifyResult.REPLAYED;
     }
 }

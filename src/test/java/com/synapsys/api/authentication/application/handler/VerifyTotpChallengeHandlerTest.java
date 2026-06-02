@@ -48,7 +48,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_validChallenge_validCode_returnsSuccess() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(true);
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(TotpVerificationResult.SUCCESS);
         when(accessTokenPort.generate(creds)).thenReturn("jwt-token");
         when(refreshTokenPort.generate(eq(creds), anyInt())).thenReturn("refresh-token");
 
@@ -63,7 +63,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_validChallenge_validCode_invalidatesChallenge() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(true);
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(TotpVerificationResult.SUCCESS);
         when(accessTokenPort.generate(any())).thenReturn("jwt");
         when(refreshTokenPort.generate(any(), anyInt())).thenReturn("refresh");
 
@@ -84,7 +84,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_throwsTotpCodeInvalid() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(TotpVerificationResult.INVALID);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(1);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
@@ -115,7 +115,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_incrementsAttempts() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(TotpVerificationResult.INVALID);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(1);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
@@ -128,7 +128,7 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_atMaxAttempts_throwsTotpMaxAttemptsExceededAndInvalidates() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(TotpVerificationResult.INVALID);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(5);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
@@ -143,7 +143,7 @@ class VerifyTotpChallengeHandlerTest {
         // the challenge is consumed (accepted trade-off: user must re-login from scratch)
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(true);
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(TotpVerificationResult.SUCCESS);
         when(accessTokenPort.generate(creds)).thenReturn("jwt");
         when(refreshTokenPort.generate(eq(creds), anyInt())).thenThrow(new RuntimeException("DB error"));
 
@@ -157,10 +157,34 @@ class VerifyTotpChallengeHandlerTest {
     void verify_invalidCode_belowMaxAttempts_doesNotInvalidateChallenge() {
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
-        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(false);
+        when(mfaVerifier.verifyAndConsume(userId, "000000")).thenReturn(TotpVerificationResult.INVALID);
         when(challengeStore.incrementFailedAttempts("challenge-id")).thenReturn(4);
 
         assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "000000")))
+            .isInstanceOf(AuthenticationException.TotpCodeInvalid.class);
+
+        verify(challengeStore, never()).invalidateChallenge(any());
+    }
+
+    @Test
+    void verify_replayedCode_doesNotIncrementFailedAttempts() {
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(TotpVerificationResult.REPLAYED);
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
+            .isInstanceOf(AuthenticationException.TotpCodeInvalid.class);
+
+        verify(challengeStore, never()).incrementFailedAttempts(any());
+    }
+
+    @Test
+    void verify_replayedCode_doesNotInvalidateChallenge() {
+        when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
+        when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
+        when(mfaVerifier.verifyAndConsume(userId, "123456")).thenReturn(TotpVerificationResult.REPLAYED);
+
+        assertThatThrownBy(() -> handler.verify(new VerifyTotpChallengeCommand("challenge-id", "123456")))
             .isInstanceOf(AuthenticationException.TotpCodeInvalid.class);
 
         verify(challengeStore, never()).invalidateChallenge(any());

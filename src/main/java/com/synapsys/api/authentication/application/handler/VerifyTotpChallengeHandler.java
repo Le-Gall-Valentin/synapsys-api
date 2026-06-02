@@ -49,13 +49,17 @@ public class VerifyTotpChallengeHandler implements VerifyTotpChallengeUseCase {
 
         if (!creds.isActive()) throw new AuthenticationException.UserNotActive();
 
-        if (!mfaVerifier.verifyAndConsume(userId, command.code())) {
-            int attempts = challengeStore.incrementFailedAttempts(command.challengeId());
-            if (attempts >= MAX_FAILED_ATTEMPTS) {
-                challengeStore.invalidateChallenge(command.challengeId());
-                throw new AuthenticationException.TotpMaxAttemptsExceeded();
+        switch (mfaVerifier.verifyAndConsume(userId, command.code())) {
+            case REPLAYED -> throw new AuthenticationException.TotpCodeInvalid();
+            case INVALID -> {
+                int attempts = challengeStore.incrementFailedAttempts(command.challengeId());
+                if (attempts >= MAX_FAILED_ATTEMPTS) {
+                    challengeStore.invalidateChallenge(command.challengeId());
+                    throw new AuthenticationException.TotpMaxAttemptsExceeded();
+                }
+                throw new AuthenticationException.TotpCodeInvalid();
             }
-            throw new AuthenticationException.TotpCodeInvalid();
+            case SUCCESS -> {}
         }
 
         challengeStore.invalidateChallenge(command.challengeId());
