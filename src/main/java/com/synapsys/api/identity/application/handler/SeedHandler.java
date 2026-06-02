@@ -39,10 +39,10 @@ public class SeedHandler implements SeedUseCase {
             log.info("Database already has users, skipping seed");
             return;
         }
-        java.util.UUID userId = userCommandPort.createProfile(
+        var user = userCommandPort.createProfile(
             new CreateUserProfileCommand(username, email, Role.SUPER_ADMIN));
-        credentialSetupPort.setup(userId, password);
-        totpRecordInitPort.initForUser(userId);
+        credentialSetupPort.setup(user.id(), password);
+        totpRecordInitPort.initForUser(user.id());
         log.info("Default SUPER_ADMIN '{}' created", username);
     }
 }

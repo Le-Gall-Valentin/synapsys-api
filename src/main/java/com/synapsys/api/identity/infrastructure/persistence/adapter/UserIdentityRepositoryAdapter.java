@@ -45,13 +45,13 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     }
 
     @Override
-    public UUID createProfile(CreateUserProfileCommand command) {
+    public User createProfile(CreateUserProfileCommand command) {
         try {
             UserIdentityEntity e = new UserIdentityEntity();
             e.setUsername(command.username());
             e.setEmail(command.email());
             e.setRole(command.role());
-            return jpa.saveAndFlush(e).getId();
+            return toDomain(jpa.saveAndFlush(e));
         } catch (DataIntegrityViolationException ex) {
             throw resolveConstraintViolation(ex);
         }

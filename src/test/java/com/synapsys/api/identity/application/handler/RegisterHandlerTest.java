@@ -7,7 +7,6 @@ import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.CredentialSetupPort;
 import com.synapsys.api.identity.domain.port.out.TotpRecordInitPort;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
-import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,13 +15,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -30,7 +26,6 @@ import static org.mockito.Mockito.*;
 class RegisterHandlerTest {
 
     @Mock UserCommandPort userCommandPort;
-    @Mock UserRepository userRepository;
     @Mock CredentialSetupPort credentialSetupPort;
     @Mock TotpRecordInitPort totpRecordInitPort;
 
@@ -38,29 +33,25 @@ class RegisterHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new RegisterHandler(userCommandPort, userRepository, credentialSetupPort, totpRecordInitPort);
+        handler = new RegisterHandler(userCommandPort, credentialSetupPort, totpRecordInitPort);
     }
 
     @Test
     void register_superAdmin_can_create_admin() {
-        UUID userId = UUID.randomUUID();
-        User created = user(userId, "newadmin", Role.ADMIN);
-        when(userCommandPort.createProfile(any(CreateUserProfileCommand.class))).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(created));
+        User created = user(UUID.randomUUID(), "newadmin", Role.ADMIN);
+        when(userCommandPort.createProfile(any(CreateUserProfileCommand.class))).thenReturn(created);
 
         User result = handler.register(cmd("newadmin", Role.ADMIN), Role.SUPER_ADMIN);
 
         assertThat(result.role()).isEqualTo(Role.ADMIN);
-        verify(credentialSetupPort).setup(userId, "pass");
-        verify(totpRecordInitPort).initForUser(userId);
+        verify(credentialSetupPort).setup(created.id(), "pass");
+        verify(totpRecordInitPort).initForUser(created.id());
     }
 
     @Test
     void register_superAdmin_can_create_user() {
-        UUID userId = UUID.randomUUID();
-        User created = user(userId, "newuser", Role.USER);
-        when(userCommandPort.createProfile(any())).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(created));
+        User created = user(UUID.randomUUID(), "newuser", Role.USER);
+        when(userCommandPort.createProfile(any())).thenReturn(created);
 
         User result = handler.register(cmd("newuser", Role.USER), Role.SUPER_ADMIN);
 
@@ -83,15 +74,13 @@ class RegisterHandlerTest {
 
     @Test
     void register_admin_can_create_user() {
-        UUID userId = UUID.randomUUID();
-        User created = user(userId, "newuser", Role.USER);
-        when(userCommandPort.createProfile(any(CreateUserProfileCommand.class))).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(created));
+        User created = user(UUID.randomUUID(), "newuser", Role.USER);
+        when(userCommandPort.createProfile(any(CreateUserProfileCommand.class))).thenReturn(created);
 
         User result = handler.register(cmd("newuser", Role.USER), Role.ADMIN);
 
         assertThat(result.role()).isEqualTo(Role.USER);
-        verify(credentialSetupPort).setup(userId, "pass");
+        verify(credentialSetupPort).setup(created.id(), "pass");
     }
 
     @Test
@@ -104,10 +93,10 @@ class RegisterHandlerTest {
 
     @Test
     void register_totpInitFails_propagatesException() {
-        UUID userId = UUID.randomUUID();
-        when(userCommandPort.createProfile(any())).thenReturn(userId);
+        User created = user(UUID.randomUUID(), "newuser", Role.USER);
+        when(userCommandPort.createProfile(any())).thenReturn(created);
         doThrow(new RuntimeException("totp store unavailable"))
-            .when(totpRecordInitPort).initForUser(userId);
+            .when(totpRecordInitPort).initForUser(created.id());
 
         assertThatThrownBy(() -> handler.register(cmd("newuser", Role.USER), Role.SUPER_ADMIN))
             .isInstanceOf(RuntimeException.class)
@@ -116,10 +105,10 @@ class RegisterHandlerTest {
 
     @Test
     void register_credentialSetupFails_propagatesException() {
-        UUID userId = UUID.randomUUID();
-        when(userCommandPort.createProfile(any())).thenReturn(userId);
+        User created = user(UUID.randomUUID(), "newuser", Role.USER);
+        when(userCommandPort.createProfile(any())).thenReturn(created);
         doThrow(new RuntimeException("credential store unavailable"))
-            .when(credentialSetupPort).setup(userId, "pass");
+            .when(credentialSetupPort).setup(created.id(), "pass");
 
         assertThatThrownBy(() -> handler.register(cmd("newuser", Role.USER), Role.SUPER_ADMIN))
             .isInstanceOf(RuntimeException.class)

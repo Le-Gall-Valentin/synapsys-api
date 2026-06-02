@@ -4,6 +4,10 @@ import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.encrypt.Encryptors;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
+
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class TotpEncryptionConfig {
@@ -19,9 +23,8 @@ public class TotpEncryptionConfig {
     // There is no in-place re-encryption path because the old ciphertext requires the old key.
     @Bean
     TotpEncryptorFactory totpEncryptorFactory(SynapsysProperties properties) {
-        return userId -> Encryptors.delux(
-            properties.encryption().secret(),
-            userId.toString().replace("-", "")
-        );
+        ConcurrentHashMap<UUID, TextEncryptor> cache = new ConcurrentHashMap<>();
+        return userId -> cache.computeIfAbsent(userId, id ->
+            Encryptors.delux(properties.encryption().secret(), id.toString().replace("-", "")));
     }
 }

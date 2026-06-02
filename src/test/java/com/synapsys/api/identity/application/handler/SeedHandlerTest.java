@@ -1,6 +1,7 @@
 package com.synapsys.api.identity.application.handler;
 
 import com.synapsys.api.identity.domain.model.IdentityException;
+import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.CredentialSetupPort;
 import com.synapsys.api.identity.domain.port.out.TotpRecordInitPort;
 import com.synapsys.api.identity.domain.port.out.UserAdminPort;
@@ -12,9 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -38,12 +39,13 @@ class SeedHandlerTest {
     @Test
     void seedInitialSuperAdmin_emptyDatabase_createsUser() {
         UUID userId = UUID.randomUUID();
+        User created = new User(userId, "admin", "admin@test.com", Role.SUPER_ADMIN, true, Instant.now());
         when(userAdminPort.isEmpty()).thenReturn(true);
         when(userCommandPort.createProfile(argThat(cmd ->
             cmd.username().equals("admin") &&
             cmd.email().equals("admin@test.com") &&
             cmd.role() == Role.SUPER_ADMIN
-        ))).thenReturn(userId);
+        ))).thenReturn(created);
 
         handler.seedInitialSuperAdmin("admin", "admin@test.com", "secret");
 
@@ -74,9 +76,10 @@ class SeedHandlerTest {
 
     @Test
     void seedInitialSuperAdmin_infraFailure_propagatesException() {
-        when(userAdminPort.isEmpty()).thenReturn(true);
         UUID userId = UUID.randomUUID();
-        when(userCommandPort.createProfile(any())).thenReturn(userId);
+        User created = new User(userId, "admin", "admin@test.com", Role.SUPER_ADMIN, true, Instant.now());
+        when(userAdminPort.isEmpty()).thenReturn(true);
+        when(userCommandPort.createProfile(any())).thenReturn(created);
         doThrow(new RuntimeException("DB unavailable")).when(credentialSetupPort).setup(userId, "secret");
 
         assertThatThrownBy(() ->
