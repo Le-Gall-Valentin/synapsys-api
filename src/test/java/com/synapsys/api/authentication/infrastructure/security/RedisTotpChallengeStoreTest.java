@@ -1,5 +1,6 @@
 package com.synapsys.api.authentication.infrastructure.security;
 
+import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,11 +29,13 @@ class RedisTotpChallengeStoreTest {
     @BeforeEach
     void setUp() {
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        store = new RedisTotpChallengeStore(redisTemplate);
+        var properties = new SynapsysProperties(null, null, null, null, null, null, null,
+            new SynapsysProperties.SecurityProperties(20));
+        store = new RedisTotpChallengeStore(redisTemplate, properties);
     }
 
     @Test
-    void createChallenge_storesUserIdWithTtl_andReturnsUuid() {
+    void createChallenge_storesUserIdWithConfiguredTtl_andReturnsUuid() {
         String challengeId = store.createChallenge(userId);
 
         assertThat(challengeId).isNotBlank();
@@ -40,7 +43,7 @@ class RedisTotpChallengeStoreTest {
         verify(valueOps).set(
             eq("totp:challenge:" + challengeId),
             eq(userId.toString()),
-            eq(Duration.ofMinutes(15))
+            eq(Duration.ofMinutes(20))
         );
     }
 
@@ -84,7 +87,7 @@ class RedisTotpChallengeStoreTest {
         assertThat(count).isEqualTo(1);
         verify(redisTemplate).expire(
             eq("totp:attempts:" + challengeId),
-            eq(Duration.ofMinutes(15))
+            eq(Duration.ofMinutes(20))
         );
     }
 
@@ -98,6 +101,6 @@ class RedisTotpChallengeStoreTest {
         int count = store.incrementFailedAttempts(challengeId);
 
         assertThat(count).isEqualTo(3);
-        verify(redisTemplate).expire(eq("totp:attempts:" + challengeId), eq(Duration.ofMinutes(15)));
+        verify(redisTemplate).expire(eq("totp:attempts:" + challengeId), eq(Duration.ofMinutes(20)));
     }
 }

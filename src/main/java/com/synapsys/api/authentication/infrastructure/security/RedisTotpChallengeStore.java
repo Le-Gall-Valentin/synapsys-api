@@ -1,6 +1,7 @@
 package com.synapsys.api.authentication.infrastructure.security;
 
 import com.synapsys.api.authentication.domain.port.out.TotpChallengeStorePort;
+import com.synapsys.api.infrastructure.config.SynapsysProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,18 +13,20 @@ import java.util.UUID;
 public class RedisTotpChallengeStore implements TotpChallengeStorePort {
 
     private static final String CHALLENGE_PREFIX = "totp:challenge:";
-    private static final Duration CHALLENGE_TTL = Duration.ofMinutes(15);
 
     private final StringRedisTemplate redisTemplate;
+    private final Duration challengeTtl;
 
-    public RedisTotpChallengeStore(StringRedisTemplate redisTemplate) {
+    public RedisTotpChallengeStore(StringRedisTemplate redisTemplate, SynapsysProperties properties) {
         this.redisTemplate = redisTemplate;
+        int ttlMinutes = properties.security() != null ? properties.security().challengeTtlMinutes() : 15;
+        this.challengeTtl = Duration.ofMinutes(ttlMinutes);
     }
 
     @Override
     public String createChallenge(UUID userId) {
         String challengeId = UUID.randomUUID().toString();
-        redisTemplate.opsForValue().set(CHALLENGE_PREFIX + challengeId, userId.toString(), CHALLENGE_TTL);
+        redisTemplate.opsForValue().set(CHALLENGE_PREFIX + challengeId, userId.toString(), challengeTtl);
         return challengeId;
     }
 
@@ -47,7 +50,7 @@ public class RedisTotpChallengeStore implements TotpChallengeStorePort {
         long attempts = count != null ? count : 1L;
         // expire() is called unconditionally to avoid the non-atomic increment+expire window:
         // if the process crashes after increment but before expire, the key would leak forever.
-        redisTemplate.expire(key, CHALLENGE_TTL);
+        redisTemplate.expire(key, challengeTtl);
         return (int) attempts;
     }
 }

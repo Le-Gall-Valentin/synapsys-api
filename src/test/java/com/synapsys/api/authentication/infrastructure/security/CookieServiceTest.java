@@ -25,7 +25,8 @@ class CookieServiceTest {
             null,
             new SynapsysProperties.CorsProperties(List.of()),
             new SynapsysProperties.RateLimitProperties(List.of()),
-            new SynapsysProperties.EncryptionProperties("test-enc-secret")
+            new SynapsysProperties.EncryptionProperties("test-enc-secret"),
+            null
         );
         cookieService = new CookieService(properties);
     }

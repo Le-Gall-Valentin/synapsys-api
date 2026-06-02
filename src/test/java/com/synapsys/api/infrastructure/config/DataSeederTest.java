@@ -74,7 +74,8 @@ class DataSeederTest {
             new SynapsysProperties.SeedProperties("user", "user@test.com", password),
             new SynapsysProperties.CorsProperties(List.of()),
             new SynapsysProperties.RateLimitProperties(List.of()),
-            new SynapsysProperties.EncryptionProperties("test-enc-secret")
+            new SynapsysProperties.EncryptionProperties("test-enc-secret"),
+            null
         );
     }
 }

@@ -21,7 +21,8 @@ class TotpEncryptionConfigTest {
             null,
             new SynapsysProperties.CorsProperties(List.of()),
             new SynapsysProperties.RateLimitProperties(List.of()),
-            new SynapsysProperties.EncryptionProperties(encSecret)
+            new SynapsysProperties.EncryptionProperties(encSecret),
+            null
         );
     }
 

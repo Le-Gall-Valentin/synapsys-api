@@ -39,7 +39,7 @@ public class UserCredentialsRepositoryAdapter implements UserCredentialsPort {
     private Optional<UserCredentials> resolveCredentials(UserProfile profile) {
         var cred = credentialRepo.findById(profile.id());
         if (cred.isEmpty()) {
-            log.error("Data integrity: profile {} has no credentials", profile.id());
+            log.error("Data integrity: profile {} ({}) has no credentials", profile.id(), profile.username());
         }
         return cred.map(c -> toUserCredentials(profile, c.getPasswordHash()));
     }

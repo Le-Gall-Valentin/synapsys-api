@@ -126,7 +126,7 @@ class UserCredentialsRepositoryAdapterTest {
     }
 
     @Test
-    void findByUsername_profileFoundButNoCredentials_logsError() {
+    void findByUsername_profileFoundButNoCredentials_logsErrorWithUsernameAndId() {
         when(userProfilePort.findByUsername("alice")).thenReturn(Optional.of(userProfile));
         when(credentialRepo.findById(userId)).thenReturn(Optional.empty());
 
@@ -134,7 +134,8 @@ class UserCredentialsRepositoryAdapterTest {
 
         boolean errorLogged = logAppender.list.stream()
             .anyMatch(e -> e.getLevel() == Level.ERROR
-                && e.getFormattedMessage().contains(userId.toString()));
+                && e.getFormattedMessage().contains(userId.toString())
+                && e.getFormattedMessage().contains("alice"));
         assertThat(errorLogged).isTrue();
     }
 
