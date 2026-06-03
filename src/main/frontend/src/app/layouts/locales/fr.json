@@ -1,0 +1,53 @@
+{
+  "brand": "SynapSys",
+  "nav": {
+    "section": {
+      "workspace": "Espace de travail",
+      "admin": "Administration"
+    },
+    "dashboard": "Tableau de bord",
+    "applications": "Applications",
+    "executions": "Exécutions",
+    "users": "Utilisateurs",
+    "agents": "Serveurs",
+    "tokens": "Tokens d'enrôlement",
+    "permissions": "Permissions",
+    "account": "Mon compte"
+  },
+  "topbar": {
+    "menu_label": "Ouvrir le menu",
+    "search_label": "Rechercher",
+    "search_placeholder": "Rechercher…",
+    "refresh_label": "Actualiser"
+  },
+  "palette": {
+    "placeholder": "Rechercher une page…",
+    "escape_hint": "Échap",
+    "navigate_hint": "Naviguer",
+    "open_hint": "Ouvrir",
+    "no_results": "Aucun résultat pour « {{query}} »",
+    "results_one": "{{count}} résultat",
+    "results_other": "{{count}} résultats",
+    "type_page": "Page"
+  },
+  "breadcrumb": {
+    "workspace": "Espace de travail",
+    "administration": "Administration",
+    "dashboard": "Tableau de bord",
+    "applications": "Applications",
+    "executions": "Exécutions",
+    "permissions": "Permissions",
+    "account": "Mon compte",
+    "admin_users": "Utilisateurs",
+    "admin_agents": "Serveurs",
+    "admin_tokens": "Tokens d'enrôlement"
+  },
+  "user": {
+    "role": {
+      "SUPER_ADMIN": "Super admin",
+      "ADMIN": "Admin",
+      "USER": "Utilisateur"
+    }
+  },
+  "loader": "Chargement…"
+}

@@ -1,0 +1,53 @@
+{
+  "brand": "SynapSys",
+  "nav": {
+    "section": {
+      "workspace": "Workspace",
+      "admin": "Administration"
+    },
+    "dashboard": "Dashboard",
+    "applications": "Applications",
+    "executions": "Executions",
+    "users": "Users",
+    "agents": "Servers",
+    "tokens": "Enrollment tokens",
+    "permissions": "Permissions",
+    "account": "My account"
+  },
+  "topbar": {
+    "menu_label": "Open menu",
+    "search_label": "Search",
+    "search_placeholder": "Search…",
+    "refresh_label": "Refresh"
+  },
+  "palette": {
+    "placeholder": "Search for a page…",
+    "escape_hint": "Esc",
+    "navigate_hint": "Navigate",
+    "open_hint": "Open",
+    "no_results": "No results for « {{query}} »",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "type_page": "Page"
+  },
+  "breadcrumb": {
+    "workspace": "Workspace",
+    "administration": "Administration",
+    "dashboard": "Dashboard",
+    "applications": "Applications",
+    "executions": "Executions",
+    "permissions": "Permissions",
+    "account": "My account",
+    "admin_users": "Users",
+    "admin_agents": "Servers",
+    "admin_tokens": "Enrollment tokens"
+  },
+  "user": {
+    "role": {
+      "SUPER_ADMIN": "Super admin",
+      "ADMIN": "Admin",
+      "USER": "User"
+    }
+  },
+  "loader": "Loading…"
+}
