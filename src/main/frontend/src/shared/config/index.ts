@@ -1,2 +1,3 @@
+import './locales'
 export { ROUTES } from './routes'
-export { commonTranslations } from './locales'
+export { toApplicationDetail, toApplicationPermissions, toRoutineDetail, toExecutionDetail } from './routes'
