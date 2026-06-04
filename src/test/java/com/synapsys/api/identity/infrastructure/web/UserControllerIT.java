@@ -134,7 +134,9 @@ class UserControllerIT {
 
         mockMvc.perform(get("/api/users/me").cookie(access))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.totpEnabled").value(true));
+            .andExpect(jsonPath("$.totpEnabled").value(true))
+            .andExpect(jsonPath("$.username").value("totpuser"))
+            .andExpect(jsonPath("$.email").value("totpuser@test.com"));
     }
 
     @Test
@@ -161,7 +163,10 @@ class UserControllerIT {
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", org.hamcrest.Matchers.matchesPattern("/api/users/[0-9a-f-]+")))
             .andExpect(jsonPath("$.username").value("newuser"))
-            .andExpect(jsonPath("$.role").value("USER"));
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.email").value("newuser@test.com"))
+            .andExpect(jsonPath("$.totpEnabled").value(false))
+            .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
 
     @Test
