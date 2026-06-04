@@ -16,6 +16,7 @@ export interface AuthActions {
   logout: () => Promise<void>
   initialize: (signal?: AbortSignal) => Promise<void>
   finalizeLogin: (user: User) => void
+  patchUser: (partial: Partial<User>) => void
 }
 
 export function createAuthStore(api: IAuthApi) {
@@ -39,6 +40,12 @@ export function createAuthStore(api: IAuthApi) {
       notifyLoginSuccess()
       setSessionHint()
       set({ user })
+    },
+
+    patchUser(partial: Partial<User>): void {
+      set(state => ({
+        user: state.user ? { ...state.user, ...partial } : null,
+      }))
     },
 
     async logout(): Promise<void> {
