@@ -46,7 +46,8 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserInfoResponse> me(@CurrentUser AuthenticatedUser caller) {
         UserSelfView view = getCurrentUserUseCase.getCurrentUser(caller.userId());
-        return ResponseEntity.ok(new UserInfoResponse(view.id(), view.username(), view.role()));
+        return ResponseEntity.ok(new UserInfoResponse(
+            view.id(), view.username(), view.email(), view.role(), view.createdAt(), view.totpEnabled()));
     }
 
     @PostMapping
@@ -59,7 +60,8 @@ public class UserController {
             caller.role()
         );
         URI location = URI.create("/api/users/" + user.id());
-        return ResponseEntity.created(location).body(new UserInfoResponse(user.id(), user.username(), user.role()));
+        return ResponseEntity.created(location).body(new UserInfoResponse(
+            user.id(), user.username(), user.email(), user.role(), user.createdAt(), false));
     }
 
     @DeleteMapping("/{id}")

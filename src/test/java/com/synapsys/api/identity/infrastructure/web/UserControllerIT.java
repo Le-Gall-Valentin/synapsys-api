@@ -5,6 +5,8 @@ import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCre
 import com.synapsys.api.authentication.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
 import com.synapsys.api.authentication.infrastructure.web.dto.LoginRequest;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import com.synapsys.api.identity.infrastructure.persistence.entity.UserIdentityEntity;
 import com.synapsys.api.identity.infrastructure.persistence.repository.UserIdentityJpaRepository;
 import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
@@ -29,6 +31,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -103,7 +108,33 @@ class UserControllerIT {
         mockMvc.perform(get("/api/users/me").cookie(access))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.username").value("testuser"))
-            .andExpect(jsonPath("$.role").value("USER"));
+            .andExpect(jsonPath("$.email").value("testuser@test.com"))
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.createdAt").isNotEmpty())
+            .andExpect(jsonPath("$.totpEnabled").value(false));
+    }
+
+    @Test
+    void me_withTotpEnabled_returnsTotpEnabledTrue() throws Exception {
+        UserIdentityEntity totpUser = userIdentityJpaRepository.findByUsername("totpuser").get();
+        // Build a valid access token directly — loginAs would be blocked by TOTP challenge
+        Instant now = Instant.now();
+        String token = Jwts.builder()
+            .issuer("synapsys-api")
+            .audience().add("synapsys-api").and()
+            .subject(totpUser.getId().toString())
+            .claim("role", totpUser.getRole().name())
+            .claim("email", totpUser.getEmail())
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(now.plusSeconds(15 * 60L)))
+            .signWith(Keys.hmacShaKeyFor(
+                "integration-test-secret-at-least-32-chars!".getBytes(StandardCharsets.UTF_8)))
+            .compact();
+        Cookie access = new Cookie("access_token", token);
+
+        mockMvc.perform(get("/api/users/me").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totpEnabled").value(true));
     }
 
     @Test
