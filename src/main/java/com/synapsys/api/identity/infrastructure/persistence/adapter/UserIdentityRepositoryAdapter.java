@@ -65,7 +65,11 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
 
     @Override
     public void updateProfile(UpdateProfileCommand command) {
-        throw new UnsupportedOperationException("updateProfile: implemented in Task 4");
+        try {
+            jpa.updateProfile(command.userId(), command.username(), command.email());
+        } catch (DataIntegrityViolationException ex) {
+            throw resolveConstraintViolation(ex);
+        }
     }
 
     private IdentityException resolveConstraintViolation(DataIntegrityViolationException e) {

@@ -18,4 +18,11 @@ public interface UserIdentityJpaRepository extends JpaRepository<UserIdentityEnt
     @Transactional
     @Query("UPDATE UserIdentityEntity u SET u.active = false WHERE u.id = :id")
     void deactivateById(@Param("id") UUID id);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("UPDATE UserIdentityEntity u SET u.username = :username, u.email = :email WHERE u.id = :id")
+    void updateProfile(@Param("id") UUID id,
+                       @Param("username") String username,
+                       @Param("email") String email);
 }

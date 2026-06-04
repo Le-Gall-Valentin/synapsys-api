@@ -36,8 +36,10 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -303,6 +305,60 @@ class UserControllerIT {
 
         mockMvc.perform(post("/api/users/" + UUID.randomUUID() + "/2fa/reset").cookie(access))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateProfile_authenticated_updatesUsernameAndEmail_returns204() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"updated\",\"email\":\"updated@test.com\"}"))
+            .andExpect(status().isNoContent());
+
+        assertThat(userIdentityJpaRepository.findByUsername("updated")).isPresent();
+    }
+
+    @Test
+    void updateProfile_duplicateUsername_returns409() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"superadmin\",\"email\":\"unique@test.com\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateProfile_duplicateEmail_returns409() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"uniqueuser\",\"email\":\"superadmin@test.com\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateProfile_invalidUsername_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"ab\",\"email\":\"ok@test.com\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateProfile_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(patch("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"x\",\"email\":\"x@test.com\"}"))
+            .andExpect(status().isUnauthorized());
     }
 
     private void saveCredential(UUID userId, String rawPassword) {

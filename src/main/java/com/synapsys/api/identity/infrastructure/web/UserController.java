@@ -6,12 +6,15 @@ import com.synapsys.api.shared.security.CurrentUser;
 import com.synapsys.api.identity.application.port.in.DeactivateUserUseCase;
 import com.synapsys.api.identity.application.port.in.GetCurrentUserUseCase;
 import com.synapsys.api.identity.application.port.in.RegisterUseCase;
+import com.synapsys.api.identity.application.port.in.UpdateMyProfileUseCase;
 import com.synapsys.api.identity.domain.model.AdminResetTotpCommand;
 import com.synapsys.api.identity.domain.model.DeactivateUserCommand;
 import com.synapsys.api.identity.domain.model.RegisterCommand;
+import com.synapsys.api.identity.domain.model.UpdateProfileCommand;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.model.UserSelfView;
 import com.synapsys.api.identity.infrastructure.web.dto.RegisterRequest;
+import com.synapsys.api.identity.infrastructure.web.dto.UpdateProfileRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.UserInfoResponse;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.validation.Valid;
@@ -30,15 +33,18 @@ public class UserController {
     private final RegisterUseCase registerUseCase;
     private final DeactivateUserUseCase deactivateUserUseCase;
     private final AdminResetTotpUseCase adminResetTotpUseCase;
+    private final UpdateMyProfileUseCase updateMyProfileUseCase;
 
     public UserController(GetCurrentUserUseCase getCurrentUserUseCase,
                           RegisterUseCase registerUseCase,
                           DeactivateUserUseCase deactivateUserUseCase,
-                          AdminResetTotpUseCase adminResetTotpUseCase) {
+                          AdminResetTotpUseCase adminResetTotpUseCase,
+                          UpdateMyProfileUseCase updateMyProfileUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.registerUseCase = registerUseCase;
         this.deactivateUserUseCase = deactivateUserUseCase;
         this.adminResetTotpUseCase = adminResetTotpUseCase;
+        this.updateMyProfileUseCase = updateMyProfileUseCase;
     }
 
     @GetMapping("/me")
@@ -79,6 +85,16 @@ public class UserController {
     public ResponseEntity<Void> resetTotp(@PathVariable UUID id,
                                           @CurrentUser AuthenticatedUser caller) {
         adminResetTotpUseCase.reset(new AdminResetTotpCommand(id, caller.userId(), caller.role()));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me")
+    @RateLimiting(max = 20)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
+                                              @CurrentUser AuthenticatedUser caller) {
+        updateMyProfileUseCase.updateProfile(
+            new UpdateProfileCommand(caller.userId(), request.username(), request.email()));
         return ResponseEntity.noContent().build();
     }
 }
