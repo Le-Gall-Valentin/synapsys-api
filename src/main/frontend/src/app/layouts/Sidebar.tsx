@@ -17,10 +17,10 @@ interface NavItemProps {
   to: string
   icon: LucideIcon
   label: string
+  pathname: string
 }
 
-function NavItem({ to, icon: Icon, label }: NavItemProps) {
-  const { pathname } = useLocation()
+function NavItem({ to, icon: Icon, label, pathname }: NavItemProps) {
   const active = pathname === to || (to !== ROUTES.DASHBOARD && pathname.startsWith(to))
 
   return (
@@ -88,7 +88,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       >
         <div
           className="grid size-[26px] shrink-0 place-items-center rounded-[7px] font-mono text-sm font-bold text-bg-0"
-          style={{ background: 'linear-gradient(135deg, var(--color-accent), #38bdf8)' }}
+          style={{ background: USER_GRADIENT }}
         >
           S
         </div>
@@ -103,7 +103,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               {t(section.titleKey)}
             </div>
             {section.items.map((item) => (
-              <NavItem key={item.to} to={item.to} icon={item.icon} label={t(item.labelKey)} />
+              <NavItem key={item.to} to={item.to} icon={item.icon} label={t(item.labelKey)} pathname={pathname} />
             ))}
           </div>
         ))}

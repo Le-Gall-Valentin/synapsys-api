@@ -22,9 +22,6 @@ export const ROUTES = {
 
   // Account
   ACCOUNT: '/account',
-
-  // Legacy redirect
-  PROFILE: '/profile',
 } as const
 
 export const ROUTE_SEGMENTS = {

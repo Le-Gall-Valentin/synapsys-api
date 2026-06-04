@@ -59,6 +59,7 @@ export function createAuthStore(api: IAuthApi) {
 
       if (!hasSessionHint()) {
         if (!signal?.aborted) set({ isInitializing: false })
+        initializationStarted = false
         return
       }
       try {
@@ -70,6 +71,9 @@ export function createAuthStore(api: IAuthApi) {
         // Only invalidate the session on actual auth failure (401); leave hint intact on transient errors
         if (error instanceof CredentialsError) clearSessionHint()
         set({ user: null, isInitializing: false })
+      } finally {
+        // Allow re-entry after completion; abort handler covers the StrictMode case
+        if (!signal?.aborted) initializationStarted = false
       }
     },
   }))

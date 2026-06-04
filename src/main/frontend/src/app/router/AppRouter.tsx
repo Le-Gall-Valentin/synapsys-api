@@ -50,6 +50,7 @@ export function AppRouter() {
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.APPLICATIONS} element={<ApplicationsPage />} />
           <Route path={ROUTES.APPLICATION_DETAIL} element={<ApplicationDetailPage />} />
+          {/* APPLICATION_PERMISSIONS uses the same component: ApplicationDetailPage handles the permissions tab internally via URL */}
           <Route path={ROUTES.APPLICATION_PERMISSIONS} element={<ApplicationDetailPage />} />
           <Route path={ROUTES.ROUTINE_DETAIL} element={<RoutinePage />} />
           <Route path={ROUTES.EXECUTIONS} element={<ExecutionsPage />} />
@@ -65,9 +66,6 @@ export function AppRouter() {
 
           <Route path={ROUTES.ACCOUNT} element={<AccountPage />} />
         </Route>
-
-        {/* Legacy redirect */}
-        <Route path={ROUTES.PROFILE} element={<Navigate to={ROUTES.ACCOUNT} replace />} />
 
         {/* Catch-all */}
         <Route path="*" element={<DefaultRedirect />} />
