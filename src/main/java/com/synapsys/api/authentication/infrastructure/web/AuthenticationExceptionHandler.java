@@ -47,6 +47,9 @@ public class AuthenticationExceptionHandler {
 
             case AuthenticationException.TotpMaxAttemptsExceeded ex ->
                     response(429, ex, "Authentication required", null);
+
+            case AuthenticationException.InvalidCurrentPassword ex ->
+                    response(422, ex, "Current password is incorrect.");
         };
 
         ProblemDetail problem = ProblemDetailFactory.of(

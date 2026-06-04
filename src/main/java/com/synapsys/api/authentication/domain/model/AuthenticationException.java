@@ -9,7 +9,8 @@ public abstract sealed class AuthenticationException extends RuntimeException
             AuthenticationException.UserNotFound,
             AuthenticationException.TotpCodeInvalid,
             AuthenticationException.TotpChallengeExpired,
-            AuthenticationException.TotpMaxAttemptsExceeded {
+            AuthenticationException.TotpMaxAttemptsExceeded,
+            AuthenticationException.InvalidCurrentPassword {
 
     private AuthenticationException(String message) {
         super(message);
@@ -49,5 +50,9 @@ public abstract sealed class AuthenticationException extends RuntimeException
 
     public static final class TotpMaxAttemptsExceeded extends AuthenticationException {
         public TotpMaxAttemptsExceeded() { super("Too many incorrect TOTP attempts"); }
+    }
+
+    public static final class InvalidCurrentPassword extends AuthenticationException {
+        public InvalidCurrentPassword() { super("Current password is incorrect"); }
     }
 }
