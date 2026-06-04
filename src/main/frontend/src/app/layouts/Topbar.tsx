@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Menu, RefreshCcw, Search } from 'lucide-react'
@@ -14,10 +14,13 @@ export function Topbar({ onMenuOpen, onSearchOpen }: TopbarProps) {
   const crumbs = useBreadcrumbs()
   const [refreshing, setRefreshing] = useState(false)
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true)
-    setTimeout(() => setRefreshing(false), 700)
-  }, [])
+  useEffect(() => {
+    if (!refreshing) return
+    const id = setTimeout(() => setRefreshing(false), 700)
+    return () => clearTimeout(id)
+  }, [refreshing])
+
+  const handleRefresh = useCallback(() => setRefreshing(true), [])
 
   return (
     <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-3 border-b border-border bg-bg-1 px-4">

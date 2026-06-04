@@ -1,52 +1,17 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  Activity,
-  ChevronRight,
-  Grid2x2,
-  KeyRound,
-  LayoutDashboard,
-  Server,
-  Shield,
-  Users,
-} from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { useFocusTrap } from '@/shared/lib'
 import { ROUTES } from '@/shared/config'
 import { isAdminRole, getInitials } from '@/entities/user'
 import type { UserRole } from '@/entities/user'
+import { NAV_CONFIG } from './navConfig'
 
 const SUPER_ADMIN_GRADIENT = 'linear-gradient(135deg, #a78bfa, #818cf8)'
 const USER_GRADIENT = 'linear-gradient(135deg, var(--color-accent), #38bdf8)'
-
-interface NavSectionDef {
-  titleKey: string
-  adminOnly?: boolean
-  items: { to: string; icon: LucideIcon; labelKey: string }[]
-}
-
-const NAV_SECTIONS: NavSectionDef[] = [
-  {
-    titleKey: 'nav.section.workspace',
-    items: [
-      { to: ROUTES.DASHBOARD, icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-      { to: ROUTES.APPLICATIONS, icon: Grid2x2, labelKey: 'nav.applications' },
-      { to: ROUTES.EXECUTIONS, icon: Activity, labelKey: 'nav.executions' },
-    ],
-  },
-  {
-    titleKey: 'nav.section.admin',
-    adminOnly: true,
-    items: [
-      { to: ROUTES.ADMIN_USERS, icon: Users, labelKey: 'nav.users' },
-      { to: ROUTES.ADMIN_AGENTS, icon: Server, labelKey: 'nav.agents' },
-      { to: ROUTES.ADMIN_TOKENS, icon: KeyRound, labelKey: 'nav.tokens' },
-      { to: ROUTES.PERMISSIONS, icon: Shield, labelKey: 'nav.permissions' },
-    ],
-  },
-]
 
 interface NavItemProps {
   to: string
@@ -85,13 +50,25 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { pathname } = useLocation()
   const sidebarRef = useRef<HTMLElement>(null)
 
-  const isFirstRender = useRef(true)
+  const prevPathname = useRef(pathname)
   useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return }
+    if (prevPathname.current === pathname) return
+    prevPathname.current = pathname
     onClose()
   }, [pathname, onClose])
 
   useFocusTrap(sidebarRef, open)
+
+  const visibleSections = useMemo(() => {
+    const map = new Map<string, typeof NAV_CONFIG>()
+    for (const item of NAV_CONFIG) {
+      if (item.adminOnly && !isAdminRole(user?.role)) continue
+      const group = map.get(item.sectionKey) ?? []
+      if (!map.has(item.sectionKey)) map.set(item.sectionKey, group)
+      group.push(item)
+    }
+    return [...map.entries()].map(([titleKey, items]) => ({ titleKey, items }))
+  }, [user?.role])
 
   const initials = user ? getInitials(user.username) : '??'
   const roleLabel = user ? t(`user.role.${user.role as UserRole}`) : ''
@@ -119,8 +96,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       </Link>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-1" aria-label={t('nav.section.workspace')}>
-        {NAV_SECTIONS.filter((section) => !section.adminOnly || isAdminRole(user?.role)).map((section) => (
+      <nav className="flex-1 overflow-y-auto py-1" aria-label={t('nav.label')}>
+        {visibleSections.map((section) => (
           <div key={section.titleKey}>
             <div className="px-3 pb-1 pt-3.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-3">
               {t(section.titleKey)}

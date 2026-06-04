@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import type { AuthState, AuthActions } from '@/features/auth/model/authStore'
 
@@ -99,10 +99,29 @@ describe('Sidebar — user footer', () => {
   })
 })
 
+function NavigateTrigger({ to }: { to: string }) {
+  const nav = useNavigate()
+  return <button onClick={() => { act(() => { nav(to) }) }}>go</button>
+}
+
 describe('Sidebar — onClose behaviour', () => {
   it('does not call onClose on initial mount', () => {
     withUser('USER')
     const { onClose } = renderSidebar()
     expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('calls onClose when the route changes', async () => {
+    withUser('USER')
+    const onClose = vi.fn()
+    render(
+      <MemoryRouter initialEntries={['/workspace/dashboard']}>
+        <Sidebar open onClose={onClose} />
+        <NavigateTrigger to="/workspace/applications" />
+      </MemoryRouter>
+    )
+    const before = onClose.mock.calls.length
+    screen.getByText('go').click()
+    expect(onClose.mock.calls.length).toBeGreaterThan(before)
   })
 })
