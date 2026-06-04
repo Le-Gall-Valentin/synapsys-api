@@ -8,12 +8,16 @@ import com.synapsys.api.authentication.domain.port.out.PasswordVerifierPort;
 import com.synapsys.api.authentication.domain.port.out.UserCredentialPort;
 import com.synapsys.api.authentication.domain.port.out.UserCredentialsPort;
 import com.synapsys.api.shared.annotation.ApplicationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @ApplicationService
 public class ChangePasswordHandler implements ChangePasswordUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(ChangePasswordHandler.class);
 
     private final UserCredentialsPort userCredentialsPort;
     private final PasswordVerifierPort passwordVerifier;
@@ -34,7 +38,13 @@ public class ChangePasswordHandler implements ChangePasswordUseCase {
     @Transactional
     public void changePassword(UUID userId, String currentPassword, String newPassword) {
         UserCredentials creds = userCredentialsPort.findById(userId)
-            .orElseThrow(AuthenticationException.UserNotFound::new);
+            .orElseThrow(() -> {
+                log.error("Data integrity: no credentials found for authenticated user {}", userId);
+                return new IllegalStateException("No credentials found for user " + userId);
+            });
+        if (!creds.isActive()) {
+            throw new AuthenticationException.UserNotActive();
+        }
         if (!passwordVerifier.matches(currentPassword, creds.passwordHash())) {
             throw new AuthenticationException.InvalidCurrentPassword();
         }

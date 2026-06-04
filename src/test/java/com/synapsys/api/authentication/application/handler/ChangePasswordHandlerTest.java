@@ -63,11 +63,22 @@ class ChangePasswordHandlerTest {
     }
 
     @Test
-    void changePassword_credentialsNotFound_throwsUserNotFound() {
+    void changePassword_credentialsNotFound_throwsIllegalStateException() {
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> handler.changePassword(userId, "any", "any"))
-            .isInstanceOf(AuthenticationException.UserNotFound.class);
+            .isInstanceOf(IllegalStateException.class);
+
+        verify(userCredentialPort, never()).updatePasswordHash(any(), any());
+    }
+
+    @Test
+    void changePassword_inactiveUser_throwsUserNotActive() {
+        UserCredentials inactive = new UserCredentials(userId, "user", "u@test.com", "$hashed", false, Role.USER);
+        when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(inactive));
+
+        assertThatThrownBy(() -> handler.changePassword(userId, "oldPass", "newPass"))
+            .isInstanceOf(AuthenticationException.UserNotActive.class);
 
         verify(userCredentialPort, never()).updatePasswordHash(any(), any());
     }
