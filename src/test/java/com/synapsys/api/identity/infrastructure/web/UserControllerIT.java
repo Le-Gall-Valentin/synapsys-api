@@ -362,6 +362,47 @@ class UserControllerIT {
             .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void changePassword_correctCurrentPassword_returns204() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"password\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void changePassword_wrongCurrentPassword_returns422() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"wrong\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void changePassword_weakNewPassword_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"password\",\"newPassword\":\"weak\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changePassword_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(patch("/api/users/me/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"x\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
     private void saveCredential(UUID userId, String rawPassword) {
         UserCredentialEntity cred = new UserCredentialEntity();
         cred.setUserId(userId);
