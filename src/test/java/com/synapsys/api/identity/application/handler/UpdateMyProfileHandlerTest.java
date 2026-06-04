@@ -43,7 +43,7 @@ class UpdateMyProfileHandlerTest {
 
         assertThatCode(() -> handler.updateProfile(cmd)).doesNotThrowAnyException();
 
-        verify(userCommandPort).updateProfile(userId, "new", "new@test.com");
+        verify(userCommandPort).updateProfile(cmd);
     }
 
     @Test
@@ -53,7 +53,7 @@ class UpdateMyProfileHandlerTest {
         assertThatThrownBy(() -> handler.updateProfile(new UpdateProfileCommand(userId, "x", "x@test.com")))
             .isInstanceOf(IdentityException.UserNotFound.class);
 
-        verify(userCommandPort, never()).updateProfile(any(), any(), any());
+        verify(userCommandPort, never()).updateProfile(any(UpdateProfileCommand.class));
     }
 
     @Test
@@ -64,6 +64,6 @@ class UpdateMyProfileHandlerTest {
         assertThatThrownBy(() -> handler.updateProfile(new UpdateProfileCommand(userId, "x", "x@test.com")))
             .isInstanceOf(IdentityException.UserNotActive.class);
 
-        verify(userCommandPort, never()).updateProfile(any(), any(), any());
+        verify(userCommandPort, never()).updateProfile(any(UpdateProfileCommand.class));
     }
 }

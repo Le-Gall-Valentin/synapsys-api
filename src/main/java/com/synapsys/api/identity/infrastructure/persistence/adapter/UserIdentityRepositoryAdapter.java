@@ -1,6 +1,7 @@
 package com.synapsys.api.identity.infrastructure.persistence.adapter;
 
 import com.synapsys.api.identity.domain.model.CreateUserProfileCommand;
+import com.synapsys.api.identity.domain.model.UpdateProfileCommand;
 import com.synapsys.api.identity.domain.model.IdentityException;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.UserAdminPort;
@@ -63,8 +64,8 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     }
 
     @Override
-    public void updateProfile(UUID userId, String username, String email) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public void updateProfile(UpdateProfileCommand command) {
+        throw new UnsupportedOperationException("updateProfile: implemented in Task 4");
     }
 
     private IdentityException resolveConstraintViolation(DataIntegrityViolationException e) {

@@ -28,6 +28,6 @@ public class UpdateMyProfileHandler implements UpdateMyProfileUseCase {
         if (!user.isActive()) {
             throw new IdentityException.UserNotActive();
         }
-        userCommandPort.updateProfile(command.userId(), command.username(), command.email());
+        userCommandPort.updateProfile(command);
     }
 }
