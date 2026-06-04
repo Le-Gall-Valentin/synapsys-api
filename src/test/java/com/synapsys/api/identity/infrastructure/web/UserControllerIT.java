@@ -318,6 +318,7 @@ class UserControllerIT {
             .andExpect(status().isNoContent());
 
         assertThat(userIdentityJpaRepository.findByUsername("updated")).isPresent();
+        assertThat(userIdentityJpaRepository.findByEmail("updated@test.com")).isPresent();
     }
 
     @Test
