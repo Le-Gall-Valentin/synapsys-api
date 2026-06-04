@@ -63,11 +63,11 @@ class ChangePasswordHandlerTest {
     }
 
     @Test
-    void changePassword_credentialsNotFound_throwsIllegalStateException() {
+    void changePassword_credentialsNotFound_throwsDataIntegrityError() {
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> handler.changePassword(userId, "any", "any"))
-            .isInstanceOf(IllegalStateException.class);
+            .isInstanceOf(AuthenticationException.DataIntegrityError.class);
 
         verify(userCredentialPort, never()).updatePasswordHash(any(), any());
     }

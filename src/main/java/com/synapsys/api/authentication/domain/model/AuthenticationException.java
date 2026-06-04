@@ -10,7 +10,8 @@ public abstract sealed class AuthenticationException extends RuntimeException
             AuthenticationException.TotpCodeInvalid,
             AuthenticationException.TotpChallengeExpired,
             AuthenticationException.TotpMaxAttemptsExceeded,
-            AuthenticationException.InvalidCurrentPassword {
+            AuthenticationException.InvalidCurrentPassword,
+            AuthenticationException.DataIntegrityError {
 
     private AuthenticationException(String message) {
         super(message);
@@ -54,5 +55,9 @@ public abstract sealed class AuthenticationException extends RuntimeException
 
     public static final class InvalidCurrentPassword extends AuthenticationException {
         public InvalidCurrentPassword() { super("Current password is incorrect"); }
+    }
+
+    public static final class DataIntegrityError extends AuthenticationException {
+        public DataIntegrityError() { super("Unexpected data integrity violation"); }
     }
 }

@@ -403,6 +403,19 @@ class UserControllerIT {
             .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void changePassword_inactiveUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        userIdentityJpaRepository.deactivateById(testUserId);
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"password\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isForbidden());
+    }
+
     private void saveCredential(UUID userId, String rawPassword) {
         UserCredentialEntity cred = new UserCredentialEntity();
         cred.setUserId(userId);

@@ -40,7 +40,7 @@ public class ChangePasswordHandler implements ChangePasswordUseCase {
         UserCredentials creds = userCredentialsPort.findById(userId)
             .orElseThrow(() -> {
                 log.error("Data integrity: no credentials found for authenticated user {}", userId);
-                return new IllegalStateException("No credentials found for user " + userId);
+                return new AuthenticationException.DataIntegrityError();
             });
         if (!creds.isActive()) {
             throw new AuthenticationException.UserNotActive();

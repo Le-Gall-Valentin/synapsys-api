@@ -50,6 +50,11 @@ public class AuthenticationExceptionHandler {
 
             case AuthenticationException.InvalidCurrentPassword ex ->
                     response(422, ex, "Current password is incorrect.");
+
+            case AuthenticationException.DataIntegrityError ex -> {
+                log.error("Data integrity violation on {}", request.getRequestURI(), ex);
+                yield response(500, ex, "An unexpected error occurred. Please try again later.");
+            }
         };
 
         ProblemDetail problem = ProblemDetailFactory.of(

@@ -12,4 +12,9 @@ public record ChangePasswordRequest(
         message = "must contain at least one uppercase letter, one digit, and one special character"
     )
     String newPassword
-) {}
+) {
+    @Override
+    public String toString() {
+        return "ChangePasswordRequest[]";
+    }
+}
