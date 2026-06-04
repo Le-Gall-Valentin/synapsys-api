@@ -10,6 +10,7 @@ import com.synapsys.api.identity.domain.model.AdminResetTotpCommand;
 import com.synapsys.api.identity.domain.model.DeactivateUserCommand;
 import com.synapsys.api.identity.domain.model.RegisterCommand;
 import com.synapsys.api.identity.domain.model.User;
+import com.synapsys.api.identity.domain.model.UserSelfView;
 import com.synapsys.api.identity.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.UserInfoResponse;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
@@ -44,8 +45,8 @@ public class UserController {
     @RateLimiting(max = 60)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserInfoResponse> me(@CurrentUser AuthenticatedUser caller) {
-        User user = getCurrentUserUseCase.getCurrentUser(caller.userId());
-        return ResponseEntity.ok(new UserInfoResponse(user.id(), user.username(), user.role()));
+        UserSelfView view = getCurrentUserUseCase.getCurrentUser(caller.userId());
+        return ResponseEntity.ok(new UserInfoResponse(view.id(), view.username(), view.role()));
     }
 
     @PostMapping
