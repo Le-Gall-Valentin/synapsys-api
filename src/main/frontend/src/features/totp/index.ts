@@ -1,7 +1,7 @@
 export type { ITotpVerifyApi } from './model/ITotpVerifyApi'
 export type { ITotpEnrollApi } from './model/ITotpEnrollApi'
 export type { TotpSetupData } from './model/types'
-export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError } from './model/errors'
+export { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError, TotpConfirmMaxAttemptsError, TotpDisableMaxAttemptsError } from './model/errors'
 import './locales'
 export { totpApi } from './api/totpApi'
 export { TotpDigitInput } from './ui/TotpDigitInput'
