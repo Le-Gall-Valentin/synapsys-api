@@ -46,5 +46,7 @@ export function useFocusTrap(
 
     container.addEventListener('keydown', handleKeyDown)
     return () => container.removeEventListener('keydown', handleKeyDown)
-  }, [enabled, containerRef])
+    // containerRef is a useRef object — stable identity, intentionally excluded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled])
 }

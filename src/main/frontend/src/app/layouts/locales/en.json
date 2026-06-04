@@ -1,6 +1,7 @@
 {
   "brand": "SynapSys",
   "nav": {
+    "label": "Main navigation",
     "section": {
       "workspace": "Workspace",
       "admin": "Administration"
