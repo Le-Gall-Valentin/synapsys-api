@@ -6,5 +6,5 @@ import { useAuthGuard } from './useAuthGuard'
 export function DefaultRedirect() {
   const { isInitializing, isAuthenticated, t } = useAuthGuard()
   if (isInitializing) return <Spinner label={t('loading')} />
-  return <Navigate to={isAuthenticated ? ROUTES.PROFILE : ROUTES.LOGIN} replace />
+  return <Navigate to={isAuthenticated ? ROUTES.DASHBOARD : ROUTES.LOGIN} replace />
 }

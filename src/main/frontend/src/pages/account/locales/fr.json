@@ -1,0 +1,5 @@
+{
+  "title": "Mon compte",
+  "action": { "logout": "Se déconnecter" },
+  "error": { "logout_failed": "La déconnexion a échoué. Veuillez réessayer." }
+}

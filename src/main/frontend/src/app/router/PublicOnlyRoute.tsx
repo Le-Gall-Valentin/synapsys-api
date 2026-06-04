@@ -7,5 +7,5 @@ import { useAuthGuard } from './useAuthGuard'
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { isInitializing, isAuthenticated, t } = useAuthGuard()
   if (isInitializing) return <Spinner label={t('loading')} />
-  return isAuthenticated ? <Navigate to={ROUTES.PROFILE} replace /> : <>{children}</>
+  return isAuthenticated ? <Navigate to={ROUTES.DASHBOARD} replace /> : <>{children}</>
 }

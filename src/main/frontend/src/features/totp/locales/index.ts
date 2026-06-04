@@ -1,4 +1,5 @@
+import { registerLocales } from '@/shared/lib/registerLocales'
 import en from './en.json'
 import fr from './fr.json'
 
-export const totpTranslations = { en, fr } as const
+registerLocales('totp', { en, fr })

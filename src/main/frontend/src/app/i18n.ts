@@ -1,7 +1,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-import { i18nResources } from './i18n/resources'
 
 void i18n
   .use(LanguageDetector)
@@ -9,11 +8,11 @@ void i18n
   .init({
     fallbackLng: 'en',
     supportedLngs: ['en', 'fr'],
-    ns: ['common', 'auth', 'login', 'profile'],
     defaultNS: 'common',
     load: 'languageOnly',
     interpolation: { escapeValue: false },
-    resources: i18nResources,
+    // No `resources` — each feature/page self-registers via registerLocales()
+    // triggered as a side-effect when its index.ts is imported.
   })
   .then(() => {
     document.documentElement.lang = i18n.language

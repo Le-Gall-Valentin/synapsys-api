@@ -42,16 +42,16 @@ describe('PublicOnlyRoute', () => {
     expect(container.querySelector('[role="status"]')).not.toBeNull()
   })
 
-  it('navigates to /profile when authenticated', () => {
+  it('navigates to /dashboard when authenticated', () => {
     mockUseAuthGuard.mockReturnValue({ isInitializing: false, isAuthenticated: true, t: (k: string) => k })
     const { getByText } = render(
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<PublicOnlyRoute><div>public</div></PublicOnlyRoute>} />
-          <Route path="/profile" element={<div>on-profile</div>} />
+          <Route path="/workspace/dashboard" element={<div>on-dashboard</div>} />
         </Routes>
       </MemoryRouter>
     )
-    expect(getByText('on-profile')).toBeDefined()
+    expect(getByText('on-dashboard')).toBeDefined()
   })
 })
