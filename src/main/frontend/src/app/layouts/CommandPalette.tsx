@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
@@ -23,7 +23,8 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
     return allItems.filter((item) => item.label.toLowerCase().includes(q))
   }, [query, allItems])
 
-  useEffect(() => setSelected(0), [items])
+  // Clamp selected to valid range without a separate useEffect render
+  const safeSelected = items.length > 0 ? Math.min(selected, items.length - 1) : 0
 
   useFocusTrap(dialogRef, true)
 
@@ -41,9 +42,9 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
       if (e.key === 'Escape') { onClose(); return }
       if (e.key === 'ArrowDown') { e.preventDefault(); setSelected((s) => Math.min(items.length - 1, s + 1)) }
       if (e.key === 'ArrowUp') { e.preventDefault(); setSelected((s) => Math.max(0, s - 1)) }
-      if (e.key === 'Enter') { e.preventDefault(); const item = items[selected]; if (item) go(item) }
+      if (e.key === 'Enter') { e.preventDefault(); const item = items[safeSelected]; if (item) go(item) }
     },
-    [items, selected, go, onClose]
+    [items, safeSelected, go, onClose]
   )
 
   return (
@@ -89,7 +90,7 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
                 key={item.id}
                 type="button"
                 className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors ${
-                  i === selected ? 'bg-bg-3' : 'hover:bg-bg-2'
+                  i === safeSelected ? 'bg-bg-3' : 'hover:bg-bg-2'
                 }`}
                 onMouseEnter={() => setSelected(i)}
                 onClick={() => go(item)}

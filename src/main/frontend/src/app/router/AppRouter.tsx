@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { LoginPage } from '@/pages/login'
-import { Spinner } from '@/shared/ui'
 import { ROUTES } from '@/shared/config'
 import { AppLayout } from '@/app/layouts'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -68,14 +67,7 @@ export function AppRouter() {
         </Route>
 
         {/* Legacy redirect */}
-        <Route
-          path={ROUTES.PROFILE}
-          element={
-            <Suspense fallback={<Spinner />}>
-              <Navigate to={ROUTES.ACCOUNT} replace />
-            </Suspense>
-          }
-        />
+        <Route path={ROUTES.PROFILE} element={<Navigate to={ROUTES.ACCOUNT} replace />} />
 
         {/* Catch-all */}
         <Route path="*" element={<DefaultRedirect />} />
