@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/features/auth'
 import { usePaletteItems } from '@/shared/lib'
 import { ROUTES } from '@/shared/config'
+import { isAdminRole } from '@/entities/user'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { CommandPalette } from './CommandPalette'
@@ -28,20 +29,18 @@ function PageLoader() {
   )
 }
 
-function ShellPaletteRegistrar() {
+export function AppLayout() {
   const { t } = useTranslation('shell')
   const user = useAuth((s) => s.user)
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
-
   const pageGroup = t('palette.type_page')
 
-  const items = useMemo(
+  const paletteItems = useMemo(
     () =>
       [
         { id: 'shell:dashboard', label: t('nav.dashboard'), to: ROUTES.DASHBOARD, icon: LayoutDashboard, group: pageGroup },
         { id: 'shell:applications', label: t('nav.applications'), to: ROUTES.APPLICATIONS, icon: Grid2x2, group: pageGroup },
         { id: 'shell:executions', label: t('nav.executions'), to: ROUTES.EXECUTIONS, icon: Activity, group: pageGroup },
-        ...(isAdmin
+        ...(isAdminRole(user?.role)
           ? [
               { id: 'shell:users', label: t('nav.users'), to: ROUTES.ADMIN_USERS, icon: Users, group: pageGroup },
               { id: 'shell:agents', label: t('nav.agents'), to: ROUTES.ADMIN_AGENTS, icon: Server, group: pageGroup },
@@ -51,14 +50,11 @@ function ShellPaletteRegistrar() {
           : []),
         { id: 'shell:account', label: t('nav.account'), to: ROUTES.ACCOUNT, icon: User, group: pageGroup },
       ],
-    [t, isAdmin, pageGroup]
+    [t, user?.role, pageGroup]
   )
 
-  usePaletteItems('shell', items)
-  return null
-}
+  usePaletteItems('shell', paletteItems)
 
-export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
 
@@ -88,8 +84,6 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg-0">
-      <ShellPaletteRegistrar />
-
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"

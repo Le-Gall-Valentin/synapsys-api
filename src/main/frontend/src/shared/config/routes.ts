@@ -27,6 +27,20 @@ export const ROUTES = {
   PROFILE: '/profile',
 } as const
 
+export const ROUTE_SEGMENTS = {
+  WORKSPACE: 'workspace',
+  ADMINISTRATION: 'administration',
+  ACCOUNT: 'account',
+  DASHBOARD: 'dashboard',
+  APPLICATIONS: 'applications',
+  EXECUTIONS: 'executions',
+  PERMISSIONS: 'permissions',
+  ROUTINES: 'routines',
+  USERS: 'users',
+  AGENTS: 'agents',
+  TOKENS: 'tokens',
+} as const
+
 export const toApplicationDetail = (appId: string) =>
   `/workspace/applications/${appId}`
 

@@ -15,6 +15,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { useFocusTrap } from '@/shared/lib'
 import { ROUTES } from '@/shared/config'
+import { isAdminRole, getInitials } from '@/entities/user'
 import type { UserRole } from '@/entities/user'
 
 const SUPER_ADMIN_GRADIENT = 'linear-gradient(135deg, #a78bfa, #818cf8)'
@@ -46,17 +47,6 @@ const NAV_SECTIONS: NavSectionDef[] = [
     ],
   },
 ]
-
-function getInitials(username: string): string {
-  return (
-    username
-      .split(/[.\s_-]/)
-      .map((s) => s[0] ?? '')
-      .join('')
-      .slice(0, 2)
-      .toUpperCase() || '??'
-  )
-}
 
 interface NavItemProps {
   to: string
@@ -103,7 +93,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   useFocusTrap(sidebarRef, open)
 
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const initials = user ? getInitials(user.username) : '??'
   const roleLabel = user ? t(`user.role.${user.role as UserRole}`) : ''
   const avatarGradient = user?.role === 'SUPER_ADMIN' ? SUPER_ADMIN_GRADIENT : USER_GRADIENT
@@ -113,13 +102,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <aside
       ref={sidebarRef}
       {...(open ? { role: 'dialog', 'aria-modal': true, 'aria-label': t('sidebar_label') } : {})}
-      className={[
-        'fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col',
-        'overflow-hidden border-r border-border bg-bg-1',
-        'transition-transform duration-200 ease-in-out',
-        'md:static md:inset-auto md:z-auto md:w-[232px] md:translate-x-0',
-        open ? 'translate-x-0' : '-translate-x-full',
-      ].join(' ')}
+      className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-bg-1 transition-transform duration-200 ease-in-out md:static md:inset-auto md:z-auto md:w-[232px] md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
     >
       {/* Brand */}
       <Link
@@ -137,7 +120,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-1" aria-label={t('nav.section.workspace')}>
-        {NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin).map((section) => (
+        {NAV_SECTIONS.filter((section) => !section.adminOnly || isAdminRole(user?.role)).map((section) => (
           <div key={section.titleKey}>
             <div className="px-3 pb-1 pt-3.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-3">
               {t(section.titleKey)}
