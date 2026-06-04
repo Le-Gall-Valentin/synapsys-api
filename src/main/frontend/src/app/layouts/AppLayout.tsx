@@ -75,7 +75,8 @@ export function AppLayout() {
       } else if (
         e.key === '/' &&
         document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
+        document.activeElement?.tagName !== 'TEXTAREA' &&
+        !(document.activeElement instanceof HTMLElement && document.activeElement.isContentEditable)
       ) {
         e.preventDefault()
         setPaletteOpen(true)

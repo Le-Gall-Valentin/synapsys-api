@@ -1,2 +1,4 @@
 import './locales'
-export { AccountPage } from './ui/AccountPage'
+import { AccountPage } from './ui/AccountPage'
+export { AccountPage }
+export default AccountPage

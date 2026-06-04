@@ -22,7 +22,12 @@ interface PaletteRegistryState {
 const paletteRegistryStore = create<PaletteRegistryState>((set) => ({
   sources: {},
   register: (sourceId, items) =>
-    set((state) => ({ sources: { ...state.sources, [sourceId]: items } })),
+    set((state) => {
+      if (import.meta.env.DEV && sourceId in state.sources) {
+        console.warn(`[paletteRegistry] sourceId "${sourceId}" already registered — previous items will be overwritten.`)
+      }
+      return { sources: { ...state.sources, [sourceId]: items } }
+    }),
   unregister: (sourceId) =>
     set((state) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

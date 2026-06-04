@@ -19,8 +19,16 @@ describe('registerLocales', () => {
     registerLocales('test-ns', { en, fr })
 
     expect(mockAdd).toHaveBeenCalledTimes(2)
-    expect(mockAdd).toHaveBeenCalledWith('en', 'test-ns', en, true, false)
-    expect(mockAdd).toHaveBeenCalledWith('fr', 'test-ns', fr, true, false)
+    expect(mockAdd).toHaveBeenCalledWith('en', 'test-ns', en, true, import.meta.env.DEV)
+    expect(mockAdd).toHaveBeenCalledWith('fr', 'test-ns', fr, true, import.meta.env.DEV)
+  })
+
+  it('supports arbitrary language keys (OCP — Record<string, LocaleResources>)', () => {
+    const de = { key: 'hallo' }
+
+    registerLocales('test-ns', { de })
+
+    expect(mockAdd).toHaveBeenCalledWith('de', 'test-ns', de, true, import.meta.env.DEV)
   })
 
   it('is a no-op when addResourceBundle is not a function', () => {

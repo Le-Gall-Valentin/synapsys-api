@@ -18,7 +18,8 @@
     "menu_label": "Ouvrir le menu",
     "search_label": "Rechercher",
     "search_placeholder": "Rechercher…",
-    "refresh_label": "Actualiser"
+    "refresh_label": "Actualiser",
+    "breadcrumb_nav": "Fil d'Ariane"
   },
   "palette": {
     "placeholder": "Rechercher une page…",

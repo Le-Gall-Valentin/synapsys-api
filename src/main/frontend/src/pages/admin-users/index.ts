@@ -1,2 +1,4 @@
 import './locales'
-export { AdminUsersPage } from './ui/AdminUsersPage'
+import { AdminUsersPage } from './ui/AdminUsersPage'
+export { AdminUsersPage }
+export default AdminUsersPage

@@ -1,2 +1,4 @@
 import './locales'
-export { AdminAgentsPage } from './ui/AdminAgentsPage'
+import { AdminAgentsPage } from './ui/AdminAgentsPage'
+export { AdminAgentsPage }
+export default AdminAgentsPage

@@ -18,7 +18,8 @@
     "menu_label": "Open menu",
     "search_label": "Search",
     "search_placeholder": "Search…",
-    "refresh_label": "Refresh"
+    "refresh_label": "Refresh",
+    "breadcrumb_nav": "Breadcrumb"
   },
   "palette": {
     "placeholder": "Search for a page…",

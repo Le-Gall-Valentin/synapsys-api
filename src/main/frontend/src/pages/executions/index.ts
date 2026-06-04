@@ -1,2 +1,4 @@
 import './locales'
-export { ExecutionsPage } from './ui/ExecutionsPage'
+import { ExecutionsPage } from './ui/ExecutionsPage'
+export { ExecutionsPage }
+export default ExecutionsPage

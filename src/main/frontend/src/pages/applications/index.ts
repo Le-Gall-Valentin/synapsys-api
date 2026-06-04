@@ -1,2 +1,4 @@
 import './locales'
-export { ApplicationsPage } from './ui/ApplicationsPage'
+import { ApplicationsPage } from './ui/ApplicationsPage'
+export { ApplicationsPage }
+export default ApplicationsPage

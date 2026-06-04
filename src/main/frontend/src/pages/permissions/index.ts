@@ -1,2 +1,4 @@
 import './locales'
-export { PermissionsPage } from './ui/PermissionsPage'
+import { PermissionsPage } from './ui/PermissionsPage'
+export { PermissionsPage }
+export default PermissionsPage

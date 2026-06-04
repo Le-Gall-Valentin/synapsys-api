@@ -1,2 +1,4 @@
 import './locales'
-export { AdminTokensPage } from './ui/AdminTokensPage'
+import { AdminTokensPage } from './ui/AdminTokensPage'
+export { AdminTokensPage }
+export default AdminTokensPage

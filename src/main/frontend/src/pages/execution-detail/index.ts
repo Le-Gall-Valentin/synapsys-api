@@ -1,2 +1,4 @@
 import './locales'
-export { ExecutionDetailPage } from './ui/ExecutionDetailPage'
+import { ExecutionDetailPage } from './ui/ExecutionDetailPage'
+export { ExecutionDetailPage }
+export default ExecutionDetailPage

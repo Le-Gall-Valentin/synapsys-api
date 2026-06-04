@@ -33,7 +33,7 @@ export function Topbar({ onMenuOpen, onSearchOpen }: TopbarProps) {
 
       {/* Breadcrumbs */}
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t('topbar.breadcrumb_nav')}
         className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap text-xs"
       >
         {crumbs.map((crumb, i) => (

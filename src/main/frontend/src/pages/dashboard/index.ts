@@ -1,2 +1,4 @@
 import './locales'
-export { DashboardPage } from './ui/DashboardPage'
+import { DashboardPage } from './ui/DashboardPage'
+export { DashboardPage }
+export default DashboardPage

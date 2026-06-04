@@ -9,39 +9,17 @@ import { AdminRoute } from './AdminRoute'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
 import { DefaultRedirect } from './DefaultRedirect'
 
-const DashboardPage = lazy(() =>
-  import('@/pages/dashboard').then((m) => ({ default: m.DashboardPage }))
-)
-const ApplicationsPage = lazy(() =>
-  import('@/pages/applications').then((m) => ({ default: m.ApplicationsPage }))
-)
-const ApplicationDetailPage = lazy(() =>
-  import('@/pages/application-detail').then((m) => ({ default: m.ApplicationDetailPage }))
-)
-const RoutinePage = lazy(() =>
-  import('@/pages/routine').then((m) => ({ default: m.RoutinePage }))
-)
-const ExecutionsPage = lazy(() =>
-  import('@/pages/executions').then((m) => ({ default: m.ExecutionsPage }))
-)
-const ExecutionDetailPage = lazy(() =>
-  import('@/pages/execution-detail').then((m) => ({ default: m.ExecutionDetailPage }))
-)
-const AdminUsersPage = lazy(() =>
-  import('@/pages/admin-users').then((m) => ({ default: m.AdminUsersPage }))
-)
-const AdminAgentsPage = lazy(() =>
-  import('@/pages/admin-agents').then((m) => ({ default: m.AdminAgentsPage }))
-)
-const AdminTokensPage = lazy(() =>
-  import('@/pages/admin-tokens').then((m) => ({ default: m.AdminTokensPage }))
-)
-const PermissionsPage = lazy(() =>
-  import('@/pages/permissions').then((m) => ({ default: m.PermissionsPage }))
-)
-const AccountPage = lazy(() =>
-  import('@/pages/account').then((m) => ({ default: m.AccountPage }))
-)
+const DashboardPage = lazy(() => import('@/pages/dashboard'))
+const ApplicationsPage = lazy(() => import('@/pages/applications'))
+const ApplicationDetailPage = lazy(() => import('@/pages/application-detail'))
+const RoutinePage = lazy(() => import('@/pages/routine'))
+const ExecutionsPage = lazy(() => import('@/pages/executions'))
+const ExecutionDetailPage = lazy(() => import('@/pages/execution-detail'))
+const AdminUsersPage = lazy(() => import('@/pages/admin-users'))
+const AdminAgentsPage = lazy(() => import('@/pages/admin-agents'))
+const AdminTokensPage = lazy(() => import('@/pages/admin-tokens'))
+const PermissionsPage = lazy(() => import('@/pages/permissions'))
+const AccountPage = lazy(() => import('@/pages/account'))
 
 export function AppRouter() {
   return (

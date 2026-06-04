@@ -1,2 +1,4 @@
 import './locales'
-export { RoutinePage } from './ui/RoutinePage'
+import { RoutinePage } from './ui/RoutinePage'
+export { RoutinePage }
+export default RoutinePage
