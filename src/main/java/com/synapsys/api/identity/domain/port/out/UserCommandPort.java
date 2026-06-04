@@ -7,4 +7,5 @@ import java.util.UUID;
 public interface UserCommandPort {
     User createProfile(CreateUserProfileCommand command);
     void deactivate(UUID userId);
+    void updateProfile(UUID userId, String username, String email);
 }

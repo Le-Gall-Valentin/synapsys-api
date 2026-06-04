@@ -62,6 +62,11 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
         jpa.deactivateById(userId);
     }
 
+    @Override
+    public void updateProfile(UUID userId, String username, String email) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
     private IdentityException resolveConstraintViolation(DataIntegrityViolationException e) {
         if (e.getCause() instanceof ConstraintViolationException cve) {
             String c = cve.getConstraintName();
