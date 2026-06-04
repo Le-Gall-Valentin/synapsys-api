@@ -9,9 +9,8 @@ import { parseRetryAfter } from '@/shared/lib'
 export const authApi: IAuthApi = {
   async login(credentials: LoginCredentials): Promise<LoginApiResult> {
     try {
-      const { data } = await client.post<{ totpRequired?: true } & Partial<User>>('/auth/login', credentials)
+      const { data } = await client.post<{ totpRequired?: true }>('/auth/login', credentials)
       if (data.totpRequired === true) return { type: 'totp_required' }
-      return { type: 'success', user: data as User }
     } catch (error) {
       if (isAxiosError(error)) {
         const status = error.response?.status
@@ -21,6 +20,8 @@ export const authApi: IAuthApi = {
       }
       throw new NetworkError()
     }
+    // Login succeeded — fetch the full profile (login response only carries id/username/role)
+    return { type: 'success', user: await authApi.getMe() }
   },
 
   async logout(): Promise<void> {
