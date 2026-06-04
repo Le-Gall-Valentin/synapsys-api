@@ -49,5 +49,7 @@
       "USER": "User"
     }
   },
+  "sidebar_label": "Navigation menu",
+  "palette_dialog_label": "Command palette",
   "loader": "Loading…"
 }

@@ -100,9 +100,9 @@ describe('Sidebar — user footer', () => {
 })
 
 describe('Sidebar — onClose behaviour', () => {
-  it('calls onClose on mount (effect fires with initial pathname)', () => {
+  it('does not call onClose on initial mount', () => {
     withUser('USER')
     const { onClose } = renderSidebar()
-    expect(onClose).toHaveBeenCalledOnce()
+    expect(onClose).not.toHaveBeenCalled()
   })
 })

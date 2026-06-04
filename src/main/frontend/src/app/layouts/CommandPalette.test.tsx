@@ -10,6 +10,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/shared/lib', () => ({
   usePaletteResults: vi.fn(),
+  useFocusTrap: vi.fn(),
 }))
 
 const mockNavigate = vi.fn()

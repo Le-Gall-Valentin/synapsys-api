@@ -49,5 +49,7 @@
       "USER": "Utilisateur"
     }
   },
+  "sidebar_label": "Menu de navigation",
+  "palette_dialog_label": "Palette de commandes",
   "loader": "Chargement…"
 }

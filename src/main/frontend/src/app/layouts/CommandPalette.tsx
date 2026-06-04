@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
-import { usePaletteResults } from '@/shared/lib'
+import { usePaletteResults, useFocusTrap } from '@/shared/lib'
 
 interface CommandPaletteProps {
   onClose: () => void
@@ -11,6 +11,7 @@ interface CommandPaletteProps {
 export function CommandPalette({ onClose }: CommandPaletteProps) {
   const { t } = useTranslation('shell')
   const nav = useNavigate()
+  const dialogRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(0)
 
@@ -23,6 +24,8 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
   }, [query, allItems])
 
   useEffect(() => setSelected(0), [items])
+
+  useFocusTrap(dialogRef, true)
 
   const go = useCallback(
     (item: { to?: string; action?: () => void }) => {
@@ -49,6 +52,10 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('palette_dialog_label')}
         className="h-fit w-full max-w-[560px] overflow-hidden rounded-xl border border-border-2 bg-bg-1 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >

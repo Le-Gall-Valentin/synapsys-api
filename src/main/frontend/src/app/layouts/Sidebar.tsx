@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/features/auth'
+import { useFocusTrap } from '@/shared/lib'
 import { ROUTES } from '@/shared/config'
 import type { UserRole } from '@/entities/user'
 
@@ -92,10 +93,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { t } = useTranslation('shell')
   const user = useAuth((s) => s.user)
   const { pathname } = useLocation()
+  const sidebarRef = useRef<HTMLElement>(null)
 
+  const isFirstRender = useRef(true)
   useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
     onClose()
   }, [pathname, onClose])
+
+  useFocusTrap(sidebarRef, open)
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const initials = user ? getInitials(user.username) : '??'
@@ -105,6 +111,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   return (
     <aside
+      ref={sidebarRef}
+      {...(open ? { role: 'dialog', 'aria-modal': true, 'aria-label': t('sidebar_label') } : {})}
       className={[
         'fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col',
         'overflow-hidden border-r border-border bg-bg-1',
