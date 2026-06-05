@@ -7,6 +7,12 @@ const ROLE_LABEL: Record<User['role'], string> = {
   USER: 'Utilisateur',
 }
 
+const ROLE_PILL_CLASS: Record<User['role'], string> = {
+  SUPER_ADMIN: 'border-accent/20 bg-accent-dim text-accent',
+  ADMIN: 'border-border-2 bg-bg-3 text-fg-2',
+  USER: 'border-status-blue/20 bg-status-blue-dim text-status-blue',
+}
+
 function getInitials(username: string): string {
   return username
     .split(/[.\s_-]/)
@@ -28,24 +34,34 @@ export function ProfileSummaryCard({ user }: ProfileSummaryCardProps) {
     { day: '2-digit', month: 'long', year: 'numeric' }
   )
 
-  const avatarBg = user.role === 'SUPER_ADMIN'
-    ? 'bg-gradient-to-br from-purple-400 to-indigo-400'
-    : 'bg-bg-3'
+  const avatarGradient =
+    user.role === 'SUPER_ADMIN'
+      ? 'linear-gradient(135deg, #a78bfa, #818cf8)'
+      : 'linear-gradient(135deg, var(--color-accent), #818cf8)'
 
   return (
-    <div className="rounded-xl border border-border bg-bg-1 p-4 mb-4">
+    <div className="rounded-md border border-border bg-bg-1 p-3.5 mb-4">
       <div className="flex items-center gap-4">
-        <div className={`size-14 rounded-full ${avatarBg} flex items-center justify-center text-lg font-semibold text-fg-0 shrink-0`}>
+        <div
+          className="w-[52px] h-[52px] rounded-[10px] flex items-center justify-center text-[18px] font-semibold shrink-0"
+          style={{ background: avatarGradient, color: '#0a0b0d' }}
+        >
           {getInitials(user.username)}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-fg-0 text-base truncate">{user.username}</div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-            <span className="rounded-full border border-border px-2 py-0.5 text-xs font-medium text-fg-1">
+          <div className="text-[18px] font-semibold text-fg-0 tracking-[-0.005em] truncate leading-snug">
+            {user.username}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-[10px] gap-y-1 mt-1.5">
+            <span
+              className={`inline-flex items-center px-[7px] py-[2px] rounded-full border text-[10px] font-semibold font-mono uppercase tracking-[0.04em] whitespace-nowrap ${ROLE_PILL_CLASS[user.role]}`}
+            >
               {ROLE_LABEL[user.role]}
             </span>
-            <span className="text-xs text-fg-2 truncate">{user.email}</span>
-            <span className="text-xs text-fg-2">{t('member_since', { date: createdDate })}</span>
+            <span className="font-mono text-[11px] text-fg-3 truncate">{user.email}</span>
+            <span className="font-mono text-[11px] text-fg-3">
+              {t('member_since', { date: createdDate })}
+            </span>
           </div>
         </div>
       </div>

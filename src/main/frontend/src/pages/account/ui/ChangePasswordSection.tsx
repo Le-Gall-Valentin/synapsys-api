@@ -60,64 +60,66 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
   }
 
   return (
-    <section className="rounded-xl border border-border bg-bg-1 p-4 mb-4">
-      <div className="mb-4">
-        <div className="font-medium text-fg-0 text-sm">{t('password.title')}</div>
-        <div className="text-xs text-fg-2 mt-0.5">{t('password.subtitle')}</div>
+    <section className="rounded-md border border-border bg-bg-1 mb-4 overflow-hidden">
+      <div className="px-3.5 py-[10px] border-b border-border">
+        <div className="text-xs font-semibold text-fg-0 tracking-tight">{t('password.title')}</div>
+        <div className="text-[11px] text-fg-2 mt-px">{t('password.subtitle')}</div>
       </div>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3 max-w-[360px]">
-          <Input
-            label={t('password.current')}
-            name="currentPassword"
-            type="password"
-            value={current}
-            onChange={e => setCurrent(e.target.value)}
-            autoComplete="current-password"
-            disabled={isSubmitting}
-          />
-        </div>
-        <div className="flex gap-3 flex-wrap sm:flex-nowrap mb-1">
-          <div className="flex-1 min-w-0">
+      <div className="p-3.5">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3 max-w-[360px]">
             <Input
-              label={t('password.new')}
-              name="newPassword"
+              label={t('password.current')}
+              name="currentPassword"
               type="password"
-              value={next}
-              onChange={e => setNext(e.target.value)}
-              autoComplete="new-password"
+              value={current}
+              onChange={e => setCurrent(e.target.value)}
+              autoComplete="current-password"
               disabled={isSubmitting}
             />
           </div>
-          <div className="flex-1 min-w-0">
-            <Input
-              label={t('password.confirm')}
-              name="confirmPassword"
-              type="password"
-              value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-              autoComplete="new-password"
-              disabled={isSubmitting}
-            />
+          <div className="flex gap-3 flex-wrap sm:flex-nowrap mb-1">
+            <div className="flex-1 min-w-0">
+              <Input
+                label={t('password.new')}
+                name="newPassword"
+                type="password"
+                value={next}
+                onChange={e => setNext(e.target.value)}
+                autoComplete="new-password"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <Input
+                label={t('password.confirm')}
+                name="confirmPassword"
+                type="password"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                autoComplete="new-password"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
-        </div>
-        {mismatch && <p className="text-xs text-status-red mb-2">{t('password.error.mismatch')}</p>}
-        {!mismatch && tooShort && <p className="text-xs text-status-orange mb-2">{t('password.error.too_short')}</p>}
-        {!mismatch && !tooShort && weak && <p className="text-xs text-status-orange mb-2">{t('password.error.weak')}</p>}
-        {flash && (
-          <div
-            role={flash.kind === 'success' ? 'status' : 'alert'}
-            className={`mb-3 text-xs px-3 py-2 rounded-lg ${flash.kind === 'success' ? 'bg-status-green-dim text-status-green' : 'bg-status-red-dim text-status-red'}`}
-          >
-            {t(flash.key)}
+          {mismatch && <p className="text-xs text-status-red mb-2">{t('password.error.mismatch')}</p>}
+          {!mismatch && tooShort && <p className="text-xs text-status-orange mb-2">{t('password.error.too_short')}</p>}
+          {!mismatch && !tooShort && weak && <p className="text-xs text-status-orange mb-2">{t('password.error.weak')}</p>}
+          {flash && (
+            <div
+              role={flash.kind === 'success' ? 'status' : 'alert'}
+              className={`mb-3 text-xs px-3 py-2 rounded-lg ${flash.kind === 'success' ? 'bg-status-green-dim text-status-green' : 'bg-status-red-dim text-status-red'}`}
+            >
+              {t(flash.key)}
+            </div>
+          )}
+          <div className="flex justify-end mt-2">
+            <Button type="submit" disabled={!canSubmit} isLoading={isSubmitting}>
+              {t('password.submit')}
+            </Button>
           </div>
-        )}
-        <div className="flex justify-end mt-2">
-          <Button type="submit" disabled={!canSubmit} isLoading={isSubmitting}>
-            {t('password.submit')}
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </section>
   )
 }

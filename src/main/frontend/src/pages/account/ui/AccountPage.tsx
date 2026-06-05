@@ -38,13 +38,17 @@ export function AccountPage() {
   if (!user) return null
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <div className="flex items-start justify-between gap-4 mb-6">
+    <div className="py-5 px-6 mx-auto">
+      <div className="flex items-start justify-between gap-4 mb-[18px]">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-fg-0">{t('title')}</h1>
           <p className="text-sm text-fg-2 mt-1">{t('subtitle')}</p>
         </div>
-        <Button onClick={() => { void handleLogout() }} isLoading={isLoggingOut} className="shrink-0">
+        <Button
+          onClick={() => { void handleLogout() }}
+          isLoading={isLoggingOut}
+          className="shrink-0 border-status-red/30 bg-transparent text-status-red hover:bg-status-red-dim"
+        >
           <LogOut className="size-4" />
           {t('action.logout')}
         </Button>
