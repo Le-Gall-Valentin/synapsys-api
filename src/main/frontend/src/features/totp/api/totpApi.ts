@@ -25,8 +25,7 @@ function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<numbe
 export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
   async verify(code: string): Promise<User> {
     try {
-      const { data } = await client.post<User>('/auth/2fa/verify', { code })
-      return data
+      await client.post('/auth/2fa/verify', { code })
     } catch (error) {
       if (isAxiosError(error)) {
         const status = error.response?.status
@@ -48,6 +47,9 @@ export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
       }
       throw new NetworkError()
     }
+    // Verify response only carries id/username/role — fetch full profile like authApi.login does
+    const { data } = await client.get<User>('/users/me')
+    return data
   },
 
   async setup(): Promise<TotpSetupData> {
