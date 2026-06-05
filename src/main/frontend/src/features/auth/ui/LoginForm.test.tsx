@@ -19,6 +19,7 @@ function setup(mockLogin: ReturnType<typeof vi.fn>, props: { onLoginOutcome?: (o
     logout: vi.fn(),
     initialize: vi.fn(),
     finalizeLogin: vi.fn(),
+    patchUser: vi.fn(),
   }
   mockUseAuth.mockImplementation((selector) => selector(baseState as Parameters<typeof selector>[0]))
   return render(<LoginForm {...props} />)

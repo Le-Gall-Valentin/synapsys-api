@@ -2,7 +2,6 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { ProfileEditSection } from './ProfileEditSection'
 import { ConflictError } from '../api/accountApi'
-import { NetworkError } from '@/shared/lib'
 import type { User } from '@/entities/user'
 
 vi.mock('react-i18next', () => ({
@@ -14,9 +13,9 @@ const BASE_USER: User = {
   role: 'USER', createdAt: '2024-01-01T00:00:00Z', totpEnabled: false,
 }
 
-function setup(overrides: { onUpdateProfile?: ReturnType<typeof vi.fn>; onPatch?: ReturnType<typeof vi.fn> } = {}) {
-  const onUpdateProfile = overrides.onUpdateProfile ?? vi.fn().mockResolvedValue(undefined)
-  const onPatch = overrides.onPatch ?? vi.fn()
+function setup(overrides: { onUpdateProfile?: (username: string, email: string) => Promise<void>; onPatch?: (partial: Partial<User>) => void } = {}) {
+  const onUpdateProfile = (overrides.onUpdateProfile ?? vi.fn().mockResolvedValue(undefined)) as (username: string, email: string) => Promise<void>
+  const onPatch = (overrides.onPatch ?? vi.fn()) as (partial: Partial<User>) => void
   const result = render(
     <ProfileEditSection user={BASE_USER} onPatch={onPatch} onUpdateProfile={onUpdateProfile} />
   )
