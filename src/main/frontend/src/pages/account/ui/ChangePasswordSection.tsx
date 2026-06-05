@@ -78,8 +78,8 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
               disabled={isSubmitting}
             />
           </div>
-          <div className="flex gap-3 flex-wrap sm:flex-nowrap mb-1">
-            <div className="flex-1 min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row mb-1">
+            <div className="min-w-0 sm:flex-1">
               <Input
                 label={t('password.new')}
                 name="newPassword"
@@ -90,7 +90,7 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
                 disabled={isSubmitting}
               />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 sm:flex-1">
               <Input
                 label={t('password.confirm')}
                 name="confirmPassword"

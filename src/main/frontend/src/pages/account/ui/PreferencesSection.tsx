@@ -50,7 +50,7 @@ export function PreferencesSection() {
         <div className="text-[11px] text-fg-2 mt-px">{t('preferences.subtitle')}</div>
       </div>
       <div className="p-3.5 flex flex-col gap-3.5">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <span className="text-xs text-fg-1 font-medium">{t('preferences.theme_label')}</span>
           <div className="flex gap-1">
             {themeOptions.map(({ value, icon, labelKey }) => (
@@ -61,7 +61,7 @@ export function PreferencesSection() {
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <span className="text-xs text-fg-1 font-medium">{t('preferences.language_label')}</span>
           <div className="flex gap-1">
             {languageOptions.map(({ value, label }) => (

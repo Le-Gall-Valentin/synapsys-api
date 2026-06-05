@@ -66,22 +66,24 @@ export function TwoFactorSection({ user, onPatch, enrollApi }: TwoFactorSectionP
           >
             <Shield className="size-5" />
           </div>
-          <p className="flex-1 text-[12.5px] text-fg-1 leading-[1.55]">
-            {user.totpEnabled ? t('twofa.desc_enabled') : t('twofa.desc_disabled')}
-          </p>
-          {user.totpEnabled ? (
-            <Button
-              onClick={() => setDisableOpen(true)}
-              className="shrink-0 border-status-red/30 bg-status-red-dim text-status-red hover:bg-status-red/20"
-            >
-              {t('twofa.btn_disable')}
-            </Button>
-          ) : (
-            <Button onClick={() => setEnableOpen(true)} className="shrink-0 border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
-              <Shield className="size-3.5" />
-              {t('twofa.btn_enable')}
-            </Button>
-          )}
+          <div className="flex-1 flex flex-col gap-3 sm:flex-row sm:items-start">
+            <p className="flex-1 text-[12.5px] text-fg-1 leading-[1.55]">
+              {user.totpEnabled ? t('twofa.desc_enabled') : t('twofa.desc_disabled')}
+            </p>
+            {user.totpEnabled ? (
+              <Button
+                onClick={() => setDisableOpen(true)}
+                className="self-end sm:self-start shrink-0 border-status-red/30 bg-status-red-dim text-status-red hover:bg-status-red/20"
+              >
+                {t('twofa.btn_disable')}
+              </Button>
+            ) : (
+              <Button onClick={() => setEnableOpen(true)} className="self-end sm:self-start shrink-0 border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
+                <Shield className="size-3.5" />
+                {t('twofa.btn_enable')}
+              </Button>
+            )}
+          </div>
         </div>
         {flash && (
           <div

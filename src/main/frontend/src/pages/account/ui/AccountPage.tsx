@@ -40,7 +40,7 @@ export function AccountPage() {
 
   return (
     <div className="py-5 px-6 mx-auto">
-      <div className="flex items-start justify-between gap-4 mb-[18px]">
+      <div className="flex flex-col gap-3 mb-[18px] sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-fg-0">{t('title')}</h1>
           <p className="text-sm text-fg-2 mt-1">{t('subtitle')}</p>
@@ -48,7 +48,7 @@ export function AccountPage() {
         <Button
           onClick={() => { void handleLogout() }}
           isLoading={isLoggingOut}
-          className="shrink-0 border-status-red/30 bg-transparent text-status-red hover:bg-status-red-dim"
+          className="self-start shrink-0 border-status-red/30 bg-transparent text-status-red hover:bg-status-red-dim"
         >
           <LogOut className="size-4" />
           {t('action.logout')}

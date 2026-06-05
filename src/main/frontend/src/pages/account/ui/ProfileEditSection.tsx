@@ -66,8 +66,8 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
       </div>
       <div className="p-3.5">
         <form onSubmit={handleSubmit}>
-          <div className="flex gap-3 flex-wrap sm:flex-nowrap mb-3">
-            <div className="flex-1 min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row mb-3">
+            <div className="min-w-0 sm:flex-1">
               <Input
                 label={t('profile.username')}
                 name="username"
@@ -76,7 +76,7 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
                 disabled={isSubmitting}
               />
             </div>
-            <div className="flex-[1.4] min-w-0">
+            <div className="min-w-0 sm:flex-[1.4]">
               <Input
                 label={t('profile.email')}
                 name="email"
