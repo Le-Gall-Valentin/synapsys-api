@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -39,7 +40,7 @@ class ChangePasswordHandlerTest {
 
     @Test
     void changePassword_correctCurrentPassword_updatesHash() {
-        UserCredentials creds = new UserCredentials(userId, "user", "u@test.com", "$hashed", true, Role.USER);
+        UserCredentials creds = new UserCredentials(userId, "user", "u@test.com", "$hashed", true, Role.USER, Instant.now());
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
         when(passwordVerifier.matches("oldPass", "$hashed")).thenReturn(true);
         when(passwordHasher.hash("newPass")).thenReturn("$newHashed");
@@ -52,7 +53,7 @@ class ChangePasswordHandlerTest {
 
     @Test
     void changePassword_wrongCurrentPassword_throwsInvalidCurrentPassword() {
-        UserCredentials creds = new UserCredentials(userId, "user", "u@test.com", "$hashed", true, Role.USER);
+        UserCredentials creds = new UserCredentials(userId, "user", "u@test.com", "$hashed", true, Role.USER, Instant.now());
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(creds));
         when(passwordVerifier.matches("wrongPass", "$hashed")).thenReturn(false);
 
@@ -74,7 +75,7 @@ class ChangePasswordHandlerTest {
 
     @Test
     void changePassword_inactiveUser_throwsUserNotActive() {
-        UserCredentials inactive = new UserCredentials(userId, "user", "u@test.com", "$hashed", false, Role.USER);
+        UserCredentials inactive = new UserCredentials(userId, "user", "u@test.com", "$hashed", false, Role.USER, Instant.now());
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(inactive));
 
         assertThatThrownBy(() -> handler.changePassword(userId, "oldPass", "newPass"))

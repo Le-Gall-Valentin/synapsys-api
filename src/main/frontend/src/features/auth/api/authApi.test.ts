@@ -34,15 +34,14 @@ describe('authApi', () => {
     mockedClient.get.mockReset()
   })
 
-  it('login posts credentials then fetches full profile and returns user', async () => {
+  it('login posts credentials and returns full user from response', async () => {
     const credentials: LoginCredentials = { username: 'user', password: 'secret' }
     const fullUser = { id: '1', username: 'user', role: 'USER', email: 'user@test.com', createdAt: '2024-01-01T00:00:00Z', totpEnabled: false }
-    mockedClient.post.mockResolvedValue({ data: {} })
-    mockedClient.get.mockResolvedValue({ data: fullUser })
+    mockedClient.post.mockResolvedValue({ data: fullUser })
 
     await expect(authApi.login(credentials)).resolves.toEqual({ type: 'success', user: fullUser })
     expect(mockedClient.post).toHaveBeenCalledWith('/auth/login', credentials)
-    expect(mockedClient.get).toHaveBeenCalledWith('/users/me')
+    expect(mockedClient.get).not.toHaveBeenCalled()
   })
 
   it('login returns { type: totp_required } when server responds with totpRequired:true', async () => {

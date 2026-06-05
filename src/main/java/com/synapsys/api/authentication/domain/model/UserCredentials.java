@@ -1,6 +1,7 @@
 package com.synapsys.api.authentication.domain.model;
 
 import com.synapsys.api.shared.model.Role;
+import java.time.Instant;
 import java.util.UUID;
 
 public record UserCredentials(
@@ -9,7 +10,8 @@ public record UserCredentials(
     String email,
     String passwordHash,
     boolean isActive,
-    Role role
+    Role role,
+    Instant createdAt
 ) {
     @Override
     public String toString() {

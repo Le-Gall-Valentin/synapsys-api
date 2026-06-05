@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
@@ -38,11 +39,11 @@ class LoginHandlerTest {
 
     private final UserCredentials activeUser = new UserCredentials(
         UUID.randomUUID(), "user1", "user1@test.com", "hashed_pw", true, Role.USER
-    );
+    , Instant.now());
 
     private final UserCredentials activeUser2 = new UserCredentials(
         UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", true, Role.USER
-    );
+    , Instant.now());
 
     @BeforeEach
     void setUpLogger() {
@@ -115,7 +116,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_throwsUserNotActive() {
         UserCredentials inactive = new UserCredentials(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role());
+            activeUser.passwordHash(), false, activeUser.role(), Instant.now());
         when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("password", inactive.passwordHash())).thenReturn(true);
 
@@ -126,7 +127,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_doesNotLogUsername() {
         UserCredentials inactive = new UserCredentials(activeUser.id(), "alice", activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role());
+            activeUser.passwordHash(), false, activeUser.role(), Instant.now());
         when(userCredentialsPort.findByUsername("alice")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("password", inactive.passwordHash())).thenReturn(true);
 
@@ -142,7 +143,7 @@ class LoginHandlerTest {
     void login_wrongPassword_doesNotLogUsername() {
         when(userCredentialsPort.findByUsername("bob")).thenReturn(Optional.of(
             new UserCredentials(activeUser.id(), "bob", activeUser.email(),
-                activeUser.passwordHash(), true, activeUser.role())
+                activeUser.passwordHash(), true, activeUser.role(), Instant.now())
         ));
         when(passwordVerifier.matches("wrong", activeUser.passwordHash())).thenReturn(false);
 
@@ -157,7 +158,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_correctPassword_throwsUserNotActive() {
         UserCredentials inactive = new UserCredentials(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role());
+            activeUser.passwordHash(), false, activeUser.role(), Instant.now());
         when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("correctpassword", inactive.passwordHash())).thenReturn(true);
 
@@ -170,7 +171,7 @@ class LoginHandlerTest {
         // Password is checked before isActive to prevent account status info disclosure.
         // An attacker who doesn't know the password must not learn the account exists and is inactive.
         UserCredentials inactive = new UserCredentials(activeUser.id(), activeUser.username(), activeUser.email(),
-            activeUser.passwordHash(), false, activeUser.role());
+            activeUser.passwordHash(), false, activeUser.role(), Instant.now());
         when(userCredentialsPort.findByUsername("user1")).thenReturn(Optional.of(inactive));
         when(passwordVerifier.matches("wrongpassword", inactive.passwordHash())).thenReturn(false);
 
@@ -181,7 +182,7 @@ class LoginHandlerTest {
     @Test
     void login_inactiveUser_totpEnabled_throwsUserNotActive() {
         UserCredentials inactiveTotpUser = new UserCredentials(
-            UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", false, Role.USER);
+            UUID.randomUUID(), "user2", "user2@test.com", "hashed_pw", false, Role.USER, Instant.now());
         when(userCredentialsPort.findByUsername("user2")).thenReturn(Optional.of(inactiveTotpUser));
         when(passwordVerifier.matches("password", "hashed_pw")).thenReturn(true);
 

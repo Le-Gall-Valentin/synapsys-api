@@ -9,6 +9,7 @@ import com.synapsys.api.authentication.domain.port.out.UserProfilePort;
 import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCredentialEntity;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
 import com.synapsys.api.shared.model.Role;
+import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class UserCredentialsRepositoryAdapterTest {
 
     private final UUID userId = UUID.randomUUID();
     private final UserProfile userProfile =
-            new UserProfile(userId, "alice", "alice@test.com", true, Role.USER);
+            new UserProfile(userId, "alice", "alice@test.com", true, Role.USER, Instant.now());
 
     private ListAppender<ILoggingEvent> logAppender;
 
