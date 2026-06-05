@@ -46,5 +46,14 @@
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable."
     }
+  },
+  "preferences": {
+    "title": "Preferences",
+    "subtitle": "Interface appearance and language.",
+    "theme_label": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
+    "language_label": "Language"
   }
 }

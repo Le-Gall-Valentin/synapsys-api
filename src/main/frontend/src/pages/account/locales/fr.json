@@ -46,5 +46,14 @@
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible."
     }
+  },
+  "preferences": {
+    "title": "Préférences",
+    "subtitle": "Apparence et langue de l'interface.",
+    "theme_label": "Thème",
+    "theme_light": "Clair",
+    "theme_dark": "Sombre",
+    "theme_system": "Système",
+    "language_label": "Langue"
   }
 }
