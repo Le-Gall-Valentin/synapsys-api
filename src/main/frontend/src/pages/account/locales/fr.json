@@ -32,7 +32,7 @@
   },
   "password": {
     "title": "Changer de mot de passe",
-    "subtitle": "Minimum 8 caractères.",
+    "subtitle": "8 à 72 caractères, avec au moins une majuscule, un chiffre et un caractère spécial.",
     "current": "Mot de passe actuel",
     "new": "Nouveau mot de passe",
     "confirm": "Confirmer",
@@ -41,6 +41,7 @@
     "error": {
       "mismatch": "Les deux mots de passe ne correspondent pas.",
       "too_short": "Trop court (8 caractères minimum).",
+      "weak": "Doit contenir au moins une majuscule, un chiffre et un caractère spécial.",
       "wrong_current": "Mot de passe actuel incorrect.",
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible."

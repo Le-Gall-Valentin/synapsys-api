@@ -19,9 +19,16 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
   const [flash, setFlash] = useState<Flash>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).+$/
   const mismatch = next.length > 0 && confirm.length > 0 && next !== confirm
   const tooShort = next.length > 0 && next.length < 8
-  const canSubmit = current.length > 0 && next.length >= 8 && next === confirm
+  const weak = next.length >= 8 && next.length <= 72 && !PASSWORD_REGEX.test(next)
+  const canSubmit =
+    current.length > 0 &&
+    next.length >= 8 &&
+    next.length <= 72 &&
+    PASSWORD_REGEX.test(next) &&
+    next === confirm
 
   function showFlash(kind: 'success' | 'error', key: string) {
     if (flashTimer.current) clearTimeout(flashTimer.current)
@@ -96,6 +103,7 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
         </div>
         {mismatch && <p className="text-xs text-status-red mb-2">{t('password.error.mismatch')}</p>}
         {!mismatch && tooShort && <p className="text-xs text-status-orange mb-2">{t('password.error.too_short')}</p>}
+        {!mismatch && !tooShort && weak && <p className="text-xs text-status-orange mb-2">{t('password.error.weak')}</p>}
         {flash && (
           <div
             role={flash.kind === 'success' ? 'status' : 'alert'}

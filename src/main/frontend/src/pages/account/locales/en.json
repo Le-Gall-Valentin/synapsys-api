@@ -32,7 +32,7 @@
   },
   "password": {
     "title": "Change password",
-    "subtitle": "Minimum 8 characters.",
+    "subtitle": "8 to 72 characters, with at least one uppercase letter, one digit, and one special character.",
     "current": "Current password",
     "new": "New password",
     "confirm": "Confirm",
@@ -41,6 +41,7 @@
     "error": {
       "mismatch": "The two passwords do not match.",
       "too_short": "Too short (minimum 8 characters).",
+      "weak": "Must contain at least one uppercase letter, one digit, and one special character.",
       "wrong_current": "Current password is incorrect.",
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable."
