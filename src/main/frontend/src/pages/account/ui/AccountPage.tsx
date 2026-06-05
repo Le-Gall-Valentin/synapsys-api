@@ -9,6 +9,7 @@ import { accountApi } from '../api/accountApi'
 import { ProfileSummaryCard } from './ProfileSummaryCard'
 import { ProfileEditSection } from './ProfileEditSection'
 import { TwoFactorSection } from './TwoFactorSection'
+import { PreferencesSection } from './PreferencesSection'
 import { ChangePasswordSection } from './ChangePasswordSection'
 
 export function AccountPage() {
@@ -71,6 +72,8 @@ export function AccountPage() {
         onPatch={patchUser}
         enrollApi={totpApi}
       />
+
+      <PreferencesSection />
 
       <ChangePasswordSection
         onChangePassword={accountApi.changePassword}
