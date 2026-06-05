@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input } from '@/shared/ui'
+import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import type { User } from '@/entities/user'
 import { ConflictError } from '../api/accountApi'
 import { NetworkError } from '@/shared/lib'
@@ -96,10 +96,10 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
             </div>
           )}
           <div className="flex justify-end gap-2 mt-1">
-            <Button type="button" onClick={handleCancel} disabled={!isDirty || isSubmitting}>
+            <Button type="button" onClick={handleCancel} disabled={!isDirty || isSubmitting} className="border-transparent bg-transparent hover:bg-bg-2 hover:border-transparent">
               {t('profile.cancel')}
             </Button>
-            <Button type="submit" disabled={!isDirty} isLoading={isSubmitting}>
+            <Button type="submit" disabled={!isDirty} isLoading={isSubmitting} className="border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
               {t('profile.save')}
             </Button>
           </div>

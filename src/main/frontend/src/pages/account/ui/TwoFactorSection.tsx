@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Shield } from 'lucide-react'
-import { Button, Dialog } from '@/shared/ui'
+import { Button, Dialog, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { TotpSetupFlow } from '@/features/totp'
 import type { ITotpEnrollApi } from '@/features/totp'
 import type { User } from '@/entities/user'
@@ -77,7 +77,7 @@ export function TwoFactorSection({ user, onPatch, enrollApi }: TwoFactorSectionP
               {t('twofa.btn_disable')}
             </Button>
           ) : (
-            <Button onClick={() => setEnableOpen(true)} className="shrink-0">
+            <Button onClick={() => setEnableOpen(true)} className="shrink-0 border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
               <Shield className="size-3.5" />
               {t('twofa.btn_enable')}
             </Button>

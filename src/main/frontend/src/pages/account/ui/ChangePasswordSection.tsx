@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input } from '@/shared/ui'
+import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { InvalidCurrentPasswordError } from '../api/accountApi'
 import { NetworkError } from '@/shared/lib'
 
@@ -114,7 +114,7 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
             </div>
           )}
           <div className="flex justify-end mt-2">
-            <Button type="submit" disabled={!canSubmit} isLoading={isSubmitting}>
+            <Button type="submit" disabled={!canSubmit} isLoading={isSubmitting} className="border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
               {t('password.submit')}
             </Button>
           </div>
