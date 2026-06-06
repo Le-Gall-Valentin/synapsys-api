@@ -21,39 +21,39 @@ public class AuthenticationExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ProblemDetail> handle(AuthenticationException e, HttpServletRequest request) {
         AuthErrorResponse response = switch (e) {
-            case AuthenticationException.InvalidCredentials ex ->
-                    response(401, ex, "Invalid credentials");
+            case AuthenticationException.InvalidCredentials ignored ->
+                    response(401, "Invalid credentials");
 
-            case AuthenticationException.UserNotActive ex ->
-                    response(401, ex, "Authentication required");
+            case AuthenticationException.UserNotActive ignored ->
+                    response(401, "Authentication required");
 
-            case AuthenticationException.UserNotFound ex ->
-                    response(401, ex, "Authentication required");
+            case AuthenticationException.UserNotFound ignored ->
+                    response(401, "Authentication required");
 
-            case AuthenticationException.TokenExpired ex ->
-                    response(401, ex, "Authentication required");
+            case AuthenticationException.TokenExpired ignored ->
+                    response(401, "Authentication required");
 
-            case AuthenticationException.TokenNotFound ex ->
-                    response(401, ex, "Authentication required");
+            case AuthenticationException.TokenNotFound ignored ->
+                    response(401, "Authentication required");
 
-            case AuthenticationException.TokenRevoked ex ->
-                    response(401, ex, "Authentication required");
+            case AuthenticationException.TokenRevoked ignored ->
+                    response(401, "Authentication required");
 
-            case AuthenticationException.TotpCodeInvalid ex ->
-                    response(401, ex, "Authentication required");
+            case AuthenticationException.TotpCodeInvalid ignored ->
+                    response(401, "Authentication required");
 
-            case AuthenticationException.TotpChallengeExpired ex ->
-                    response(401, ex, "Authentication required", "totp_challenge_expired");
+            case AuthenticationException.TotpChallengeExpired ignored ->
+                    response(401, "Authentication required", "totp_challenge_expired");
 
-            case AuthenticationException.TotpMaxAttemptsExceeded ex ->
-                    response(429, ex, "Authentication required", null);
+            case AuthenticationException.TotpMaxAttemptsExceeded ignored ->
+                    response(429, "Authentication required", null);
 
-            case AuthenticationException.InvalidCurrentPassword ex ->
-                    response(422, ex, "Current password is incorrect.");
+            case AuthenticationException.InvalidCurrentPassword ignored ->
+                    response(422, "Current password is incorrect.");
 
             case AuthenticationException.DataIntegrityError ex -> {
                 log.error("Data integrity violation on {}", request.getRequestURI(), ex);
-                yield response(500, ex, "An unexpected error occurred. Please try again later.");
+                yield response(500, "An unexpected error occurred. Please try again later.");
             }
         };
 
@@ -68,11 +68,11 @@ public class AuthenticationExceptionHandler {
         return ResponseEntity.status(response.status()).body(problem);
     }
 
-    private static AuthErrorResponse response(int status, AuthenticationException e, String detail) {
+    private static AuthErrorResponse response(int status, String detail) {
         return new AuthErrorResponse(status, "AuthenticationError", detail, null);
     }
 
-    private static AuthErrorResponse response(int status, AuthenticationException e, String detail, String errorCode) {
+    private static AuthErrorResponse response(int status, String detail, String errorCode) {
         return new AuthErrorResponse(status, "AuthenticationError", detail, errorCode);
     }
 

@@ -363,6 +363,19 @@ class UserControllerIT {
     }
 
     @Test
+    void updateProfile_inactiveUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        userIdentityJpaRepository.deactivateById(testUserId);
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"updated\",\"email\":\"updated@test.com\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void changePassword_correctCurrentPassword_returns204() throws Exception {
         Cookie access = loginAs("testuser", "password");
 

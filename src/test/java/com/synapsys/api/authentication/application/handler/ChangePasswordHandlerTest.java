@@ -73,14 +73,4 @@ class ChangePasswordHandlerTest {
         verify(userCredentialPort, never()).updatePasswordHash(any(), any());
     }
 
-    @Test
-    void changePassword_inactiveUser_throwsUserNotActive() {
-        UserCredentials inactive = new UserCredentials(userId, "user", "u@test.com", "$hashed", false, Role.USER, Instant.now());
-        when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(inactive));
-
-        assertThatThrownBy(() -> handler.changePassword(userId, "oldPass", "newPass"))
-            .isInstanceOf(AuthenticationException.UserNotActive.class);
-
-        verify(userCredentialPort, never()).updatePasswordHash(any(), any());
-    }
 }

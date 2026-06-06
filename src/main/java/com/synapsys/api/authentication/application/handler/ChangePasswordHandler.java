@@ -42,9 +42,6 @@ public class ChangePasswordHandler implements ChangePasswordUseCase {
                 log.error("Data integrity: no credentials found for authenticated user {}", userId);
                 return new AuthenticationException.DataIntegrityError();
             });
-        if (!creds.isActive()) {
-            throw new AuthenticationException.UserNotActive();
-        }
         if (!passwordVerifier.matches(currentPassword, creds.passwordHash())) {
             throw new AuthenticationException.InvalidCurrentPassword();
         }
