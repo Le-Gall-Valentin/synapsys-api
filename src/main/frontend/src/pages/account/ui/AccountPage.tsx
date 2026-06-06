@@ -1,12 +1,10 @@
-import { useRef, useMemo, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
-import { KeyRound, LogOut, Shield, SlidersHorizontal, User } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { totpApi } from '@/features/totp'
 import { Button } from '@/shared/ui'
-import { usePaletteItems } from '@/shared/lib'
-import { ROUTES } from '@/shared/config'
 import { accountApi } from '../api/accountApi'
 import { ProfileSummaryCard } from './ProfileSummaryCard'
 import { ProfileEditSection } from './ProfileEditSection'
@@ -19,18 +17,6 @@ export function AccountPage() {
   const { user, logout, patchUser } = useAuth(
     useShallow(s => ({ user: s.user, logout: s.logout, patchUser: s.patchUser }))
   )
-  const paletteItems = useMemo(() => {
-    const group = t('title')
-    return [
-      { id: 'account:profile',     label: t('profile.title'),     to: `${ROUTES.ACCOUNT}#section-profile`,     icon: User,              group },
-      { id: 'account:twofa',       label: t('twofa.title'),       to: `${ROUTES.ACCOUNT}#section-twofa`,       icon: Shield,            group },
-      { id: 'account:preferences', label: t('preferences.title'), to: `${ROUTES.ACCOUNT}#section-preferences`, icon: SlidersHorizontal, group },
-      { id: 'account:password',    label: t('password.title'),    to: `${ROUTES.ACCOUNT}#section-password`,    icon: KeyRound,          group },
-    ]
-  }, [t])
-
-  usePaletteItems('account', paletteItems)
-
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const pendingRef = useRef(false)

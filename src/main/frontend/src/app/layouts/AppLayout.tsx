@@ -1,15 +1,14 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { usePaletteItems } from '@/shared/lib'
-import { ROUTES } from '@/shared/config'
 import { isAdminRole } from '@/entities/user'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { CommandPalette } from './CommandPalette'
 import { NAV_CONFIG } from './navConfig'
+import { PaletteSetups } from './paletteSetups'
 
 function PageLoader() {
   const { t } = useTranslation('shell')
@@ -36,7 +35,6 @@ export function AppLayout() {
         ...NAV_CONFIG
           .filter((item) => !item.adminOnly || isAdminRole(user?.role))
           .map((item) => ({ id: item.id, label: t(item.labelKey), to: item.to, icon: item.icon, group: pageGroup })),
-        { id: 'shell:account', label: t('nav.account'), to: ROUTES.ACCOUNT, icon: User, group: pageGroup },
       ]
     },
     [t, user?.role]
@@ -73,6 +71,7 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg-0">
+      <PaletteSetups />
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
