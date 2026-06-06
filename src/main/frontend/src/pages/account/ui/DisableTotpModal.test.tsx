@@ -11,7 +11,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/shared/ui', () => ({
   Dialog: ({ open, children, onClose }: { open: boolean; children: React.ReactNode; onClose: () => void; title: string; maxWidth?: string }) =>
     open ? <div role="dialog"><button onClick={onClose}>close-dialog</button>{children}</div> : null,
-  Button: ({ children, onClick, disabled, type, isLoading, className }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean }) => (
+  Button: ({ children, onClick, disabled, type, className }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean }) => (
     <button onClick={onClick} disabled={disabled} type={type} className={className}>{children}</button>
   ),
 }))
