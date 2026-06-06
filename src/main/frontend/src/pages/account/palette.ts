@@ -1,0 +1,1 @@
+export { AccountPaletteSetup } from './ui/AccountPaletteSetup'

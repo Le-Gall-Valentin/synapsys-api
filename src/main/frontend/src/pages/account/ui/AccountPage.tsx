@@ -36,7 +36,9 @@ export function AccountPage() {
     }
   }
 
-  if (!user) return null
+  if (!user) return logoutError
+    ? <p className="text-sm text-status-red" role="alert">{logoutError}</p>
+    : null
 
   return (
     <div className="py-5 px-6 mx-auto">

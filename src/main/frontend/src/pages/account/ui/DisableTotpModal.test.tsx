@@ -125,7 +125,7 @@ describe('DisableTotpModal', () => {
     )
     fireEvent.change(getByLabelText('code'), { target: { value: '123456' } })
     fireEvent.click(getByText('disable.submit'))
-    await waitFor(() => expect(queryByRole('alert')).toBeDefined())
+    await waitFor(() => expect(queryByRole('alert')).not.toBeNull())
     fireEvent.click(getByText('setup.dismiss_profile'))
     expect(onClose).toHaveBeenCalled()
   })

@@ -1,4 +1,4 @@
-import { AccountPaletteSetup } from '@/pages/account'
+import { AccountPaletteSetup } from '@/pages/account/palette'
 
 export function PaletteSetups() {
   return <AccountPaletteSetup />

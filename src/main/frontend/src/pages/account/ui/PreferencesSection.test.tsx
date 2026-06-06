@@ -1,9 +1,6 @@
 import { render, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PreferencesSection } from './PreferencesSection'
-import type { Theme } from '@/app/providers/ThemeProvider'
-import type { Language } from '@/app/providers/LanguageProvider'
-
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }))
@@ -11,19 +8,14 @@ vi.mock('react-i18next', () => ({
 const mockSetTheme = vi.fn()
 const mockSetLanguage = vi.fn()
 
-vi.mock('@/app/providers/ThemeProvider', () => ({
-  useTheme: (): { theme: Theme; setTheme: typeof mockSetTheme } => ({
-    theme: 'system',
-    setTheme: mockSetTheme,
-  }),
-}))
-
-vi.mock('@/app/providers/LanguageProvider', () => ({
-  useLanguage: (): { language: Language; setLanguage: typeof mockSetLanguage } => ({
-    language: 'fr',
-    setLanguage: mockSetLanguage,
-  }),
-}))
+vi.mock('@/shared/lib', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib')>()
+  return {
+    ...actual,
+    useTheme: () => ({ theme: 'system', setTheme: mockSetTheme }),
+    useLanguage: () => ({ language: 'fr', setLanguage: mockSetLanguage }),
+  }
+})
 
 beforeEach(() => {
   vi.clearAllMocks()

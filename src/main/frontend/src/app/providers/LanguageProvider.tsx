@@ -1,14 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { LanguageContext, type Language } from '@/shared/lib/language'
 import i18n from '../i18n'
-
-export type Language = 'fr' | 'en'
-
-interface LanguageContextValue {
-  language: Language
-  setLanguage: (lang: Language) => void
-}
-
-const LanguageContext = createContext<LanguageContextValue | null>(null)
+export { useLanguage, type Language } from '@/shared/lib/language'
 
 function toLanguage(lng: string): Language {
   return lng.startsWith('fr') ? 'fr' : 'en'
@@ -34,10 +27,4 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       {children}
     </LanguageContext.Provider>
   )
-}
-
-export function useLanguage(): LanguageContextValue {
-  const ctx = useContext(LanguageContext)
-  if (!ctx) throw new Error('useLanguage must be used inside LanguageProvider')
-  return ctx
 }

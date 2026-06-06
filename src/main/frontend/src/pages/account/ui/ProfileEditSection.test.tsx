@@ -2,6 +2,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { ProfileEditSection } from './ProfileEditSection'
 import { ConflictError } from '../api/accountApi'
+import { NetworkError, ServerError } from '@/shared/lib'
 import type { User } from '@/entities/user'
 
 vi.mock('react-i18next', () => ({
@@ -85,5 +86,25 @@ describe('ProfileEditSection', () => {
     fireEvent.change(getByLabelText('profile.username'), { target: { value: 'a'.repeat(51) } })
     expect((getByRole('button', { name: 'profile.save' }) as HTMLButtonElement).disabled).toBe(true)
     expect(getByText('profile.error.username_too_long')).toBeDefined()
+  })
+
+  it('shows network error on NetworkError', async () => {
+    const { getByLabelText, getByRole, findByRole } = setup({
+      onUpdateProfile: vi.fn().mockRejectedValue(new NetworkError()),
+    })
+    fireEvent.change(getByLabelText('profile.username'), { target: { value: 'bob' } })
+    fireEvent.click(getByRole('button', { name: 'profile.save' }))
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('profile.error.network')
+  })
+
+  it('shows server error on ServerError', async () => {
+    const { getByLabelText, getByRole, findByRole } = setup({
+      onUpdateProfile: vi.fn().mockRejectedValue(new ServerError()),
+    })
+    fireEvent.change(getByLabelText('profile.username'), { target: { value: 'bob' } })
+    fireEvent.click(getByRole('button', { name: 'profile.save' }))
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('profile.error.server')
   })
 })

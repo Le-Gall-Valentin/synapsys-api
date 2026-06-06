@@ -2,7 +2,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { ChangePasswordSection } from './ChangePasswordSection'
 import { InvalidCurrentPasswordError } from '../api/accountApi'
-import { NetworkError } from '@/shared/lib'
+import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -71,5 +71,21 @@ describe('ChangePasswordSection', () => {
     fireEvent.click(getByRole('button', { name: 'password.submit' }))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('password.error.network')
+  })
+
+  it('shows server error on ServerError', async () => {
+    const { container, getByRole, findByRole } = setup(vi.fn().mockRejectedValue(new ServerError()))
+    fillForm(container, 'old', 'Newpass1!', 'Newpass1!')
+    fireEvent.click(getByRole('button', { name: 'password.submit' }))
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('password.error.server')
+  })
+
+  it('shows server error on RateLimitError', async () => {
+    const { container, getByRole, findByRole } = setup(vi.fn().mockRejectedValue(new RateLimitError()))
+    fillForm(container, 'old', 'Newpass1!', 'Newpass1!')
+    fireEvent.click(getByRole('button', { name: 'password.submit' }))
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('password.error.server')
   })
 })

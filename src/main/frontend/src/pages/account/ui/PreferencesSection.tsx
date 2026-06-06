@@ -1,8 +1,7 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CTA_BUTTON_STYLE } from '@/shared/ui'
-import { useTheme, type Theme } from '@/app/providers/ThemeProvider'
-import { useLanguage, type Language } from '@/app/providers/LanguageProvider'
+import { useTheme, type Theme, useLanguage, type Language } from '@/shared/lib'
 
 interface OptionButtonProps {
   active: boolean
