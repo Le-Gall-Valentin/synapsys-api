@@ -19,6 +19,7 @@ import com.synapsys.api.identity.infrastructure.web.dto.ChangePasswordRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.UpdateProfileRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.UserInfoResponse;
+import com.synapsys.api.infrastructure.ratelimit.RateLimitMode;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -96,6 +97,7 @@ public class UserController {
 
     @PatchMapping("/me")
     @RateLimiting(max = 20)
+    @RateLimiting(mode = RateLimitMode.USER, max = 5)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
                                               @CurrentUser AuthenticatedUser caller) {
@@ -106,6 +108,7 @@ public class UserController {
 
     @PatchMapping("/me/password")
     @RateLimiting(max = 10)
+    @RateLimiting(mode = RateLimitMode.USER, max = 5)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request,
                                                @CurrentUser AuthenticatedUser caller) {

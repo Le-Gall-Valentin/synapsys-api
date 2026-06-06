@@ -4,6 +4,7 @@ import com.synapsys.api.shared.model.Role;
 import java.time.Instant;
 import java.util.UUID;
 
+// Intentional duplication: authentication BC has an identical record. Keep both in sync.
 public record UserInfoResponse(
     UUID id,
     String username,
