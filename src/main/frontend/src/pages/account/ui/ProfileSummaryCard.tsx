@@ -21,7 +21,7 @@ interface ProfileSummaryCardProps {
 }
 
 export function ProfileSummaryCard({ user }: ProfileSummaryCardProps) {
-  const { t, i18n } = useTranslation(['account', 'layouts'])
+  const { t, i18n } = useTranslation(['account', 'shell'])
 
   const createdDate = new Date(user.createdAt).toLocaleDateString(
     i18n.language === 'fr' ? 'fr-FR' : 'en-GB',
@@ -50,7 +50,7 @@ export function ProfileSummaryCard({ user }: ProfileSummaryCardProps) {
             <span
               className={`inline-flex items-center px-[7px] py-[2px] rounded-full border text-[10px] font-semibold font-mono uppercase tracking-[0.04em] whitespace-nowrap ${ROLE_PILL_CLASS[user.role]}`}
             >
-              {t(`user.role.${user.role}`, { ns: 'layouts' })}
+              {t(`user.role.${user.role}`, { ns: 'shell' })}
             </span>
             <span className="font-mono text-[11px] text-fg-3 truncate">{user.email}</span>
             <span className="font-mono text-[11px] text-fg-3">
