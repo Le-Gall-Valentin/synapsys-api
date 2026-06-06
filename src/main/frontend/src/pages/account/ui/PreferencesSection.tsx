@@ -44,7 +44,7 @@ export function PreferencesSection() {
   ]
 
   return (
-    <section className="rounded-md border border-border bg-bg-1 mb-4 overflow-hidden">
+    <section id="section-preferences" className="rounded-md border border-border bg-bg-1 mb-4 overflow-hidden">
       <div className="px-3.5 py-[10px] border-b border-border">
         <div className="text-xs font-semibold text-fg-0 tracking-tight">{t('preferences.title')}</div>
         <div className="text-[11px] text-fg-2 mt-px">{t('preferences.subtitle')}</div>
