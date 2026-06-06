@@ -1,6 +1,7 @@
 package com.synapsys.api.identity.infrastructure.persistence.adapter;
 
 import com.synapsys.api.identity.domain.model.CreateUserProfileCommand;
+import com.synapsys.api.identity.domain.model.UpdateProfileCommand;
 import com.synapsys.api.identity.domain.model.IdentityException;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.UserAdminPort;
@@ -60,6 +61,15 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     @Override
     public void deactivate(UUID userId) {
         jpa.deactivateById(userId);
+    }
+
+    @Override
+    public void updateProfile(UpdateProfileCommand command) {
+        try {
+            jpa.updateProfile(command.userId(), command.username(), command.email());
+        } catch (DataIntegrityViolationException ex) {
+            throw resolveConstraintViolation(ex);
+        }
     }
 
     private IdentityException resolveConstraintViolation(DataIntegrityViolationException e) {

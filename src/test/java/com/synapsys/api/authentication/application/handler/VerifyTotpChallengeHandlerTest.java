@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +34,7 @@ class VerifyTotpChallengeHandlerTest {
     private final UUID userId = UUID.randomUUID();
     private final UserCredentials creds = new UserCredentials(
         userId, "user1", "user1@test.com", "hash", true, Role.USER
-    );
+    , Instant.now());
 
     @BeforeEach
     void setUp() {
@@ -94,7 +95,7 @@ class VerifyTotpChallengeHandlerTest {
     @Test
     void verify_inactiveUser_throwsUserNotActive() {
         UserCredentials inactive = new UserCredentials(userId, "user1", "user1@test.com", "hash",
-            false, Role.USER);
+            false, Role.USER, Instant.now());
         when(challengeStore.resolveChallenge("challenge-id")).thenReturn(Optional.of(userId));
         when(userCredentialsPort.findById(userId)).thenReturn(Optional.of(inactive));
 

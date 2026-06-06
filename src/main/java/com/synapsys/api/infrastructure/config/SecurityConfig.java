@@ -85,7 +85,7 @@ public class SecurityConfig {
             config.setAllowedOrigins(List.of());
         } else {
             config.setAllowedOrigins(allowedOrigins);
-            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
             config.setAllowedHeaders(List.of("Content-Type", "Accept", "X-Requested-With"));
             config.setExposedHeaders(List.of("X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"));
             config.setAllowCredentials(true);

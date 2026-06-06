@@ -3,19 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios, { type AxiosError } from 'axios'
 import { totpApi } from './totpApi'
 import { client } from '@/shared/api'
-import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError, TotpConfirmMaxAttemptsError } from '../model/errors'
+import { TotpCodeError, TotpChallengeExpiredError, TotpAlreadyEnabledError, TotpMaxAttemptsError, TotpConfirmMaxAttemptsError, TotpDisableMaxAttemptsError } from '../model/errors'
 import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 
 vi.mock('@/shared/api', () => ({
   client: {
     post: vi.fn(),
     get: vi.fn(),
+    delete: vi.fn(),
   },
 }))
 
 const mockedClient = client as unknown as {
   post: ReturnType<typeof vi.fn>
   get: ReturnType<typeof vi.fn>
+  delete: ReturnType<typeof vi.fn>
 }
 
 function makeAxiosError(
@@ -37,6 +39,7 @@ describe('totpApi', () => {
   beforeEach(() => {
     mockedClient.post.mockReset()
     mockedClient.get.mockReset()
+    mockedClient.delete.mockReset()
   })
 
   // verify
@@ -197,6 +200,42 @@ describe('totpApi', () => {
     it('throws NetworkError on no response', async () => {
       mockedClient.post.mockRejectedValue(new Error('Network Error'))
       await expect(totpApi.confirm('123456')).rejects.toBeInstanceOf(NetworkError)
+    })
+  })
+
+  // disable
+  describe('disable', () => {
+    it('resolves void on 204', async () => {
+      mockedClient.delete.mockResolvedValue({ status: 204, data: undefined })
+      await expect(totpApi.disable('123456')).resolves.toBeUndefined()
+      expect(mockedClient.delete).toHaveBeenCalledWith('/auth/2fa', { data: { code: '123456' } })
+    })
+
+    it('throws TotpCodeError on 401', async () => {
+      mockedClient.delete.mockRejectedValue(makeAxiosError(401))
+      await expect(totpApi.disable('000000')).rejects.toBeInstanceOf(TotpCodeError)
+    })
+
+    it('throws TotpDisableMaxAttemptsError on 429 without retry-after', async () => {
+      mockedClient.delete.mockRejectedValue(makeAxiosError(429))
+      await expect(totpApi.disable('000000')).rejects.toBeInstanceOf(TotpDisableMaxAttemptsError)
+    })
+
+    it('throws RateLimitError on 429 with retry-after', async () => {
+      mockedClient.delete.mockRejectedValue(makeAxiosError(429, 'Too Many Requests', { 'retry-after': '30' }))
+      const caught = await totpApi.disable('123456').catch((e) => e)
+      expect(caught).toBeInstanceOf(RateLimitError)
+      expect((caught as RateLimitError).retryAfterSeconds).toBe(30)
+    })
+
+    it('throws ServerError on 500', async () => {
+      mockedClient.delete.mockRejectedValue(makeAxiosError(500))
+      await expect(totpApi.disable('123456')).rejects.toBeInstanceOf(ServerError)
+    })
+
+    it('throws NetworkError on no response', async () => {
+      mockedClient.delete.mockRejectedValue(new Error('Network Error'))
+      await expect(totpApi.disable('123456')).rejects.toBeInstanceOf(NetworkError)
     })
   })
 })

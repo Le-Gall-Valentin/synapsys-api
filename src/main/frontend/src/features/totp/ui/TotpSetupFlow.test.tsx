@@ -24,6 +24,7 @@ function makeApi(overrides: Partial<ITotpEnrollApi> = {}): ITotpEnrollApi {
     setup: vi.fn().mockResolvedValue(SETUP_DATA),
     confirm: vi.fn().mockResolvedValue(undefined),
     getStatus: vi.fn(),
+    disable: vi.fn(),
     ...overrides,
   }
 }

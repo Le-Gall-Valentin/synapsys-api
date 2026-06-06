@@ -17,3 +17,7 @@ export class TotpMaxAttemptsError extends Error {
 export class TotpConfirmMaxAttemptsError extends Error {
   constructor() { super('Too many failed confirmation attempts'); this.name = 'TotpConfirmMaxAttemptsError' }
 }
+
+export class TotpDisableMaxAttemptsError extends Error {
+  constructor() { super('Too many failed disable attempts'); this.name = 'TotpDisableMaxAttemptsError' }
+}

@@ -23,4 +23,9 @@ public class UserCredentialAdapter implements UserCredentialPort {
         e.setPasswordHash(passwordHash);
         jpa.save(e);
     }
+
+    @Override
+    public void updatePasswordHash(UUID userId, String newHash) {
+        jpa.updatePasswordHash(userId, newHash);
+    }
 }

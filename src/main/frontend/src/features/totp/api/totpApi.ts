@@ -4,7 +4,7 @@ import type { User } from '@/entities/user'
 import type { ITotpVerifyApi } from '../model/ITotpVerifyApi'
 import type { ITotpEnrollApi } from '../model/ITotpEnrollApi'
 import type { TotpSetupData } from '../model/types'
-import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpConfirmMaxAttemptsError, TotpMaxAttemptsError } from '../model/errors'
+import { TotpAlreadyEnabledError, TotpChallengeExpiredError, TotpCodeError, TotpConfirmMaxAttemptsError, TotpDisableMaxAttemptsError, TotpMaxAttemptsError } from '../model/errors'
 import { NetworkError, ServerError, RateLimitError, parseRetryAfter } from '@/shared/lib'
 
 function handleTotpApiError(error: unknown, statusHandlers: Partial<Record<number, () => never>>): never {
@@ -82,6 +82,24 @@ export const totpApi: ITotpVerifyApi & ITotpEnrollApi = {
       return data
     } catch (error) {
       handleTotpApiError(error, {})
+    }
+  },
+
+  async disable(code: string): Promise<void> {
+    try {
+      await client.delete('/auth/2fa', { data: { code } })
+    } catch (error) {
+      if (isAxiosError(error)) {
+        const status = error.response?.status
+        if (status === 401) throw new TotpCodeError()
+        if (status === 429) {
+          const retryAfter = parseRetryAfter(error.response?.headers)
+          if (retryAfter === null) throw new TotpDisableMaxAttemptsError()
+          throw new RateLimitError(retryAfter)
+        }
+        if (status !== undefined) throw new ServerError()
+      }
+      throw new NetworkError()
     }
   },
 }

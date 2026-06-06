@@ -46,5 +46,19 @@
       "network": "Réseau indisponible. Vérifiez votre connexion.",
       "server": "Une erreur serveur est survenue. Veuillez réessayer."
     }
+  },
+  "disable": {
+    "title": "Désactiver la double authentification",
+    "subtitle": "Saisissez le code affiché par votre application pour confirmer.",
+    "submit": "Désactiver",
+    "code_group_label": "Code de vérification",
+    "digit_label": "Chiffre {{n}}",
+    "error": {
+      "invalid_code": "Code invalide ou expiré.",
+      "max_attempts": "Trop de tentatives incorrectes.",
+      "rate_limit": "Trop de tentatives. Veuillez patienter.",
+      "network": "Réseau indisponible.",
+      "server": "Une erreur serveur est survenue."
+    }
   }
 }

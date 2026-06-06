@@ -51,7 +51,8 @@ public class UserCredentialsRepositoryAdapter implements UserCredentialsPort {
                 profile.email(),
                 passwordHash,
                 profile.isActive(),
-                profile.role()
+                profile.role(),
+                profile.createdAt()
         );
     }
 }

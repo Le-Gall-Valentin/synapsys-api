@@ -5,6 +5,8 @@ import com.synapsys.api.authentication.infrastructure.persistence.entity.UserCre
 import com.synapsys.api.authentication.infrastructure.persistence.repository.RefreshTokenJpaRepository;
 import com.synapsys.api.authentication.infrastructure.persistence.repository.UserCredentialJpaRepository;
 import com.synapsys.api.authentication.infrastructure.web.dto.LoginRequest;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import com.synapsys.api.identity.infrastructure.persistence.entity.UserIdentityEntity;
 import com.synapsys.api.identity.infrastructure.persistence.repository.UserIdentityJpaRepository;
 import com.synapsys.api.infrastructure.ratelimit.RedisRateLimitBucketStore;
@@ -29,10 +31,15 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -103,7 +110,35 @@ class UserControllerIT {
         mockMvc.perform(get("/api/users/me").cookie(access))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.username").value("testuser"))
-            .andExpect(jsonPath("$.role").value("USER"));
+            .andExpect(jsonPath("$.email").value("testuser@test.com"))
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.createdAt").isNotEmpty())
+            .andExpect(jsonPath("$.totpEnabled").value(false));
+    }
+
+    @Test
+    void me_withTotpEnabled_returnsTotpEnabledTrue() throws Exception {
+        UserIdentityEntity totpUser = userIdentityJpaRepository.findByUsername("totpuser").get();
+        // Build a valid access token directly — loginAs would be blocked by TOTP challenge
+        Instant now = Instant.now();
+        String token = Jwts.builder()
+            .issuer("synapsys-api")
+            .audience().add("synapsys-api").and()
+            .subject(totpUser.getId().toString())
+            .claim("role", totpUser.getRole().name())
+            .claim("email", totpUser.getEmail())
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(now.plusSeconds(15 * 60L)))
+            .signWith(Keys.hmacShaKeyFor(
+                "integration-test-secret-at-least-32-chars!".getBytes(StandardCharsets.UTF_8)))
+            .compact();
+        Cookie access = new Cookie("access_token", token);
+
+        mockMvc.perform(get("/api/users/me").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totpEnabled").value(true))
+            .andExpect(jsonPath("$.username").value("totpuser"))
+            .andExpect(jsonPath("$.email").value("totpuser@test.com"));
     }
 
     @Test
@@ -130,7 +165,10 @@ class UserControllerIT {
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", org.hamcrest.Matchers.matchesPattern("/api/users/[0-9a-f-]+")))
             .andExpect(jsonPath("$.username").value("newuser"))
-            .andExpect(jsonPath("$.role").value("USER"));
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.email").value("newuser@test.com"))
+            .andExpect(jsonPath("$.totpEnabled").value(false))
+            .andExpect(jsonPath("$.createdAt").isNotEmpty());
     }
 
     @Test
@@ -267,6 +305,160 @@ class UserControllerIT {
 
         mockMvc.perform(post("/api/users/" + UUID.randomUUID() + "/2fa/reset").cookie(access))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateProfile_authenticated_updatesUsernameAndEmail_returns204() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"updated\",\"email\":\"updated@test.com\"}"))
+            .andExpect(status().isNoContent());
+
+        assertThat(userIdentityJpaRepository.findByUsername("updated")).isPresent();
+        assertThat(userIdentityJpaRepository.findByEmail("updated@test.com")).isPresent();
+    }
+
+    @Test
+    void updateProfile_duplicateUsername_returns409() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"superadmin\",\"email\":\"unique@test.com\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateProfile_duplicateEmail_returns409() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"uniqueuser\",\"email\":\"superadmin@test.com\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateProfile_invalidUsername_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"ab\",\"email\":\"ok@test.com\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateProfile_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(patch("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"x\",\"email\":\"x@test.com\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateProfile_inactiveUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        userIdentityJpaRepository.deactivateById(testUserId);
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"updated\",\"email\":\"updated@test.com\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void changePassword_correctCurrentPassword_returns204() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"password\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void changePassword_wrongCurrentPassword_returns422() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"wrong\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void changePassword_weakNewPassword_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"password\",\"newPassword\":\"weak\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changePassword_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(patch("/api/users/me/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"x\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void me_withInactiveUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        userIdentityJpaRepository.deactivateById(testUserId);
+
+        mockMvc.perform(get("/api/users/me").cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateProfile_invalidEmail_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"testuser\",\"email\":\"notanemail\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changePassword_sameAsCurrentPassword_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"Samepass1!\",\"newPassword\":\"Samepass1!\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changePassword_inactiveUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        userIdentityJpaRepository.deactivateById(testUserId);
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"password\",\"newPassword\":\"Newpassword1!\"}"))
+            .andExpect(status().isForbidden());
     }
 
     private void saveCredential(UUID userId, String rawPassword) {

@@ -256,15 +256,15 @@ class ArchRulesTest {
             new String[]{BASE + "mfa.application.port.in..", BASE + "mfa.application.dto.."},
             Set.of("TotpStatusAdapter", "MfaTotpVerifierAdapter")),
 
-        // identity.infra → authentication.application.port.in
+        // identity.infra → authentication.application (port.in + dto)
         new CrossBcAppDep("identity",
-            new String[]{BASE + "authentication.application.port.in.."},
-            Set.of("CredentialSetupAdapter")),
+            new String[]{BASE + "authentication.application.port.in..", BASE + "authentication.application.dto.."},
+            Set.of("CredentialSetupAdapter", "CredentialChangeAdapter")),
 
         // identity.infra → mfa.application.port.in
         new CrossBcAppDep("identity",
             new String[]{BASE + "mfa.application.port.in.."},
-            Set.of("TotpRecordInitAdapter", "MfaAdminResetTotpAdapter"))
+            Set.of("TotpRecordInitAdapter", "MfaAdminResetTotpAdapter", "IdentityTotpStatusAdapter"))
     );
 
     @ParameterizedTest(name = "{0}.infra → {1}: only whitelisted adapters allowed")

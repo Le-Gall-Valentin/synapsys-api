@@ -46,5 +46,19 @@
       "network": "Network unavailable. Please check your connection.",
       "server": "A server error occurred. Please try again."
     }
+  },
+  "disable": {
+    "title": "Disable two-factor authentication",
+    "subtitle": "Enter the code from your authenticator app to confirm.",
+    "submit": "Disable",
+    "code_group_label": "Verification code",
+    "digit_label": "Digit {{n}}",
+    "error": {
+      "invalid_code": "Invalid or expired code.",
+      "max_attempts": "Too many incorrect attempts.",
+      "rate_limit": "Too many attempts. Please wait.",
+      "network": "Network unavailable.",
+      "server": "A server error occurred."
+    }
   }
 }

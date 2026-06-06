@@ -20,12 +20,12 @@ public class UserProfileAdapter implements UserProfilePort {
     @Override
     public Optional<UserProfile> findByUsername(String username) {
         return findUser.findByUsername(username)
-            .map(u -> new UserProfile(u.id(), u.username(), u.email(), u.isActive(), u.role()));
+            .map(u -> new UserProfile(u.id(), u.username(), u.email(), u.isActive(), u.role(), u.createdAt()));
     }
 
     @Override
     public Optional<UserProfile> findById(UUID id) {
         return findUser.findById(id)
-            .map(u -> new UserProfile(u.id(), u.username(), u.email(), u.isActive(), u.role()));
+            .map(u -> new UserProfile(u.id(), u.username(), u.email(), u.isActive(), u.role(), u.createdAt()));
     }
 }

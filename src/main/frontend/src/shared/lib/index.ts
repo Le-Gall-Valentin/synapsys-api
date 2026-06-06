@@ -6,3 +6,5 @@ export { setSessionExpiredCallback, triggerSessionExpired } from './sessionCallb
 export { setSessionHint, clearSessionHint, hasSessionHint } from './sessionHint'
 export { NetworkError, ServerError, RateLimitError } from './apiErrors'
 export { parseRetryAfter } from './parseRetryAfter'
+export { useTheme, type Theme } from './theme'
+export { useLanguage, type Language } from './language'

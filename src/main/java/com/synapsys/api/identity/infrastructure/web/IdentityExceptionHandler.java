@@ -39,6 +39,9 @@ public class IdentityExceptionHandler {
             case IdentityException.EmailAlreadyExists ex ->
                     response(409, ex, "Email already registered.");
 
+            case IdentityException.InvalidCurrentPassword ex ->
+                    response(422, ex, "Current password is incorrect.");
+
             case IdentityException.DataIntegrityError ex -> {
                 log.error("Data integrity violation on {}", request.getRequestURI(), ex);
                 yield response(500, ex, "An unexpected error occurred. Please try again later.");

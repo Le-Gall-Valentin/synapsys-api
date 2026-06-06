@@ -7,6 +7,7 @@ public abstract sealed class IdentityException extends RuntimeException
             IdentityException.UsernameAlreadyExists,
             IdentityException.EmailAlreadyExists,
             IdentityException.InsufficientPermissions,
+            IdentityException.InvalidCurrentPassword,
             IdentityException.DataIntegrityError {
 
     private IdentityException(String message) { super(message); }
@@ -29,6 +30,10 @@ public abstract sealed class IdentityException extends RuntimeException
     public static final class InsufficientPermissions extends IdentityException {
         public InsufficientPermissions() { super("Insufficient permissions"); }
     }
+    public static final class InvalidCurrentPassword extends IdentityException {
+        public InvalidCurrentPassword() { super("Current password is incorrect"); }
+    }
+
     public static final class DataIntegrityError extends IdentityException {
         public DataIntegrityError() { super("Unexpected data integrity violation"); }
     }

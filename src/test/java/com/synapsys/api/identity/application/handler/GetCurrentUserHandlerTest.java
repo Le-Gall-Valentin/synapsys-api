@@ -2,6 +2,8 @@ package com.synapsys.api.identity.application.handler;
 
 import com.synapsys.api.identity.domain.model.IdentityException;
 import com.synapsys.api.identity.domain.model.User;
+import com.synapsys.api.identity.domain.model.UserSelfView;
+import com.synapsys.api.identity.domain.port.out.TotpStatusPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.model.Role;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,22 +24,43 @@ import static org.mockito.Mockito.when;
 class GetCurrentUserHandlerTest {
 
     @Mock UserRepository userRepository;
+    @Mock TotpStatusPort totpStatusPort;
 
     private GetCurrentUserHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GetCurrentUserHandler(userRepository);
+        handler = new GetCurrentUserHandler(userRepository, totpStatusPort);
     }
 
     @Test
-    void getCurrentUser_found_returnsUser() {
+    void getCurrentUser_found_totpDisabled_returnsView() {
+        UUID id = UUID.randomUUID();
+        Instant now = Instant.now();
+        User user = new User(id, "user1", "u@test.com", Role.USER, true, now);
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(totpStatusPort.isTotpEnabled(id)).thenReturn(false);
+
+        UserSelfView view = handler.getCurrentUser(id);
+
+        assertThat(view.id()).isEqualTo(id);
+        assertThat(view.username()).isEqualTo("user1");
+        assertThat(view.email()).isEqualTo("u@test.com");
+        assertThat(view.role()).isEqualTo(Role.USER);
+        assertThat(view.createdAt()).isEqualTo(now);
+        assertThat(view.totpEnabled()).isFalse();
+    }
+
+    @Test
+    void getCurrentUser_found_totpEnabled_returnsViewWithTotpTrue() {
         UUID id = UUID.randomUUID();
         User user = new User(id, "user1", "u@test.com", Role.USER, true, Instant.now());
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(totpStatusPort.isTotpEnabled(id)).thenReturn(true);
 
-        User result = handler.getCurrentUser(id);
-        assertThat(result).isEqualTo(user);
+        UserSelfView view = handler.getCurrentUser(id);
+
+        assertThat(view.totpEnabled()).isTrue();
     }
 
     @Test
