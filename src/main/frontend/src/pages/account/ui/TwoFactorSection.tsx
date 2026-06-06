@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Shield } from 'lucide-react'
 import { Button, Dialog, CTA_BUTTON_STYLE } from '@/shared/ui'
@@ -21,6 +21,10 @@ export function TwoFactorSection({ user, onPatch, enrollApi }: TwoFactorSectionP
   const [disableOpen, setDisableOpen] = useState(false)
   const [flash, setFlash] = useState<Flash>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (flashTimer.current) clearTimeout(flashTimer.current) }
+  }, [])
 
   function showFlash(kind: 'success' | 'error', key: string) {
     if (flashTimer.current) clearTimeout(flashTimer.current)

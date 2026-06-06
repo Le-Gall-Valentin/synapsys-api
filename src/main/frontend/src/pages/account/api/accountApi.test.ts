@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios, { type AxiosError } from 'axios'
 import { accountApi, ConflictError, InvalidCurrentPasswordError } from './accountApi'
 import { client } from '@/shared/api'
-import { NetworkError, ServerError } from '@/shared/lib'
+import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 
 vi.mock('@/shared/api', () => ({
   client: {
@@ -50,6 +50,11 @@ describe('accountApi', () => {
       await expect(accountApi.updateProfile('a', 'a@test.com')).rejects.toBeInstanceOf(ServerError)
     })
 
+    it('throws RateLimitError on 429', async () => {
+      mockedClient.patch.mockRejectedValue(makeAxiosError(429))
+      await expect(accountApi.updateProfile('a', 'a@test.com')).rejects.toBeInstanceOf(RateLimitError)
+    })
+
     it('throws NetworkError when no response', async () => {
       mockedClient.patch.mockRejectedValue(new Error('Network Error'))
       await expect(accountApi.updateProfile('a', 'a@test.com')).rejects.toBeInstanceOf(NetworkError)
@@ -76,6 +81,11 @@ describe('accountApi', () => {
     it('throws ServerError on 500', async () => {
       mockedClient.patch.mockRejectedValue(makeAxiosError(500))
       await expect(accountApi.changePassword('old', 'New1!')).rejects.toBeInstanceOf(ServerError)
+    })
+
+    it('throws RateLimitError on 429', async () => {
+      mockedClient.patch.mockRejectedValue(makeAxiosError(429))
+      await expect(accountApi.changePassword('old', 'New1!')).rejects.toBeInstanceOf(RateLimitError)
     })
 
     it('throws NetworkError when no response', async () => {

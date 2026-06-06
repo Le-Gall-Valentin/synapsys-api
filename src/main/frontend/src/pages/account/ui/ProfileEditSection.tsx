@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import type { User } from '@/entities/user'
@@ -21,7 +21,15 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
   const [flash, setFlash] = useState<Flash>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const isDirty = username.trim() !== user.username || email.trim() !== user.email
+  const trimmedUsername = username.trim()
+  const isDirty = trimmedUsername !== user.username || email.trim() !== user.email
+  const usernameTooShort = trimmedUsername.length > 0 && trimmedUsername.length < 3
+  const usernameTooLong = trimmedUsername.length > 50
+  const canSave = isDirty && !usernameTooShort && !usernameTooLong
+
+  useEffect(() => {
+    return () => { if (flashTimer.current) clearTimeout(flashTimer.current) }
+  }, [])
 
   function showFlash(kind: 'success' | 'error', key: string) {
     if (flashTimer.current) clearTimeout(flashTimer.current)
@@ -31,10 +39,9 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!isDirty || isSubmitting) return
+    if (!canSave || isSubmitting) return
     setIsSubmitting(true)
     try {
-      const trimmedUsername = username.trim()
       const trimmedEmail = email.trim()
       await onUpdateProfile(trimmedUsername, trimmedEmail)
       onPatch({ username: trimmedUsername, email: trimmedEmail })
@@ -66,6 +73,8 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
       </div>
       <div className="p-3.5">
         <form onSubmit={handleSubmit}>
+          {usernameTooShort && <p className="text-xs text-status-orange mb-2">{t('profile.error.username_too_short')}</p>}
+          {usernameTooLong && <p className="text-xs text-status-orange mb-2">{t('profile.error.username_too_long')}</p>}
           <div className="flex flex-col gap-3 sm:flex-row mb-3">
             <div className="min-w-0 sm:flex-1">
               <Input
@@ -99,7 +108,7 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
             <Button type="button" onClick={handleCancel} disabled={!isDirty || isSubmitting} className="border-transparent bg-transparent hover:bg-bg-2 hover:border-transparent">
               {t('profile.cancel')}
             </Button>
-            <Button type="submit" disabled={!isDirty} isLoading={isSubmitting} className="border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
+            <Button type="submit" disabled={!canSave} isLoading={isSubmitting} className="border-transparent font-semibold" style={CTA_BUTTON_STYLE}>
               {t('profile.save')}
             </Button>
           </div>

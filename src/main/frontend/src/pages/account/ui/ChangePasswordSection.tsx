@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { InvalidCurrentPasswordError } from '../api/accountApi'
@@ -29,6 +29,10 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
     next.length <= 72 &&
     PASSWORD_REGEX.test(next) &&
     next === confirm
+
+  useEffect(() => {
+    return () => { if (flashTimer.current) clearTimeout(flashTimer.current) }
+  }, [])
 
   function showFlash(kind: 'success' | 'error', key: string) {
     if (flashTimer.current) clearTimeout(flashTimer.current)

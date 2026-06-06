@@ -1,12 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { User } from '@/entities/user'
 
-const ROLE_LABEL: Record<User['role'], string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
-  USER: 'Utilisateur',
-}
-
 const ROLE_PILL_CLASS: Record<User['role'], string> = {
   SUPER_ADMIN: 'border-accent/20 bg-accent-dim text-accent',
   ADMIN: 'border-border-2 bg-bg-3 text-fg-2',
@@ -27,7 +21,7 @@ interface ProfileSummaryCardProps {
 }
 
 export function ProfileSummaryCard({ user }: ProfileSummaryCardProps) {
-  const { t, i18n } = useTranslation('account')
+  const { t, i18n } = useTranslation(['account', 'layouts'])
 
   const createdDate = new Date(user.createdAt).toLocaleDateString(
     i18n.language === 'fr' ? 'fr-FR' : 'en-GB',
@@ -56,7 +50,7 @@ export function ProfileSummaryCard({ user }: ProfileSummaryCardProps) {
             <span
               className={`inline-flex items-center px-[7px] py-[2px] rounded-full border text-[10px] font-semibold font-mono uppercase tracking-[0.04em] whitespace-nowrap ${ROLE_PILL_CLASS[user.role]}`}
             >
-              {ROLE_LABEL[user.role]}
+              {t(`user.role.${user.role}`, { ns: 'layouts' })}
             </span>
             <span className="font-mono text-[11px] text-fg-3 truncate">{user.email}</span>
             <span className="font-mono text-[11px] text-fg-3">

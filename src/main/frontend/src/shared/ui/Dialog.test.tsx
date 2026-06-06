@@ -57,4 +57,18 @@ describe('Dialog', () => {
     expect(dialog).toBeDefined()
     expect(dialog?.getAttribute('aria-modal')).toBe('true')
   })
+
+  it('links aria-labelledby to the sr-only title element', () => {
+    const { container } = render(
+      <Dialog open={true} onClose={vi.fn()} title="My Dialog Title">
+        <p>Content</p>
+      </Dialog>
+    )
+    const dialog = container.querySelector('[role="dialog"]')
+    const titleId = dialog?.getAttribute('aria-labelledby')
+    expect(titleId).toBeTruthy()
+    const h2 = container.querySelector('h2')
+    expect(h2?.id).toBe(titleId)
+    expect(h2?.textContent).toBe('My Dialog Title')
+  })
 })

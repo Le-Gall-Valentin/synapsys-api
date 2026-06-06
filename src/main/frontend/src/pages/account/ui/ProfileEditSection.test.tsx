@@ -72,4 +72,18 @@ describe('ProfileEditSection', () => {
     fireEvent.click(getByRole('button', { name: 'profile.cancel' }))
     expect((getByLabelText('profile.username') as HTMLInputElement).value).toBe('alice')
   })
+
+  it('save button is disabled and shows error when username is too short', () => {
+    const { getByLabelText, getByRole, getByText } = setup()
+    fireEvent.change(getByLabelText('profile.username'), { target: { value: 'ab' } })
+    expect((getByRole('button', { name: 'profile.save' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(getByText('profile.error.username_too_short')).toBeDefined()
+  })
+
+  it('save button is disabled and shows error when username is too long', () => {
+    const { getByLabelText, getByRole, getByText } = setup()
+    fireEvent.change(getByLabelText('profile.username'), { target: { value: 'a'.repeat(51) } })
+    expect((getByRole('button', { name: 'profile.save' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(getByText('profile.error.username_too_long')).toBeDefined()
+  })
 })

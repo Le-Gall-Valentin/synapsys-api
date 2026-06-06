@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
-import { NetworkError, ServerError } from '@/shared/lib'
+import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 
 export class ConflictError extends Error {
   constructor() { super('Username or email already taken'); this.name = 'ConflictError' }
@@ -18,6 +18,7 @@ export const accountApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 409) throw new ConflictError()
+        if (status === 429) throw new RateLimitError()
         if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
@@ -31,6 +32,7 @@ export const accountApi = {
       if (isAxiosError(error)) {
         const status = error.response?.status
         if (status === 422) throw new InvalidCurrentPasswordError()
+        if (status === 429) throw new RateLimitError()
         if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
