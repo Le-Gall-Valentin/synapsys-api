@@ -1,7 +1,7 @@
 package com.synapsys.api.authentication.application.handler;
 
+import com.synapsys.api.authentication.application.dto.ChangePasswordResult;
 import com.synapsys.api.authentication.application.port.in.ChangePasswordUseCase;
-import com.synapsys.api.authentication.domain.model.AuthenticationException;
 import com.synapsys.api.authentication.domain.model.UserCredentials;
 import com.synapsys.api.authentication.domain.port.out.PasswordHasherPort;
 import com.synapsys.api.authentication.domain.port.out.PasswordVerifierPort;
@@ -36,16 +36,17 @@ public class ChangePasswordHandler implements ChangePasswordUseCase {
 
     @Override
     @Transactional
-    public void changePassword(UUID userId, String currentPassword, String newPassword) {
-        UserCredentials creds = userCredentialsPort.findById(userId)
-            .orElseThrow(() -> {
-                log.error("Data integrity: no credentials found for authenticated user {}", userId);
-                return new AuthenticationException.DataIntegrityError();
-            });
+    public ChangePasswordResult changePassword(UUID userId, String currentPassword, String newPassword) {
+        UserCredentials creds = userCredentialsPort.findById(userId).orElse(null);
+        if (creds == null) {
+            log.error("Data integrity: no credentials found for authenticated user {}", userId);
+            return new ChangePasswordResult.DataIntegrityError();
+        }
         if (!passwordVerifier.matches(currentPassword, creds.passwordHash())) {
-            throw new AuthenticationException.InvalidCurrentPassword();
+            return new ChangePasswordResult.InvalidCurrentPassword();
         }
         String newHash = passwordHasher.hash(newPassword);
         userCredentialPort.updatePasswordHash(userId, newHash);
+        return new ChangePasswordResult.Success();
     }
 }

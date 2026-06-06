@@ -1,5 +1,6 @@
 package com.synapsys.api.identity.infrastructure.web.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -13,6 +14,11 @@ public record ChangePasswordRequest(
     )
     String newPassword
 ) {
+    @AssertTrue(message = "new password must differ from current password")
+    public boolean isNewPasswordDifferent() {
+        return currentPassword == null || newPassword == null || !newPassword.equals(currentPassword);
+    }
+
     @Override
     public String toString() {
         return "ChangePasswordRequest[]";

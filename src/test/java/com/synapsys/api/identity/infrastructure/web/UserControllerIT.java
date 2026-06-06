@@ -417,6 +417,38 @@ class UserControllerIT {
     }
 
     @Test
+    void me_withInactiveUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        userIdentityJpaRepository.deactivateById(testUserId);
+
+        mockMvc.perform(get("/api/users/me").cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateProfile_invalidEmail_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"testuser\",\"email\":\"notanemail\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changePassword_sameAsCurrentPassword_returns400() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"Samepass1!\",\"newPassword\":\"Samepass1!\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void changePassword_inactiveUser_returns403() throws Exception {
         Cookie access = loginAs("testuser", "password");
         UUID testUserId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
