@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { InvalidCurrentPasswordError } from '../api/accountApi'
-import { NetworkError } from '@/shared/lib'
+import { NetworkError, RateLimitError } from '@/shared/lib'
+
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).+$/
 
 type Flash = { kind: 'success' | 'error'; key: string } | null
 
@@ -19,7 +21,6 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
   const [flash, setFlash] = useState<Flash>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).+$/
   const mismatch = next.length > 0 && confirm.length > 0 && next !== confirm
   const tooShort = next.length > 0 && next.length < 8
   const weak = next.length >= 8 && next.length <= 72 && !PASSWORD_REGEX.test(next)
@@ -53,6 +54,8 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
     } catch (error) {
       if (error instanceof InvalidCurrentPasswordError) {
         showFlash('error', 'password.error.wrong_current')
+      } else if (error instanceof RateLimitError) {
+        showFlash('error', 'password.error.rate_limit')
       } else if (error instanceof NetworkError) {
         showFlash('error', 'password.error.network')
       } else {

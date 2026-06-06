@@ -17,7 +17,9 @@
       "username_too_short": "Minimum 3 characters.",
       "username_too_long": "Maximum 50 characters.",
       "server": "An error occurred. Please try again.",
-      "network": "Network unavailable."
+      "network": "Network unavailable.",
+      "rate_limit": "Too many requests. Please try again later.",
+      "email_required": "Email address is required."
     }
   },
   "twofa": {
@@ -46,7 +48,8 @@
       "weak": "Must contain at least one uppercase letter, one digit, and one special character.",
       "wrong_current": "Current password is incorrect.",
       "server": "An error occurred. Please try again.",
-      "network": "Network unavailable."
+      "network": "Network unavailable.",
+      "rate_limit": "Too many requests. Please try again later."
     }
   },
   "preferences": {

@@ -38,7 +38,7 @@ export function ProfileSummaryCard({ user }: ProfileSummaryCardProps) {
       <div className="flex items-center gap-4">
         <div
           className="w-[52px] h-[52px] rounded-[10px] flex items-center justify-center text-[18px] font-semibold shrink-0"
-          style={{ background: avatarGradient, color: '#0a0b0d' }}
+          style={{ background: avatarGradient, color: '#ffffff' }}
         >
           {getInitials(user.username)}
         </div>

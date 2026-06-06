@@ -2,7 +2,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { ProfileEditSection } from './ProfileEditSection'
 import { ConflictError } from '../api/accountApi'
-import { NetworkError, ServerError } from '@/shared/lib'
+import { NetworkError, ServerError, RateLimitError } from '@/shared/lib'
 import type { User } from '@/entities/user'
 
 vi.mock('react-i18next', () => ({
@@ -106,5 +106,21 @@ describe('ProfileEditSection', () => {
     fireEvent.click(getByRole('button', { name: 'profile.save' }))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('profile.error.server')
+  })
+
+  it('shows rate_limit error on RateLimitError', async () => {
+    const { getByLabelText, getByRole, findByRole } = setup({
+      onUpdateProfile: vi.fn().mockRejectedValue(new RateLimitError()),
+    })
+    fireEvent.change(getByLabelText('profile.username'), { target: { value: 'bob' } })
+    fireEvent.click(getByRole('button', { name: 'profile.save' }))
+    const alert = await findByRole('alert')
+    expect(alert.textContent).toContain('profile.error.rate_limit')
+  })
+
+  it('disables save when email is cleared', () => {
+    const { getByLabelText, getByRole } = setup()
+    fireEvent.change(getByLabelText('profile.email'), { target: { value: '' } })
+    expect((getByRole('button', { name: 'profile.save' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import type { User } from '@/entities/user'
 import { ConflictError } from '../api/accountApi'
-import { NetworkError } from '@/shared/lib'
+import { NetworkError, RateLimitError } from '@/shared/lib'
 
 type Flash = { kind: 'success' | 'error'; key: string } | null
 
@@ -22,10 +22,12 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const trimmedUsername = username.trim()
-  const isDirty = trimmedUsername !== user.username || email.trim() !== user.email
+  const trimmedEmail = email.trim()
+  const isDirty = trimmedUsername !== user.username || trimmedEmail !== user.email
   const usernameTooShort = trimmedUsername.length > 0 && trimmedUsername.length < 3
   const usernameTooLong = trimmedUsername.length > 50
-  const canSave = isDirty && !usernameTooShort && !usernameTooLong
+  const emailEmpty = trimmedEmail.length === 0
+  const canSave = isDirty && !usernameTooShort && !usernameTooLong && !emailEmpty
 
   useEffect(() => {
     return () => { if (flashTimer.current) clearTimeout(flashTimer.current) }
@@ -42,13 +44,14 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
     if (!canSave || isSubmitting) return
     setIsSubmitting(true)
     try {
-      const trimmedEmail = email.trim()
       await onUpdateProfile(trimmedUsername, trimmedEmail)
       onPatch({ username: trimmedUsername, email: trimmedEmail })
       showFlash('success', 'profile.success')
     } catch (error) {
       if (error instanceof ConflictError) {
         showFlash('error', 'profile.error.conflict')
+      } else if (error instanceof RateLimitError) {
+        showFlash('error', 'profile.error.rate_limit')
       } else if (error instanceof NetworkError) {
         showFlash('error', 'profile.error.network')
       } else {
@@ -75,6 +78,7 @@ export function ProfileEditSection({ user, onPatch, onUpdateProfile }: ProfileEd
         <form onSubmit={handleSubmit}>
           {usernameTooShort && <p className="text-xs text-status-orange mb-2">{t('profile.error.username_too_short')}</p>}
           {usernameTooLong && <p className="text-xs text-status-orange mb-2">{t('profile.error.username_too_long')}</p>}
+          {emailEmpty && isDirty && <p className="text-xs text-status-orange mb-2">{t('profile.error.email_required')}</p>}
           <div className="flex flex-col gap-3 sm:flex-row mb-3">
             <div className="min-w-0 sm:flex-1">
               <Input

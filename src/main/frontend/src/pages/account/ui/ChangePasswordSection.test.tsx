@@ -81,11 +81,11 @@ describe('ChangePasswordSection', () => {
     expect(alert.textContent).toContain('password.error.server')
   })
 
-  it('shows server error on RateLimitError', async () => {
+  it('shows rate_limit error on RateLimitError', async () => {
     const { container, getByRole, findByRole } = setup(vi.fn().mockRejectedValue(new RateLimitError()))
     fillForm(container, 'old', 'Newpass1!', 'Newpass1!')
     fireEvent.click(getByRole('button', { name: 'password.submit' }))
     const alert = await findByRole('alert')
-    expect(alert.textContent).toContain('password.error.server')
+    expect(alert.textContent).toContain('password.error.rate_limit')
   })
 })

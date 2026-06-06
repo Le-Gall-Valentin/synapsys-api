@@ -13,6 +13,7 @@ function OptionButton({ active, onClick, children }: OptionButtonProps) {
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
         active

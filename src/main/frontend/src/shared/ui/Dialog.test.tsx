@@ -38,12 +38,12 @@ describe('Dialog', () => {
 
   it('calls onClose when backdrop is clicked', () => {
     const onClose = vi.fn()
-    const { getByLabelText } = render(
+    const { getByTestId } = render(
       <Dialog open={true} onClose={onClose} title="Test">
         <p>Content</p>
       </Dialog>
     )
-    fireEvent.click(getByLabelText('backdrop'))
+    fireEvent.click(getByTestId('backdrop'))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
