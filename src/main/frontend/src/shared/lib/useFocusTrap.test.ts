@@ -15,19 +15,6 @@ function makeContainer(...tagNames: string[]): HTMLDivElement {
   return container
 }
 
-function focusableButtons(count: number): HTMLButtonElement[] {
-  const container = document.createElement('div')
-  const buttons: HTMLButtonElement[] = []
-  for (let i = 0; i < count; i++) {
-    const btn = document.createElement('button')
-    btn.textContent = `Button ${i}`
-    container.appendChild(btn)
-    buttons.push(btn)
-  }
-  document.body.appendChild(container)
-  return buttons
-}
-
 beforeEach(() => {
   document.body.innerHTML = ''
 })
