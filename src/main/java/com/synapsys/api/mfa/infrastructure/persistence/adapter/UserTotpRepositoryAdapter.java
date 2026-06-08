@@ -65,6 +65,9 @@ public class UserTotpRepositoryAdapter
     public void disableTotp(UUID userId) { jpa.disableTotpById(userId); }
 
     @Override
+    public void deleteTotp(UUID userId) { jpa.deleteById(userId); }
+
+    @Override
     public Set<UUID> findTotpEnabledAmong(Collection<UUID> userIds) {
         if (userIds.isEmpty()) return Set.of();
         return jpa.findTotpEnabledIds(userIds);
