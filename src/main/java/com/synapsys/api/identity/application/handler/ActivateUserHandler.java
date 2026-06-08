@@ -33,11 +33,11 @@ public class ActivateUserHandler implements ActivateUserUseCase {
         }
         User target = userRepository.findById(command.targetUserId())
             .orElseThrow(IdentityException.UserNotFound::new);
-        if (target.isActive()) {
-            throw new IdentityException.UserAlreadyActive();
-        }
         if (!RoleHierarchy.canManage(command.callerRole(), target.role())) {
             throw new IdentityException.InsufficientPermissions();
+        }
+        if (target.isActive()) {
+            throw new IdentityException.UserAlreadyActive();
         }
         userCommandPort.activate(command.targetUserId());
         log.info("User {} activated by caller {} with role {}",

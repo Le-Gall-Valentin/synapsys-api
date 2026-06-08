@@ -94,6 +94,17 @@ class ActivateUserHandlerTest {
         verify(userCommandPort, never()).activate(any());
     }
 
+    @Test
+    void activate_adminCannotActivateActiveSuperAdmin_throwsInsufficientPermissions_notUserAlreadyActive() {
+        // Role hierarchy check must fire before state check — admin must not learn the target's state
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.SUPER_ADMIN)));
+
+        assertThatThrownBy(() -> handler.activate(new ActivateUserCommand(targetId, callerId, Role.ADMIN)))
+            .isInstanceOf(IdentityException.InsufficientPermissions.class);
+
+        verify(userCommandPort, never()).activate(any());
+    }
+
     private User active(UUID id, Role role) {
         return new User(id, "u-" + id, id + "@test.com", role, true, Instant.now());
     }
