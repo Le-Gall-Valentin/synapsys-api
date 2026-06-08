@@ -10,7 +10,9 @@ import com.synapsys.api.mfa.infrastructure.persistence.entity.UserTotpEntity;
 import com.synapsys.api.mfa.infrastructure.persistence.repository.UserTotpJpaRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -61,4 +63,10 @@ public class UserTotpRepositoryAdapter
 
     @Override
     public void disableTotp(UUID userId) { jpa.disableTotpById(userId); }
+
+    @Override
+    public Set<UUID> findTotpEnabledAmong(Collection<UUID> userIds) {
+        if (userIds.isEmpty()) return Set.of();
+        return jpa.findTotpEnabledIds(userIds);
+    }
 }

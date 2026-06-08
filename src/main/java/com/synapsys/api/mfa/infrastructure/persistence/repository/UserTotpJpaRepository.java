@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Collection;
+import java.util.Set;
 import java.util.UUID;
 
 public interface UserTotpJpaRepository extends JpaRepository<UserTotpEntity, UUID> {
@@ -25,4 +27,7 @@ public interface UserTotpJpaRepository extends JpaRepository<UserTotpEntity, UUI
     @Modifying(clearAutomatically = true) @Transactional
     @Query("UPDATE UserTotpEntity u SET u.totpEnabled = false, u.totpSecret = null WHERE u.userId = :id")
     void disableTotpById(@Param("id") UUID id);
+
+    @Query("SELECT u.userId FROM UserTotpEntity u WHERE u.userId IN :ids AND u.totpEnabled = true")
+    Set<UUID> findTotpEnabledIds(@Param("ids") Collection<UUID> ids);
 }
