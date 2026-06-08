@@ -17,7 +17,17 @@ public record User(
         if (!isActive) throw new IdentityException.UserAlreadyInactive();
     }
 
-    public void ensureCanBeDeactivatedBy(Role callerRole) {
+    public void ensureInactive() {
+        if (isActive) throw new IdentityException.UserAlreadyActive();
+    }
+
+    public void ensureCanBeDeactivatedBy(Role callerRole) { ensureCanBeManagedBy(callerRole); }
+
+    public void ensureCanBeActivatedBy(Role callerRole) { ensureCanBeManagedBy(callerRole); }
+
+    public void ensureCanBeDeletedBy(Role callerRole) { ensureCanBeManagedBy(callerRole); }
+
+    private void ensureCanBeManagedBy(Role callerRole) {
         if (!RoleHierarchy.canManage(callerRole, this.role)) {
             throw new IdentityException.InsufficientPermissions();
         }

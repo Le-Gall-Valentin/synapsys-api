@@ -101,6 +101,21 @@ class UserControllerIT {
         userIdentityJpaRepository.saveAndFlush(totpUser);
         saveCredential(totpUser.getId(), "totppass");
         saveTotpRecord(totpUser.getId(), "JBSWY3DPEHPK3PXP", true);
+
+        UserIdentityEntity inactiveUser = new UserIdentityEntity();
+        inactiveUser.setUsername("inactiveuser");
+        inactiveUser.setEmail("inactive@test.com");
+        inactiveUser.setRole(Role.USER);
+        inactiveUser.setActive(false);
+        userIdentityJpaRepository.saveAndFlush(inactiveUser);
+        saveCredential(inactiveUser.getId(), "inactivepass");
+
+        UserIdentityEntity adminUser = new UserIdentityEntity();
+        adminUser.setUsername("adminuser");
+        adminUser.setEmail("admin@test.com");
+        adminUser.setRole(Role.ADMIN);
+        userIdentityJpaRepository.saveAndFlush(adminUser);
+        saveCredential(adminUser.getId(), "adminpass2");
     }
 
     @Test
@@ -235,16 +250,28 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivate_asSuperAdmin_deletesUser_returns204() throws Exception {
-        Cookie access = loginAs("superadmin", "adminpass");
+    void deleteUser_asSuperAdmin_gdprDeletesUser_returns204() throws Exception {
         UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        saveTotpRecord(targetId, "JBSWY3DPEHPK3PXP", false);
+        loginAs("testuser", "password"); // creates a refresh token for testuser
+        Cookie access = loginAs("superadmin", "adminpass");
 
         mockMvc.perform(delete("/api/users/" + targetId).cookie(access))
             .andExpect(status().isNoContent());
+
+        UserIdentityEntity entity = userIdentityJpaRepository.findById(targetId).get();
+        assertThat(entity.isDeleted()).isTrue();
+        assertThat(entity.getUsername()).isNull();
+        assertThat(entity.getEmail()).isNull();
+        assertThat(userCredentialJpaRepository.findById(targetId)).isEmpty();
+        assertThat(userTotpJpaRepository.findById(targetId)).isEmpty();
+        boolean hasTokens = refreshTokenJpaRepository.findAll().stream()
+            .anyMatch(t -> targetId.equals(t.getUserId()));
+        assertThat(hasTokens).isFalse();
     }
 
     @Test
-    void deactivate_asUser_returns403() throws Exception {
+    void deleteUser_asUser_returns403() throws Exception {
         Cookie access = loginAs("testuser", "password");
         UUID targetId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
 
@@ -253,13 +280,13 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivate_unauthenticated_returns401() throws Exception {
+    void deleteUser_unauthenticated_returns401() throws Exception {
         mockMvc.perform(delete("/api/users/" + UUID.randomUUID()))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void deactivate_nonExistentUser_returns404() throws Exception {
+    void deleteUser_nonExistentUser_returns404() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
 
         mockMvc.perform(delete("/api/users/" + UUID.randomUUID()).cookie(access))
@@ -267,11 +294,34 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivate_self_returns403() throws Exception {
+    void deleteUser_self_returns403() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
         UUID selfId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
 
         mockMvc.perform(delete("/api/users/" + selfId).cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deleteUser_adminCannotDeleteSuperAdmin_returns403() throws Exception {
+        Cookie access = loginAs("adminuser", "adminpass2");
+        UUID superAdminId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
+
+        mockMvc.perform(delete("/api/users/" + superAdminId).cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deleteUser_superAdminCannotDeleteSuperAdmin_returns403() throws Exception {
+        UserIdentityEntity secondSuperAdmin = new UserIdentityEntity();
+        secondSuperAdmin.setUsername("superadmin2");
+        secondSuperAdmin.setEmail("superadmin2@test.com");
+        secondSuperAdmin.setRole(Role.SUPER_ADMIN);
+        userIdentityJpaRepository.saveAndFlush(secondSuperAdmin);
+
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(delete("/api/users/" + secondSuperAdmin.getId()).cookie(access))
             .andExpect(status().isForbidden());
     }
 
@@ -459,6 +509,136 @@ class UserControllerIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"currentPassword\":\"password\",\"newPassword\":\"Newpassword1!\"}"))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void listUsers_asSuperAdmin_returns200WithPage() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.totalElements").isNumber())
+            .andExpect(jsonPath("$.page").value(0))
+            .andExpect(jsonPath("$.size").value(20))
+            .andExpect(jsonPath("$.content[0].id").isNotEmpty())
+            .andExpect(jsonPath("$.content[0].role").isNotEmpty())
+            .andExpect(jsonPath("$.content[0].isActive").isBoolean())
+            .andExpect(jsonPath("$.content[0].totpEnabled").isBoolean())
+            .andExpect(jsonPath("$.content[0].createdAt").isNotEmpty());
+    }
+
+    @Test
+    void listUsers_totpEnabledUser_appearsWithTotpEnabledTrue() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.username == 'totpuser')].totpEnabled").value(true));
+    }
+
+    @Test
+    void listUsers_asUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+
+        mockMvc.perform(get("/api/users").cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void listUsers_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/users"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listUsers_invalidSortBy_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("sortBy", "invalid").cookie(access))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listUsers_sizeOverMax_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("size", "101").cookie(access))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listUsers_negativePage_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("page", "-1").cookie(access))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void activateUser_asSuperAdmin_activatesInactiveUser_returns204() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID inactiveId = userIdentityJpaRepository.findByUsername("inactiveuser").get().getId();
+
+        mockMvc.perform(post("/api/users/" + inactiveId + "/activate").cookie(access))
+            .andExpect(status().isNoContent());
+
+        assertThat(userIdentityJpaRepository.findByIdAndDeletedFalse(inactiveId).get().isActive()).isTrue();
+    }
+
+    @Test
+    void activateUser_alreadyActive_returns409() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID activeId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(post("/api/users/" + activeId + "/activate").cookie(access))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void activateUser_asUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID inactiveId = userIdentityJpaRepository.findByUsername("inactiveuser").get().getId();
+
+        mockMvc.perform(post("/api/users/" + inactiveId + "/activate").cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void activateUser_nonExistentUser_returns404() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(post("/api/users/" + UUID.randomUUID() + "/activate").cookie(access))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deactivateUser_asSuperAdmin_deactivatesUser_returns204() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(post("/api/users/" + targetId + "/deactivate").cookie(access))
+            .andExpect(status().isNoContent());
+
+        assertThat(userIdentityJpaRepository.findByIdAndDeletedFalse(targetId).get().isActive()).isFalse();
+    }
+
+    @Test
+    void deactivateUser_adminOnSuperAdmin_returns403() throws Exception {
+        Cookie access = loginAs("adminuser", "adminpass2");
+        UUID superAdminId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
+
+        mockMvc.perform(post("/api/users/" + superAdminId + "/deactivate").cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deactivateUser_alreadyInactive_returns409() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID inactiveId = userIdentityJpaRepository.findByUsername("inactiveuser").get().getId();
+
+        mockMvc.perform(post("/api/users/" + inactiveId + "/deactivate").cookie(access))
+            .andExpect(status().isConflict());
     }
 
     private void saveCredential(UUID userId, String rawPassword) {

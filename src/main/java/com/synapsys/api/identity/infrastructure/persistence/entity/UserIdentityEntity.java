@@ -24,10 +24,10 @@ public class UserIdentityEntity {
     @UuidGenerator
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(length = 50)
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column
     private String email;
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +36,9 @@ public class UserIdentityEntity {
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean deleted = false;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
