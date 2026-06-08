@@ -264,7 +264,7 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivate_asUser_returns403() throws Exception {
+    void deleteUser_asUser_returns403() throws Exception {
         Cookie access = loginAs("testuser", "password");
         UUID targetId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
 
@@ -273,13 +273,13 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivate_unauthenticated_returns401() throws Exception {
+    void deleteUser_unauthenticated_returns401() throws Exception {
         mockMvc.perform(delete("/api/users/" + UUID.randomUUID()))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void deactivate_nonExistentUser_returns404() throws Exception {
+    void deleteUser_nonExistentUser_returns404() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
 
         mockMvc.perform(delete("/api/users/" + UUID.randomUUID()).cookie(access))
@@ -287,7 +287,7 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivate_self_returns403() throws Exception {
+    void deleteUser_self_returns403() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
         UUID selfId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
 
