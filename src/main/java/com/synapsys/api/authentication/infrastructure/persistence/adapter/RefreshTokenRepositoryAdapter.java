@@ -47,6 +47,11 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, Re
     }
 
     @Override
+    public void deleteAllForUser(UUID userId) {
+        jpa.deleteByUserId(userId);
+    }
+
+    @Override
     public int deleteExpiredAndRevoked(Instant now, Instant cutoff) {
         return jpa.deleteExpiredAndOldRevoked(now, cutoff);
     }
