@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-add-user-deletion-support
+      author: synapsys
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+        - dropNotNullConstraint:
+            tableName: users
+            columnName: username
+            columnDataType: VARCHAR(50)
+        - dropNotNullConstraint:
+            tableName: users
+            columnName: email
+            columnDataType: VARCHAR(255)
+        - dropUniqueConstraint:
+            tableName: users
+            constraintName: uq_users_username
+        - dropUniqueConstraint:
+            tableName: users
+            constraintName: uq_users_email
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uq_users_username_active
+                ON users(username) WHERE is_deleted = false;
+              CREATE UNIQUE INDEX uq_users_email_active
+                ON users(email) WHERE is_deleted = false;
+      rollback:
+        - dropIndex:
+            indexName: uq_users_username_active
+            tableName: users
+        - dropIndex:
+            indexName: uq_users_email_active
+            tableName: users
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: username
+            constraintName: uq_users_username
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: email
+            constraintName: uq_users_email
+        - addNotNullConstraint:
+            tableName: users
+            columnName: username
+            columnDataType: VARCHAR(50)
+        - addNotNullConstraint:
+            tableName: users
+            columnName: email
+            columnDataType: VARCHAR(255)
+        - dropColumn:
+            tableName: users
+            columnName: is_deleted
