@@ -33,6 +33,9 @@ public class IdentityExceptionHandler {
             case IdentityException.UserAlreadyInactive ex ->
                     response(409, ex, "User account is already inactive.");
 
+            case IdentityException.UserAlreadyActive ex ->
+                    response(409, ex, "User account is already active.");
+
             case IdentityException.UsernameAlreadyExists ex ->
                     response(409, ex, "Username already taken.");
 

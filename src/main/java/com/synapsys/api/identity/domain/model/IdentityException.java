@@ -4,6 +4,7 @@ public abstract sealed class IdentityException extends RuntimeException
     permits IdentityException.UserNotFound,
             IdentityException.UserNotActive,
             IdentityException.UserAlreadyInactive,
+            IdentityException.UserAlreadyActive,
             IdentityException.UsernameAlreadyExists,
             IdentityException.EmailAlreadyExists,
             IdentityException.InsufficientPermissions,
@@ -20,6 +21,9 @@ public abstract sealed class IdentityException extends RuntimeException
     }
     public static final class UserAlreadyInactive extends IdentityException {
         public UserAlreadyInactive() { super("User account is already inactive"); }
+    }
+    public static final class UserAlreadyActive extends IdentityException {
+        public UserAlreadyActive() { super("User account is already active"); }
     }
     public static final class UsernameAlreadyExists extends IdentityException {
         public UsernameAlreadyExists() { super("Username already taken"); }
