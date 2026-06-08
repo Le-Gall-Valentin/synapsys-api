@@ -252,6 +252,7 @@ class UserControllerIT {
     @Test
     void deleteUser_asSuperAdmin_gdprDeletesUser_returns204() throws Exception {
         UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+        saveTotpRecord(targetId, "JBSWY3DPEHPK3PXP", false);
         loginAs("testuser", "password"); // creates a refresh token for testuser
         Cookie access = loginAs("superadmin", "adminpass");
 
@@ -263,6 +264,7 @@ class UserControllerIT {
         assertThat(entity.getUsername()).isNull();
         assertThat(entity.getEmail()).isNull();
         assertThat(userCredentialJpaRepository.findById(targetId)).isEmpty();
+        assertThat(userTotpJpaRepository.findById(targetId)).isEmpty();
         boolean hasTokens = refreshTokenJpaRepository.findAll().stream()
             .anyMatch(t -> targetId.equals(t.getUserId()));
         assertThat(hasTokens).isFalse();
@@ -306,6 +308,20 @@ class UserControllerIT {
         UUID superAdminId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
 
         mockMvc.perform(delete("/api/users/" + superAdminId).cookie(access))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deleteUser_superAdminCannotDeleteSuperAdmin_returns403() throws Exception {
+        UserIdentityEntity secondSuperAdmin = new UserIdentityEntity();
+        secondSuperAdmin.setUsername("superadmin2");
+        secondSuperAdmin.setEmail("superadmin2@test.com");
+        secondSuperAdmin.setRole(Role.SUPER_ADMIN);
+        userIdentityJpaRepository.saveAndFlush(secondSuperAdmin);
+
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(delete("/api/users/" + secondSuperAdmin.getId()).cookie(access))
             .andExpect(status().isForbidden());
     }
 
@@ -533,6 +549,30 @@ class UserControllerIT {
     void listUsers_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/users"))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listUsers_invalidSortBy_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("sortBy", "invalid").cookie(access))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listUsers_sizeOverMax_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("size", "101").cookie(access))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listUsers_negativePage_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("page", "-1").cookie(access))
+            .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -9,7 +9,6 @@ import com.synapsys.api.identity.domain.port.out.TotpDeletionPort;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
-import com.synapsys.api.shared.service.RoleHierarchy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,9 +41,7 @@ public class DeleteUserHandler implements DeleteUserUseCase {
         }
         User target = userRepository.findById(command.targetUserId())
             .orElseThrow(IdentityException.UserNotFound::new);
-        if (!RoleHierarchy.canManage(command.callerRole(), target.role())) {
-            throw new IdentityException.InsufficientPermissions();
-        }
+        target.ensureCanBeDeletedBy(command.callerRole());
         userCommandPort.deleteGdpr(command.targetUserId());
         credentialDeletionPort.deleteCredentials(command.targetUserId());
         totpDeletionPort.deleteTotpData(command.targetUserId());

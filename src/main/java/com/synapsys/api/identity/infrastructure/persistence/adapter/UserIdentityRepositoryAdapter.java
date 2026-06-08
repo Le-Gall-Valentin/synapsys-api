@@ -31,7 +31,7 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
 
     @Override
     public boolean isEmpty() {
-        return jpa.count() == 0;
+        return jpa.countByDeletedFalse() == 0;
     }
 
     @Override

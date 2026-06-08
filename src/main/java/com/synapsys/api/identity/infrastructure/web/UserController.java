@@ -94,7 +94,7 @@ public class UserController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") @Pattern(regexp = "username|email|role|active|createdAt", message = "must be one of: username, email, role, active, createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection) {
+            @RequestParam(defaultValue = "desc") @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection) {
         SortRequest sort = new SortRequest(sortBy, "asc".equalsIgnoreCase(sortDirection));
         PageResult<UserAdminView> result = listUsersUseCase.listUsers(page, size, sort);
         PageResponse<UserAdminItemResponse> response = new PageResponse<>(

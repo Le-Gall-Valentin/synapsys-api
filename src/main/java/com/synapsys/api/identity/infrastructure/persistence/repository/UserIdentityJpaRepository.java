@@ -39,6 +39,10 @@ public interface UserIdentityJpaRepository extends JpaRepository<UserIdentityEnt
                        @Param("username") String username,
                        @Param("email") String email);
 
+    long countByDeletedFalse();
+
+    // ON DELETE CASCADE does not fire on this UPDATE, so credential and TOTP cleanup
+    // is handled explicitly by DeleteUserHandler after this call.
     @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE UserIdentityEntity u SET u.username = null, u.email = null, u.deleted = true, u.active = false WHERE u.id = :id")

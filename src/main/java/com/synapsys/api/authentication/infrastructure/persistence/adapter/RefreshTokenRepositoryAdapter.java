@@ -46,6 +46,9 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository, Re
         jpa.revokeAllByUserId(userId);
     }
 
+    // REQUIRED propagation (default): must participate in the GDPR delete transaction.
+    // Do NOT change to REQUIRES_NEW — unlike revokeAllForUser, token deletion here
+    // must roll back if identity anonymization fails.
     @Override
     public void deleteAllForUser(UUID userId) {
         jpa.deleteByUserId(userId);
