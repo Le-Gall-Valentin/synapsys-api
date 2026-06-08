@@ -1,11 +1,13 @@
 package com.synapsys.api.infrastructure.web;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.server.ResponseStatusException;
 
+@Hidden
 @Controller
 public class SpaFallbackController {
 

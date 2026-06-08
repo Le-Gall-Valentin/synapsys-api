@@ -31,10 +31,19 @@ import com.synapsys.api.infrastructure.ratelimit.RateLimitMode;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +52,8 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.UUID;
 
+@Tag(name = "Users")
+@SecurityRequirement(name = "cookieAuth")
 @Validated
 @RestController
 @RequestMapping("/api/users")
@@ -78,22 +89,85 @@ public class UserController {
         this.deleteUserUseCase = deleteUserUseCase;
     }
 
+    @Operation(
+        summary = "Profil de l'utilisateur connecté",
+        description = "Retourne les informations du compte de l'utilisateur authentifié. Rate limit : 60 req/fenêtre."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Informations du compte",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserInfoResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @GetMapping("/me")
     @RateLimiting(max = 60)
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserInfoResponse> me(@CurrentUser AuthenticatedUser caller) {
+    public ResponseEntity<UserInfoResponse> me(@Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         UserSelfView view = getCurrentUserUseCase.getCurrentUser(caller.userId());
         return ResponseEntity.ok(new UserInfoResponse(
             view.id(), view.username(), view.email(), view.role(), view.createdAt(), view.totpEnabled()));
     }
 
+    @Operation(
+        summary = "Lister les utilisateurs (admin)",
+        description = """
+            Retourne la liste paginée de tous les utilisateurs. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
+
+            Rate limit : 60 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Liste paginée des utilisateurs",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Paramètre de pagination ou de tri invalide",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant (réservé aux ADMIN et SUPER_ADMIN)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @GetMapping
     @RateLimiting(max = 60)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<PageResponse<UserAdminItemResponse>> listUsers(
+            @Parameter(description = "Index de la page (commence à 0)", example = "0")
             @RequestParam(defaultValue = "0") @Min(0) int page,
+
+            @Parameter(description = "Nombre d'éléments par page (1–100)", example = "20")
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+
+            @Parameter(description = "Champ de tri", schema = @Schema(allowableValues = {"username", "email", "role", "active", "createdAt"}))
             @RequestParam(defaultValue = "createdAt") @Pattern(regexp = "username|email|role|active|createdAt", message = "must be one of: username, email, role, active, createdAt") String sortBy,
+
+            @Parameter(description = "Direction du tri", schema = @Schema(allowableValues = {"asc", "desc"}))
             @RequestParam(defaultValue = "desc") @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection) {
         SortRequest sort = new SortRequest(sortBy, "asc".equalsIgnoreCase(sortDirection));
         PageResult<UserAdminView> result = listUsersUseCase.listUsers(page, size, sort);
@@ -108,11 +182,55 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+        summary = "Créer un utilisateur (admin)",
+        description = """
+            Crée un nouvel utilisateur. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
+
+            **Contrainte de rôle** : un `ADMIN` ne peut créer que des utilisateurs avec le rôle `USER`.
+            Seul un `SUPER_ADMIN` peut créer un `ADMIN` ou un autre `SUPER_ADMIN`.
+            Toute tentative de dépassement de rôle retourne `403`.
+
+            Rate limit : 20 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "201",
+            description = "Utilisateur créé — l'URL de la ressource est retournée dans le header `Location`",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserInfoResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Corps de requête invalide (champs manquants, format incorrect, contraintes de mot de passe non respectées)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant ou tentative de créer un utilisateur avec un rôle supérieur au sien",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Le nom d'utilisateur ou l'adresse email est déjà utilisé",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @PostMapping
     @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<UserInfoResponse> register(@Valid @RequestBody RegisterRequest request,
-                                                     @CurrentUser AuthenticatedUser caller) {
+                                                     @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         User user = registerUseCase.register(
             new RegisterCommand(request.username(), request.email(), request.password(), request.role()),
             caller.role()
@@ -122,59 +240,278 @@ public class UserController {
             user.id(), user.username(), user.email(), user.role(), user.createdAt(), false));
     }
 
+    @Operation(
+        summary = "Supprimer un utilisateur (admin)",
+        description = """
+            Supprime définitivement un utilisateur. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
+
+            Les mêmes contraintes de rôle que la création s'appliquent : un `ADMIN` ne peut pas
+            supprimer un `SUPER_ADMIN` ou un autre `ADMIN`. Retourne `403` en cas de dépassement.
+
+            Rate limit : 20 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Utilisateur supprimé", content = @Content),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant pour supprimer cet utilisateur",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @DeleteMapping("/{id}")
     @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id,
-                                           @CurrentUser AuthenticatedUser caller) {
+    public ResponseEntity<Void> deleteUser(
+            @Parameter(description = "UUID de l'utilisateur à supprimer") @PathVariable UUID id,
+            @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         deleteUserUseCase.delete(new DeleteUserCommand(id, caller.userId(), caller.role()));
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "Activer un utilisateur (admin)",
+        description = """
+            Réactive un compte utilisateur précédemment désactivé. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
+
+            Retourne `409` si le compte est déjà actif. Les mêmes contraintes de rôle s'appliquent.
+
+            Rate limit : 20 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Utilisateur activé", content = @Content),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Le compte est déjà actif",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @PostMapping("/{id}/activate")
     @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
-    public ResponseEntity<Void> activateUser(@PathVariable UUID id,
-                                             @CurrentUser AuthenticatedUser caller) {
+    public ResponseEntity<Void> activateUser(
+            @Parameter(description = "UUID de l'utilisateur à activer") @PathVariable UUID id,
+            @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         activateUserUseCase.activate(new ActivateUserCommand(id, caller.userId(), caller.role()));
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "Désactiver un utilisateur (admin)",
+        description = """
+            Désactive un compte utilisateur. L'utilisateur ne pourra plus se connecter
+            tant que son compte reste désactivé. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
+
+            Retourne `409` si le compte est déjà inactif. Les mêmes contraintes de rôle s'appliquent.
+
+            Rate limit : 20 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Utilisateur désactivé", content = @Content),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Le compte est déjà inactif",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @PostMapping("/{id}/deactivate")
     @RateLimiting(max = 20)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
-    public ResponseEntity<Void> deactivateUser(@PathVariable UUID id,
-                                               @CurrentUser AuthenticatedUser caller) {
+    public ResponseEntity<Void> deactivateUser(
+            @Parameter(description = "UUID de l'utilisateur à désactiver") @PathVariable UUID id,
+            @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         deactivateUserUseCase.deactivate(new DeactivateUserCommand(id, caller.userId(), caller.role()));
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "Réinitialiser le TOTP d'un utilisateur (admin)",
+        description = """
+            Supprime le secret TOTP d'un utilisateur et désactive son authentification à deux facteurs.
+            L'utilisateur devra reconfigurer le TOTP depuis son compte s'il souhaite le réactiver.
+
+            À utiliser lorsqu'un utilisateur a perdu l'accès à son application d'authentification.
+
+            Accessible aux rôles `ADMIN` et `SUPER_ADMIN`. Les contraintes de rôle habituelles s'appliquent.
+
+            Rate limit : 10 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "TOTP réinitialisé", content = @Content),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @PostMapping("/{id}/2fa/reset")
     @RateLimiting(max = 10)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
-    public ResponseEntity<Void> resetTotp(@PathVariable UUID id,
-                                          @CurrentUser AuthenticatedUser caller) {
+    public ResponseEntity<Void> resetTotp(
+            @Parameter(description = "UUID de l'utilisateur dont le TOTP est à réinitialiser") @PathVariable UUID id,
+            @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         adminResetTotpUseCase.reset(new AdminResetTotpCommand(id, caller.userId(), caller.role()));
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "Mettre à jour son profil",
+        description = """
+            Permet à l'utilisateur connecté de modifier son nom d'utilisateur et son adresse email.
+
+            Double rate limit : 20 req/fenêtre globalement, et 5 req/fenêtre par utilisateur.
+            Retourne `409` si le nouveau nom d'utilisateur ou la nouvelle adresse email est déjà pris.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Profil mis à jour", content = @Content),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Corps invalide (champs manquants ou non conformes aux contraintes)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Nom d'utilisateur ou email déjà utilisé",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes (global ou par utilisateur)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @PatchMapping("/me")
     @RateLimiting(max = 20)
     @RateLimiting(mode = RateLimitMode.USER, max = 5)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
-                                              @CurrentUser AuthenticatedUser caller) {
+                                              @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         updateMyProfileUseCase.updateProfile(
             new UpdateProfileCommand(caller.userId(), request.username(), request.email()));
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "Changer son mot de passe",
+        description = """
+            Permet à l'utilisateur connecté de modifier son mot de passe.
+            Le mot de passe actuel est requis pour confirmer l'opération.
+            Le nouveau mot de passe doit être différent de l'actuel.
+
+            **Contraintes du nouveau mot de passe** : 8–72 caractères, au moins une majuscule,
+            un chiffre et un caractère spécial.
+
+            Double rate limit : 10 req/fenêtre globalement, et 5 req/fenêtre par utilisateur.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Mot de passe modifié", content = @Content),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Corps invalide (contraintes non respectées ou nouveau mot de passe identique à l'actuel)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "422",
+            description = "Mot de passe actuel incorrect",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes (global ou par utilisateur)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
     @PatchMapping("/me/password")
     @RateLimiting(max = 10)
     @RateLimiting(mode = RateLimitMode.USER, max = 5)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request,
-                                               @CurrentUser AuthenticatedUser caller) {
+                                               @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         changeMyPasswordUseCase.changeMyPassword(
             new ChangeMyPasswordCommand(caller.userId(), request.currentPassword(), request.newPassword()));
         return ResponseEntity.noContent().build();
