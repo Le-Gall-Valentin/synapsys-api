@@ -48,7 +48,7 @@ public class DeleteUserHandler implements DeleteUserUseCase {
         userCommandPort.deleteGdpr(command.targetUserId());
         credentialDeletionPort.deleteCredentials(command.targetUserId());
         totpDeletionPort.deleteTotpData(command.targetUserId());
-        log.info("User {} GDPR-deleted by caller {} with role {}",
-            command.targetUserId(), command.callerId(), command.callerRole());
+        log.info("GDPR delete performed by caller {} with role {}",
+            command.callerId(), command.callerRole());
     }
 }

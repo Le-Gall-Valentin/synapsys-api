@@ -504,7 +504,21 @@ class UserControllerIT {
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.totalElements").isNumber())
             .andExpect(jsonPath("$.page").value(0))
-            .andExpect(jsonPath("$.size").value(20));
+            .andExpect(jsonPath("$.size").value(20))
+            .andExpect(jsonPath("$.content[0].id").isNotEmpty())
+            .andExpect(jsonPath("$.content[0].role").isNotEmpty())
+            .andExpect(jsonPath("$.content[0].isActive").isBoolean())
+            .andExpect(jsonPath("$.content[0].totpEnabled").isBoolean())
+            .andExpect(jsonPath("$.content[0].createdAt").isNotEmpty());
+    }
+
+    @Test
+    void listUsers_totpEnabledUser_appearsWithTotpEnabledTrue() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.username == 'totpuser')].totpEnabled").value(true));
     }
 
     @Test
@@ -570,7 +584,7 @@ class UserControllerIT {
     }
 
     @Test
-    void deactivateUser_adminOnAdmin_returns403() throws Exception {
+    void deactivateUser_adminOnSuperAdmin_returns403() throws Exception {
         Cookie access = loginAs("adminuser", "adminpass2");
         UUID superAdminId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
 

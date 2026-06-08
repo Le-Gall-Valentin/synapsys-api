@@ -24,10 +24,10 @@ public class UserIdentityEntity {
     @UuidGenerator
     private UUID id;
 
-    @Column(nullable = true, length = 50)
+    @Column(length = 50)
     private String username;
 
-    @Column(nullable = true)
+    @Column
     private String email;
 
     @Enumerated(EnumType.STRING)
