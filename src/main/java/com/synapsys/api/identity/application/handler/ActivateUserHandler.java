@@ -7,7 +7,6 @@ import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
-import com.synapsys.api.shared.service.RoleHierarchy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,12 +32,8 @@ public class ActivateUserHandler implements ActivateUserUseCase {
         }
         User target = userRepository.findById(command.targetUserId())
             .orElseThrow(IdentityException.UserNotFound::new);
-        if (!RoleHierarchy.canManage(command.callerRole(), target.role())) {
-            throw new IdentityException.InsufficientPermissions();
-        }
-        if (target.isActive()) {
-            throw new IdentityException.UserAlreadyActive();
-        }
+        target.ensureCanBeActivatedBy(command.callerRole());
+        target.ensureInactive();
         userCommandPort.activate(command.targetUserId());
         log.info("User {} activated by caller {} with role {}",
             command.targetUserId(), command.callerId(), command.callerRole());
