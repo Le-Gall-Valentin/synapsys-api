@@ -10,7 +10,11 @@ import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.identity.infrastructure.persistence.entity.UserIdentityEntity;
 import com.synapsys.api.identity.infrastructure.persistence.repository.UserIdentityJpaRepository;
 import org.hibernate.exception.ConstraintViolationException;
+import com.synapsys.api.shared.model.PageResult;
+import com.synapsys.api.shared.model.SortRequest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -42,7 +46,7 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
 
     @Override
     public Optional<User> findById(UUID id) {
-        return jpa.findById(id).map(this::toDomain);
+        return jpa.findByIdAndDeletedFalse(id).map(this::toDomain);
     }
 
     @Override
@@ -59,8 +63,28 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     }
 
     @Override
+    public PageResult<User> findAll(int page, int size, SortRequest sort) {
+        Sort springSort = sort.ascending()
+                ? Sort.by(sort.field()).ascending()
+                : Sort.by(sort.field()).descending();
+        var result = jpa.findAllNotDeleted(PageRequest.of(page, size, springSort));
+        return new PageResult<>(result.getContent().stream().map(this::toDomain).toList(),
+                result.getTotalElements(), page, size);
+    }
+
+    @Override
     public void deactivate(UUID userId) {
         jpa.deactivateById(userId);
+    }
+
+    @Override
+    public void activate(UUID userId) {
+        jpa.activateById(userId);
+    }
+
+    @Override
+    public void deleteGdpr(UUID userId) {
+        jpa.gdprAnonymize(userId);
     }
 
     @Override
