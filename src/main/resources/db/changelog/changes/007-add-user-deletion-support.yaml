@@ -27,11 +27,11 @@ databaseChangeLog:
             tableName: users
             constraintName: uq_users_email
         - sql:
-            sql: >
-              CREATE UNIQUE INDEX uq_users_username_active
-                ON users(username) WHERE is_deleted = false;
-              CREATE UNIQUE INDEX uq_users_email_active
-                ON users(email) WHERE is_deleted = false;
+            sql: CREATE UNIQUE INDEX uq_users_username_active ON users(username) WHERE is_deleted = false
+            splitStatements: false
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_users_email_active ON users(email) WHERE is_deleted = false
+            splitStatements: false
       rollback:
         - dropIndex:
             indexName: uq_users_username_active
@@ -47,6 +47,7 @@ databaseChangeLog:
             tableName: users
             columnNames: email
             constraintName: uq_users_email
+        - comment: "Rollback will fail if rows have been GDPR-anonymized (username/email = NULL). This is intentional: GDPR deletion is irreversible at the data level."
         - addNotNullConstraint:
             tableName: users
             columnName: username
