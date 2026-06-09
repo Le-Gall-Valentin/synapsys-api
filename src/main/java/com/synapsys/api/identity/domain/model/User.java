@@ -27,6 +27,8 @@ public record User(
 
     public void ensureCanBeDeletedBy(Role callerRole) { ensureCanBeManagedBy(callerRole); }
 
+    public void ensureCanBeUpdatedBy(Role callerRole) { ensureCanBeManagedBy(callerRole); }
+
     private void ensureCanBeManagedBy(Role callerRole) {
         if (!RoleHierarchy.canManage(callerRole, this.role)) {
             throw new IdentityException.InsufficientPermissions();
