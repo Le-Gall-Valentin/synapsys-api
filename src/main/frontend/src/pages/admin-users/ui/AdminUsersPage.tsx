@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Shield, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '@/shared/ui'
+import { Plus } from 'lucide-react'
+import { Alert, Button, Pagination, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { useAuth } from '@/features/auth'
+import type { AdminUser } from '@/entities/user'
 import { useUsers } from '../model/useUsers'
 import {
   useCreateUser,
@@ -11,12 +12,12 @@ import {
   useResetTotp,
   useToggleUserActive,
 } from '../model/useUserMutations'
-import type { AdminUser } from '../api/adminUsersApi'
 import { UsersTable } from './UsersTable'
 import { CreateUserModal } from './CreateUserModal'
 import { EditUserRoleModal } from './EditUserRoleModal'
 import { DeleteUserModal } from './DeleteUserModal'
 import { ResetTotpModal } from './ResetTotpModal'
+import { ProtectionRulesPanel } from './ProtectionRulesPanel'
 
 export function AdminUsersPage() {
   const { t } = useTranslation('adminUsers')
@@ -68,37 +69,28 @@ export function AdminUsersPage() {
         <Button
           onClick={() => setCreateOpen(true)}
           className="self-start shrink-0 border-transparent font-semibold"
-          style={{ background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)', color: '#07211c' }}
+          style={CTA_BUTTON_STYLE}
         >
           <Plus className="size-4" />
           {t('action.create')}
         </Button>
       </div>
 
-      {/* Load error */}
       {loadError && (
-        <div role="alert" className="mb-4 flex items-center gap-2.5 rounded-lg border border-status-red/25 bg-status-red-dim px-3.5 py-2.5 text-sm text-status-red">
-          <AlertTriangle className="size-4 shrink-0" />
-          {t('load_error')}
-        </div>
+        <Alert variant="error" className="mb-4">{t('load_error')}</Alert>
       )}
 
-      {/* Toggle/mutation error */}
       {toggleError && (
-        <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3.5 py-2.5 text-sm text-status-red">
-          <AlertTriangle className="size-4 shrink-0" />
+        <Alert
+          variant="error"
+          className="mb-4"
+          onDismiss={() => setToggleError(false)}
+          dismissLabel={t('close')}
+        >
           {t('mutation_error')}
-          <button
-            className="ml-auto text-status-red/70 hover:text-status-red"
-            onClick={() => setToggleError(false)}
-            aria-label="Fermer"
-          >
-            ×
-          </button>
-        </div>
+        </Alert>
       )}
 
-      {/* Table */}
       <UsersTable
         users={users}
         isLoading={isPending}
@@ -109,55 +101,27 @@ export function AdminUsersPage() {
         onDelete={setDeleteTarget}
       />
 
-      {/* Pagination */}
       {showPagination && (
-        <div className={`flex items-center justify-between mt-3 transition-opacity ${isPlaceholderData ? 'opacity-50 pointer-events-none' : ''}`}>
-          <span className="text-xs text-fg-2">
-            {t('pagination.total', { count: totalElements })}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage(p => p - 1)}
-              disabled={page === 0}
-              className="size-7 flex items-center justify-center rounded-md border border-transparent text-fg-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:border-border hover:enabled:bg-bg-2 hover:enabled:text-fg-0"
-              aria-label={t('pagination.prev')}
-            >
-              <ChevronLeft className="size-3.5" />
-            </button>
-            <span className="min-w-[5rem] text-center text-xs text-fg-1 tabular-nums">
-              {t('pagination.page', { current: page + 1, total: totalPages })}
-            </span>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={page >= totalPages - 1}
-              className="size-7 flex items-center justify-center rounded-md border border-transparent text-fg-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:border-border hover:enabled:bg-bg-2 hover:enabled:text-fg-0"
-              aria-label={t('pagination.next')}
-            >
-              <ChevronRight className="size-3.5" />
-            </button>
-          </div>
+        <div className="mt-3">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageLabel={t('pagination.page', { current: page + 1, total: totalPages })}
+            prevLabel={t('pagination.prev')}
+            nextLabel={t('pagination.next')}
+            summary={t('pagination.total', { count: totalElements })}
+            isTransitioning={isPlaceholderData}
+          />
         </div>
       )}
 
-      {/* Protection rules */}
-      <div className="mt-3 rounded-md border border-border bg-bg-1 p-4">
-        <div className="flex gap-3">
-          <Shield className="size-4 shrink-0 text-fg-3 mt-0.5" aria-hidden="true" />
-          <div className="text-[12px] leading-relaxed">
-            <div className="font-semibold text-fg-0 mb-2">{t('rules.title')}</div>
-            <ul className="space-y-1 text-fg-2">
-              <li dangerouslySetInnerHTML={{ __html: `· ${t('rules.super_admin')}` }} />
-              <li dangerouslySetInnerHTML={{ __html: `· ${t('rules.self')}` }} />
-              <li dangerouslySetInnerHTML={{ __html: `· ${t('rules.admin_admin')}` }} />
-              <li dangerouslySetInnerHTML={{ __html: `· ${t('rules.totp')}` }} />
-            </ul>
-          </div>
-        </div>
-      </div>
+      <ProtectionRulesPanel />
 
       {/* Modals */}
       {createOpen && (
         <CreateUserModal
+          caller={currentUser}
           onClose={() => setCreateOpen(false)}
           onCreate={(u, e, p, r) => createUser.mutateAsync({ username: u, email: e, password: p, role: r })}
           onSuccess={() => { setPage(0); setCreateOpen(false) }}
@@ -169,7 +133,7 @@ export function AdminUsersPage() {
           target={editTarget}
           caller={currentUser}
           onClose={() => setEditTarget(null)}
-          onUpdate={(id, role) => updateUserRole.mutateAsync({ id, role: role as 'USER' | 'ADMIN' })}
+          onUpdate={(id, role) => updateUserRole.mutateAsync({ id, role })}
           onSuccess={() => setEditTarget(null)}
         />
       )}

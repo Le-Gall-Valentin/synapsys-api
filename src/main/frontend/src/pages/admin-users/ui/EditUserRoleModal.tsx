@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, Button } from '@/shared/ui'
-import { NetworkError, RateLimitError } from '@/shared/lib'
-import type { User } from '@/entities/user'
-import { RoleAlreadyAssignedError } from '../api/adminUsersApi'
-import type { AdminUser } from '../api/adminUsersApi'
+import { Alert, Dialog, Button, CTA_BUTTON_STYLE } from '@/shared/ui'
+import type { User, AdminUser } from '@/entities/user'
+import { assignableRoles } from '../lib/permissions'
+import { mapApiErrorToKey } from '../lib/mapApiErrorToKey'
 
 interface EditUserRoleModalProps {
   target: AdminUser
@@ -17,8 +16,7 @@ interface EditUserRoleModalProps {
 export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess }: EditUserRoleModalProps) {
   const { t } = useTranslation('adminUsers')
 
-  const availableRoles: Array<'USER' | 'ADMIN'> =
-    caller.role === 'SUPER_ADMIN' ? ['USER', 'ADMIN'] : ['USER']
+  const availableRoles = assignableRoles(caller.role)
 
   const initialRole: 'USER' | 'ADMIN' =
     target.role === 'SUPER_ADMIN' ? 'USER' : (target.role as 'USER' | 'ADMIN')
@@ -28,9 +26,12 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const pendingRef = useRef(false)
 
+  // Backend returns 409 RoleAlreadyAssigned on a no-op — block it upfront.
+  const isUnchanged = role === target.role
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (pendingRef.current) return
+    if (isUnchanged || pendingRef.current) return
     pendingRef.current = true
     setIsLoading(true)
     setErrorKey(null)
@@ -38,15 +39,7 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
       await onUpdate(target.id, role)
       onSuccess(role)
     } catch (error) {
-      if (error instanceof RoleAlreadyAssignedError) {
-        setErrorKey('edit_role.error.already_assigned')
-      } else if (error instanceof RateLimitError) {
-        setErrorKey('edit_role.error.rate_limit')
-      } else if (error instanceof NetworkError) {
-        setErrorKey('edit_role.error.network')
-      } else {
-        setErrorKey('edit_role.error.server')
-      }
+      setErrorKey(mapApiErrorToKey(error, 'edit_role'))
     } finally {
       pendingRef.current = false
       setIsLoading(false)
@@ -84,9 +77,7 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
         </div>
 
         {errorKey && (
-          <div role="alert" className="mt-3 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red">
-            {t(errorKey)}
-          </div>
+          <Alert variant="error" className="mt-3">{t(errorKey)}</Alert>
         )}
 
         <div className="flex justify-end gap-2 mt-5">
@@ -95,9 +86,10 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
           </Button>
           <Button
             type="submit"
+            disabled={isUnchanged}
             isLoading={isLoading}
             className="border-transparent font-semibold"
-            style={{ background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)', color: '#07211c' }}
+            style={CTA_BUTTON_STYLE}
           >
             {t('edit_role.submit')}
           </Button>

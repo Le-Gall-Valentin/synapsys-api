@@ -90,7 +90,7 @@ export const adminUsersApi = {
 
   async resetTotp(id: string): Promise<void> {
     try {
-      await client.post(`/users/${id}/totp/reset`)
+      await client.post(`/users/${id}/2fa/reset`)
     } catch (error) {
       handleError(error)
     }

@@ -153,10 +153,10 @@ describe('deactivateUser', () => {
 })
 
 describe('resetTotp', () => {
-  it('POST /users/{id}/totp/reset', async () => {
+  it('POST /users/{id}/2fa/reset (backend UserController path)', async () => {
     mock.post.mockResolvedValue({ status: 204 })
     await adminUsersApi.resetTotp('u-1')
-    expect(mock.post).toHaveBeenCalledWith('/users/u-1/totp/reset')
+    expect(mock.post).toHaveBeenCalledWith('/users/u-1/2fa/reset')
   })
 
   it('throws ServerError on 500', async () => {

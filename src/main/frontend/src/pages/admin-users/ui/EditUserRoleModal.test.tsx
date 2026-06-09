@@ -3,8 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { EditUserRoleModal } from './EditUserRoleModal'
 import { NetworkError, ServerError } from '@/shared/lib'
 import { RoleAlreadyAssignedError } from '../api/adminUsersApi'
-import type { AdminUser } from '../api/adminUsersApi'
-import type { User } from '@/entities/user'
+import type { User, AdminUser } from '@/entities/user'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string, opts?: Record<string, string>) => {
@@ -14,6 +13,10 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@/shared/ui', () => ({
+  CTA_BUTTON_STYLE: {},
+  Alert: ({ children, variant }: { children: React.ReactNode; variant: string }) => (
+    <div role={variant === 'error' ? 'alert' : 'status'}>{children}</div>
+  ),
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
   Button: ({ children, onClick, disabled, isLoading, type, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; children: React.ReactNode }) => (
@@ -49,19 +52,28 @@ function setup(target: AdminUser, caller: User, overrides: { onUpdate?: () => Pr
 beforeEach(() => { vi.clearAllMocks() })
 
 describe('EditUserRoleModal — SUPER_ADMIN caller', () => {
-  it('shows USER and ADMIN options', () => {
+  it('shows USER and ADMIN options, never SUPER_ADMIN', () => {
     const { getByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER)
     const select = getByRole('combobox') as HTMLSelectElement
     const options = Array.from(select.options).map(o => o.value)
-    expect(options).toContain('USER')
-    expect(options).toContain('ADMIN')
-    expect(options).not.toContain('SUPER_ADMIN')
+    expect(options).toEqual(['USER', 'ADMIN'])
   })
 
   it('pre-selects current role', () => {
     const { getByRole } = setup(TARGET_ADMIN, SUPER_ADMIN_CALLER)
     const select = getByRole('combobox') as HTMLSelectElement
     expect(select.value).toBe('ADMIN')
+  })
+
+  it('submit is disabled while the role is unchanged (backend returns 409 on no-op)', () => {
+    const { getByText } = setup(TARGET_USER, SUPER_ADMIN_CALLER)
+    expect((getByText('edit_role.submit') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('submit becomes enabled when a different role is selected', () => {
+    const { getByRole, getByText } = setup(TARGET_USER, SUPER_ADMIN_CALLER)
+    fireEvent.change(getByRole('combobox'), { target: { value: 'ADMIN' } })
+    expect((getByText('edit_role.submit') as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('calls onUpdate and onSuccess on submit', async () => {
@@ -83,28 +95,31 @@ describe('EditUserRoleModal — ADMIN caller', () => {
 })
 
 describe('EditUserRoleModal — errors', () => {
-  it('shows RoleAlreadyAssignedError', async () => {
-    const { getByText, findByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, {
+  it('shows RoleAlreadyAssignedError when the API still reports a no-op', async () => {
+    const { getByText, getByRole, findByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, {
       onUpdate: vi.fn().mockRejectedValue(new RoleAlreadyAssignedError()),
     })
+    fireEvent.change(getByRole('combobox'), { target: { value: 'ADMIN' } })
     fireEvent.click(getByText('edit_role.submit'))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('edit_role.error.already_assigned')
   })
 
   it('shows server error', async () => {
-    const { getByText, findByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, {
+    const { getByText, getByRole, findByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, {
       onUpdate: vi.fn().mockRejectedValue(new ServerError()),
     })
+    fireEvent.change(getByRole('combobox'), { target: { value: 'ADMIN' } })
     fireEvent.click(getByText('edit_role.submit'))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('edit_role.error.server')
   })
 
   it('shows network error', async () => {
-    const { getByText, findByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, {
+    const { getByText, getByRole, findByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, {
       onUpdate: vi.fn().mockRejectedValue(new NetworkError()),
     })
+    fireEvent.change(getByRole('combobox'), { target: { value: 'ADMIN' } })
     fireEvent.click(getByText('edit_role.submit'))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('edit_role.error.network')

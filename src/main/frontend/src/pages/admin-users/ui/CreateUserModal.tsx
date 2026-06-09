@@ -1,17 +1,22 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, Button, Input } from '@/shared/ui'
-import { NetworkError, RateLimitError } from '@/shared/lib'
-import { ConflictError } from '../api/adminUsersApi'
+import { Alert, Dialog, Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
+import { isValidPassword, PASSWORD_MIN_LENGTH } from '@/shared/lib'
+import type { User } from '@/entities/user'
+import { assignableRoles } from '../lib/permissions'
+import { mapApiErrorToKey } from '../lib/mapApiErrorToKey'
 
 interface CreateUserModalProps {
+  caller: User
   onClose: () => void
   onCreate: (username: string, email: string, password: string, role: 'USER' | 'ADMIN') => Promise<void>
   onSuccess: () => void
 }
 
-export function CreateUserModal({ onClose, onCreate, onSuccess }: CreateUserModalProps) {
+export function CreateUserModal({ caller, onClose, onCreate, onSuccess }: CreateUserModalProps) {
   const { t } = useTranslation('adminUsers')
+  const roles = assignableRoles(caller.role)
+
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +25,18 @@ export function CreateUserModal({ onClose, onCreate, onSuccess }: CreateUserModa
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const pendingRef = useRef(false)
 
-  const canSubmit = username.trim().length > 0 && email.trim().length > 0 && password.length > 0
+  const trimmedUsername = username.trim()
+  const trimmedEmail = email.trim()
+
+  // Mirror of the backend RegisterRequest constraints.
+  const usernameInvalid = trimmedUsername.length > 0 && (trimmedUsername.length < 3 || trimmedUsername.length > 50)
+  const passwordTooShort = password.length > 0 && password.length < PASSWORD_MIN_LENGTH
+  const passwordWeak = password.length >= PASSWORD_MIN_LENGTH && !isValidPassword(password)
+  const canSubmit =
+    trimmedUsername.length >= 3 &&
+    trimmedUsername.length <= 50 &&
+    trimmedEmail.length > 0 &&
+    isValidPassword(password)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -29,18 +45,10 @@ export function CreateUserModal({ onClose, onCreate, onSuccess }: CreateUserModa
     setIsLoading(true)
     setErrorKey(null)
     try {
-      await onCreate(username.trim(), email.trim(), password, role)
+      await onCreate(trimmedUsername, trimmedEmail, password, role)
       onSuccess()
     } catch (error) {
-      if (error instanceof ConflictError) {
-        setErrorKey('create.error.conflict')
-      } else if (error instanceof RateLimitError) {
-        setErrorKey('create.error.rate_limit')
-      } else if (error instanceof NetworkError) {
-        setErrorKey('create.error.network')
-      } else {
-        setErrorKey('create.error.server')
-      }
+      setErrorKey(mapApiErrorToKey(error, 'create'))
     } finally {
       pendingRef.current = false
       setIsLoading(false)
@@ -94,6 +102,10 @@ export function CreateUserModal({ onClose, onCreate, onSuccess }: CreateUserModa
           />
         </div>
 
+        {usernameInvalid && <p className="text-xs text-status-orange mb-2">{t('create.error.username_length')}</p>}
+        {passwordTooShort && <p className="text-xs text-status-orange mb-2">{t('create.error.password_too_short')}</p>}
+        {passwordWeak && <p className="text-xs text-status-orange mb-2">{t('create.error.password_weak')}</p>}
+
         <div className="mb-1 flex flex-col gap-2">
           <label htmlFor="create-role" className="text-xs font-medium text-fg-1">
             {t('create.role')}
@@ -102,19 +114,18 @@ export function CreateUserModal({ onClose, onCreate, onSuccess }: CreateUserModa
             id="create-role"
             value={role}
             onChange={e => setRole(e.target.value as 'USER' | 'ADMIN')}
-            disabled={isLoading}
+            disabled={isLoading || roles.length === 1}
             className="w-full rounded-lg border border-border bg-bg-1 px-3.5 py-3 text-sm text-fg-0 outline-none transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_var(--color-accent-ring)] disabled:opacity-50"
           >
-            <option value="USER">USER</option>
-            <option value="ADMIN">ADMIN</option>
+            {roles.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
           </select>
           <p className="text-[11px] text-fg-3">{t('create.role_note')}</p>
         </div>
 
         {errorKey && (
-          <div role="alert" className="mt-3 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red">
-            {t(errorKey)}
-          </div>
+          <Alert variant="error" className="mt-3">{t(errorKey)}</Alert>
         )}
 
         <div className="flex justify-end gap-2 mt-5">
@@ -126,7 +137,7 @@ export function CreateUserModal({ onClose, onCreate, onSuccess }: CreateUserModa
             disabled={!canSubmit}
             isLoading={isLoading}
             className="border-transparent font-semibold"
-            style={{ background: 'linear-gradient(180deg, #6dead0 0%, #4dd9c2 100%)', color: '#07211c' }}
+            style={CTA_BUTTON_STYLE}
           >
             {t('create.submit')}
           </Button>

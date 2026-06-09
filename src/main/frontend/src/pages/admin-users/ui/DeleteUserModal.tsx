@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
-import { Dialog, Button } from '@/shared/ui'
-import { NetworkError, RateLimitError } from '@/shared/lib'
-import type { AdminUser } from '../api/adminUsersApi'
+import { Alert, Dialog, Button } from '@/shared/ui'
+import type { AdminUser } from '@/entities/user'
+import { mapApiErrorToKey } from '../lib/mapApiErrorToKey'
 
 interface DeleteUserModalProps {
   user: AdminUser
@@ -27,13 +27,7 @@ export function DeleteUserModal({ user, onClose, onDelete, onSuccess }: DeleteUs
       await onDelete(user.id)
       onSuccess()
     } catch (error) {
-      if (error instanceof RateLimitError) {
-        setErrorKey('delete.error.rate_limit')
-      } else if (error instanceof NetworkError) {
-        setErrorKey('delete.error.network')
-      } else {
-        setErrorKey('delete.error.server')
-      }
+      setErrorKey(mapApiErrorToKey(error, 'delete'))
     } finally {
       pendingRef.current = false
       setIsLoading(false)
@@ -63,9 +57,7 @@ export function DeleteUserModal({ user, onClose, onDelete, onSuccess }: DeleteUs
       </div>
 
       {errorKey && (
-        <div role="alert" className="mb-4 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red">
-          {t(errorKey)}
-        </div>
+        <Alert variant="error" className="mb-4">{t(errorKey)}</Alert>
       )}
 
       <div className="flex justify-end gap-2">

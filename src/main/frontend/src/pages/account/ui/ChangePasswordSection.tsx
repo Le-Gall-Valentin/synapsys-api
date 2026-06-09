@@ -2,9 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
 import { InvalidCurrentPasswordError } from '../api/accountApi'
-import { NetworkError, RateLimitError } from '@/shared/lib'
-
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).+$/
+import { NetworkError, RateLimitError, PASSWORD_REGEX, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, isValidPassword } from '@/shared/lib'
 
 type Flash = { kind: 'success' | 'error'; key: string } | null
 
@@ -22,14 +20,9 @@ export function ChangePasswordSection({ onChangePassword }: ChangePasswordSectio
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const mismatch = next.length > 0 && confirm.length > 0 && next !== confirm
-  const tooShort = next.length > 0 && next.length < 8
-  const weak = next.length >= 8 && next.length <= 72 && !PASSWORD_REGEX.test(next)
-  const canSubmit =
-    current.length > 0 &&
-    next.length >= 8 &&
-    next.length <= 72 &&
-    PASSWORD_REGEX.test(next) &&
-    next === confirm
+  const tooShort = next.length > 0 && next.length < PASSWORD_MIN_LENGTH
+  const weak = next.length >= PASSWORD_MIN_LENGTH && next.length <= PASSWORD_MAX_LENGTH && !PASSWORD_REGEX.test(next)
+  const canSubmit = current.length > 0 && isValidPassword(next) && next === confirm
 
   useEffect(() => {
     return () => { if (flashTimer.current) clearTimeout(flashTimer.current) }

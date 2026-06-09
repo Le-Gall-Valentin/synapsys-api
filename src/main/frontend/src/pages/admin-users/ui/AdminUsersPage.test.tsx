@@ -1,7 +1,7 @@
 import { fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AdminUsersPage } from './AdminUsersPage'
-import { renderWithQuery } from '@/shared/test/renderWithQuery'
+import { renderWithQuery } from '@/shared/test'
 import type { AdminUser, UsersPage } from '../api/adminUsersApi'
 import type { User } from '@/entities/user'
 

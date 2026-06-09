@@ -1,15 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { Key, Pencil, Trash2 } from 'lucide-react'
-import type { User } from '@/entities/user'
-import { getInitials } from '@/entities/user'
-import { canDeactivate, canActivate, canDelete, canResetTotp, canEditRole } from '@/entities/user'
-import type { AdminUser } from '../api/adminUsersApi'
-
-const ROLE_PILL_CLASS: Record<string, string> = {
-  SUPER_ADMIN: 'border-accent/20 bg-accent-dim text-accent',
-  ADMIN: 'border-border-2 bg-bg-3 text-fg-2',
-  USER: 'border-status-blue/20 bg-status-blue-dim text-status-blue',
-}
+import type { User, AdminUser } from '@/entities/user'
+import { RolePill, UserAvatar } from '@/entities/user'
+import { canDeactivate, canActivate, canDelete, canResetTotp, canEditRole } from '../lib/permissions'
+import type { PermissionResult } from '../lib/permissions'
 
 interface UsersTableProps {
   users: AdminUser[]
@@ -95,9 +89,12 @@ interface RowProps {
   onDelete: (user: AdminUser) => void
 }
 
+function denialTitle(check: PermissionResult, t: RowProps['t'], fallback: string): string {
+  return check.ok ? fallback : t(`perm.${check.reason}`)
+}
+
 function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, onResetTotp, onDelete }: RowProps) {
   const isMe = user.id === currentUser.id
-  const isSuper = user.role === 'SUPER_ADMIN'
 
   const toggleCheck = user.isActive
     ? canDeactivate(currentUser, user)
@@ -106,9 +103,7 @@ function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, o
   const totpCheck = canResetTotp(currentUser, user)
   const editCheck = canEditRole(currentUser, user)
 
-  const avatarGradient = isSuper
-    ? 'linear-gradient(135deg, #a78bfa, #818cf8)'
-    : 'linear-gradient(135deg, var(--color-accent), #818cf8)'
+  const toggleLabel = user.isActive ? t('table.toggle_deactivate') : t('table.toggle_activate')
 
   const createdDate = new Date(user.createdAt).toLocaleDateString(
     i18nLang === 'fr' ? 'fr-FR' : 'en-GB',
@@ -120,13 +115,7 @@ function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, o
       {/* Username */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <div
-            className="size-6 shrink-0 rounded-md flex items-center justify-center text-[10px] font-semibold text-white"
-            style={{ background: avatarGradient }}
-            aria-hidden="true"
-          >
-            {getInitials(user.username)}
-          </div>
+          <UserAvatar username={user.username} role={user.role} />
           <span className="font-medium text-fg-0">{user.username}</span>
           {isMe && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-bg-3 text-fg-2 font-mono">
@@ -141,9 +130,7 @@ function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, o
 
       {/* Role */}
       <td className="px-4 py-3">
-        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[10px] font-semibold font-mono uppercase tracking-[0.04em] ${ROLE_PILL_CLASS[user.role] ?? ''}`}>
-          {user.role}
-        </span>
+        <RolePill role={user.role} />
       </td>
 
       {/* Status */}
@@ -152,8 +139,8 @@ function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, o
           <button
             role="switch"
             aria-checked={user.isActive}
-            aria-label={user.isActive ? t('table.toggle_deactivate') : t('table.toggle_activate')}
-            title={!toggleCheck.ok && toggleCheck.reason ? t(`perm.${toggleCheck.reason.replace('perm.', '')}`) : (user.isActive ? t('table.toggle_deactivate') : t('table.toggle_activate'))}
+            aria-label={toggleLabel}
+            title={denialTitle(toggleCheck, t, toggleLabel)}
             onClick={() => toggleCheck.ok && onToggleActive(user)}
             disabled={!toggleCheck.ok}
             className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full border transition-colors
@@ -190,24 +177,24 @@ function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, o
         <div className="flex items-center justify-end gap-1">
           <ActionButton
             label={t('table.btn_reset_totp', { username: user.username })}
-            disabled={!totpCheck.ok}
-            disabledReason={totpCheck.reason ? t(totpCheck.reason) : undefined}
+            check={totpCheck}
+            t={t}
             onClick={() => onResetTotp(user)}
           >
             <Key className="size-3.5" />
           </ActionButton>
           <ActionButton
             label={t('table.btn_edit', { username: user.username })}
-            disabled={!editCheck.ok}
-            disabledReason={editCheck.reason ? t(editCheck.reason) : undefined}
+            check={editCheck}
+            t={t}
             onClick={() => onEditRole(user)}
           >
             <Pencil className="size-3.5" />
           </ActionButton>
           <ActionButton
             label={t('table.btn_delete')}
-            disabled={!deleteCheck.ok}
-            disabledReason={deleteCheck.reason ? t(deleteCheck.reason) : undefined}
+            check={deleteCheck}
+            t={t}
             onClick={() => onDelete(user)}
           >
             <Trash2 className="size-3.5" />
@@ -220,21 +207,21 @@ function UserRow({ user, currentUser, t, i18nLang, onToggleActive, onEditRole, o
 
 interface ActionButtonProps {
   label: string
-  disabled: boolean
-  disabledReason?: string
+  check: PermissionResult
+  t: RowProps['t']
   onClick: () => void
   children: React.ReactNode
 }
 
-function ActionButton({ label, disabled, disabledReason, onClick, children }: ActionButtonProps) {
+function ActionButton({ label, check, t, onClick, children }: ActionButtonProps) {
   return (
     <button
       aria-label={label}
-      title={disabled ? disabledReason : label}
-      disabled={disabled}
+      title={denialTitle(check, t, label)}
+      disabled={!check.ok}
       onClick={onClick}
       className={`size-7 flex items-center justify-center rounded-md border border-transparent text-fg-2 transition-colors
-        ${disabled
+        ${!check.ok
           ? 'opacity-40 cursor-not-allowed'
           : 'hover:border-border hover:bg-bg-2 hover:text-fg-0'
         }`}

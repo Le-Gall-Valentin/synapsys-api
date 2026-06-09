@@ -22,12 +22,14 @@
     "btn_edit": "Modifier le rôle de {{username}}",
     "btn_delete": "Supprimer le compte"
   },
+  "close": "Fermer",
   "perm": {
     "super_admin_protected": "Le super administrateur est protégé.",
     "self": "Vous ne pouvez pas modifier votre propre compte.",
     "admin_cannot_manage_admin": "Un administrateur ne peut pas gérer un autre administrateur.",
     "insufficient": "Action réservée aux administrateurs.",
-    "totp_not_enabled": "La 2FA n'est pas activée sur ce compte."
+    "totp_not_enabled": "La 2FA n'est pas activée sur ce compte.",
+    "target_inactive": "Le compte doit être actif pour modifier son rôle."
   },
   "load_error": "Impossible de charger la liste des utilisateurs. Veuillez réessayer.",
   "mutation_error": "Une erreur est survenue. Les modifications ont été annulées.",
@@ -53,7 +55,10 @@
       "conflict": "Ce nom d'utilisateur ou cette adresse e-mail est déjà utilisé(e).",
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible.",
-      "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard."
+      "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard.",
+      "username_length": "L'identifiant doit contenir entre 3 et 50 caractères.",
+      "password_too_short": "Le mot de passe doit contenir au moins 8 caractères.",
+      "password_weak": "Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial."
     }
   },
   "edit_role": {

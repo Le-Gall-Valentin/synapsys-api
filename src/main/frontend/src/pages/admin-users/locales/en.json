@@ -22,12 +22,14 @@
     "btn_edit": "Edit role of {{username}}",
     "btn_delete": "Delete account"
   },
+  "close": "Close",
   "perm": {
     "super_admin_protected": "The super administrator is protected.",
     "self": "You cannot modify your own account.",
     "admin_cannot_manage_admin": "An administrator cannot manage another administrator.",
     "insufficient": "Action reserved for administrators.",
-    "totp_not_enabled": "2FA is not enabled on this account."
+    "totp_not_enabled": "2FA is not enabled on this account.",
+    "target_inactive": "The account must be active to change its role."
   },
   "load_error": "Unable to load the users list. Please try again.",
   "mutation_error": "An error occurred. The changes have been reverted.",
@@ -53,7 +55,10 @@
       "conflict": "This username or email address is already taken.",
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable.",
-      "rate_limit": "Too many attempts. Please try again later."
+      "rate_limit": "Too many attempts. Please try again later.",
+      "username_length": "Username must be between 3 and 50 characters.",
+      "password_too_short": "Password must be at least 8 characters.",
+      "password_weak": "Password must contain an uppercase letter, a digit and a special character."
     }
   },
   "edit_role": {

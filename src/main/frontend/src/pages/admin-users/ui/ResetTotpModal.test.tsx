@@ -12,6 +12,9 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@/shared/ui', () => ({
+  Alert: ({ children, variant }: { children: React.ReactNode; variant: string }) => (
+    <div role={variant === 'error' ? 'alert' : 'status'}>{children}</div>
+  ),
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
   Button: ({ children, onClick, disabled, isLoading, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; children: React.ReactNode }) => (

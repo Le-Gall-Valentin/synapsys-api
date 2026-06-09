@@ -3,12 +3,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { CreateUserModal } from './CreateUserModal'
 import { NetworkError, ServerError } from '@/shared/lib'
 import { ConflictError } from '../api/adminUsersApi'
+import type { User } from '@/entities/user'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }))
 
 vi.mock('@/shared/ui', () => ({
+  CTA_BUTTON_STYLE: {},
+  Alert: ({ children, variant }: { children: React.ReactNode; variant: string }) => (
+    <div role={variant === 'error' ? 'alert' : 'status'}>{children}</div>
+  ),
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
   Button: ({ children, onClick, disabled, isLoading, type, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isLoading?: boolean; children: React.ReactNode }) => (
@@ -25,36 +30,77 @@ vi.mock('@/shared/ui', () => ({
   ),
 }))
 
-function setup(overrides: { onCreate?: () => Promise<void> } = {}) {
+const SUPER_ADMIN_CALLER: User = {
+  id: 'sa', username: 'sa', email: 'sa@test.com',
+  role: 'SUPER_ADMIN', createdAt: '2024-01-01T00:00:00Z', totpEnabled: false,
+}
+const ADMIN_CALLER: User = { ...SUPER_ADMIN_CALLER, id: 'a1', username: 'admin', role: 'ADMIN' }
+
+const VALID_PASSWORD = 'P@ssword1!'
+
+function setup(overrides: { onCreate?: () => Promise<void>; caller?: User } = {}) {
   const onClose = vi.fn()
   const onSuccess = vi.fn()
   const onCreate = overrides.onCreate ?? vi.fn().mockResolvedValue(undefined)
   const result = render(
-    <CreateUserModal onClose={onClose} onCreate={onCreate} onSuccess={onSuccess} />
+    <CreateUserModal caller={overrides.caller ?? SUPER_ADMIN_CALLER} onClose={onClose} onCreate={onCreate} onSuccess={onSuccess} />
   )
   return { ...result, onClose, onSuccess, onCreate }
 }
 
-function fillForm(getByLabelText: ReturnType<typeof render>['getByLabelText']) {
+function fillForm(getByLabelText: ReturnType<typeof render>['getByLabelText'], password = VALID_PASSWORD) {
   fireEvent.change(getByLabelText('create.username'), { target: { value: 'bob' } })
   fireEvent.change(getByLabelText('create.email'), { target: { value: 'bob@test.com' } })
-  fireEvent.change(getByLabelText('create.password'), { target: { value: 'P@ss1!' } })
+  fireEvent.change(getByLabelText('create.password'), { target: { value: password } })
 }
 
 beforeEach(() => { vi.clearAllMocks() })
 
-describe('CreateUserModal', () => {
+describe('CreateUserModal — role options', () => {
+  it('SUPER_ADMIN caller sees USER and ADMIN options', () => {
+    const { getByRole } = setup()
+    const select = getByRole('combobox') as HTMLSelectElement
+    expect(Array.from(select.options).map(o => o.value)).toEqual(['USER', 'ADMIN'])
+  })
+
+  it('ADMIN caller sees USER only (backend RoleHierarchy)', () => {
+    const { getByRole } = setup({ caller: ADMIN_CALLER })
+    const select = getByRole('combobox') as HTMLSelectElement
+    expect(Array.from(select.options).map(o => o.value)).toEqual(['USER'])
+  })
+})
+
+describe('CreateUserModal — validation', () => {
   it('submit button is disabled when fields are empty', () => {
     const { getByText } = setup()
-    const btn = getByText('create.submit') as HTMLButtonElement
-    expect(btn.disabled).toBe(true)
+    expect((getByText('create.submit') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('submit stays disabled with a weak password and shows hint', () => {
+    const { getByLabelText, getByText } = setup()
+    fillForm(getByLabelText, 'weakpassword')
+    expect((getByText('create.submit') as HTMLButtonElement).disabled).toBe(true)
+    expect(getByText('create.error.password_weak')).toBeDefined()
+  })
+
+  it('submit stays disabled with a too short password and shows hint', () => {
+    const { getByLabelText, getByText } = setup()
+    fillForm(getByLabelText, 'P@s1')
+    expect((getByText('create.submit') as HTMLButtonElement).disabled).toBe(true)
+    expect(getByText('create.error.password_too_short')).toBeDefined()
+  })
+
+  it('shows hint when username is shorter than 3 chars', () => {
+    const { getByLabelText, getByText } = setup()
+    fireEvent.change(getByLabelText('create.username'), { target: { value: 'ab' } })
+    expect(getByText('create.error.username_length')).toBeDefined()
   })
 
   it('calls onCreate with trimmed values and selected role on submit', async () => {
     const { getByLabelText, getByText, onCreate, onSuccess } = setup()
     fillForm(getByLabelText)
     fireEvent.click(getByText('create.submit'))
-    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('bob', 'bob@test.com', 'P@ss1!', 'USER'))
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('bob', 'bob@test.com', VALID_PASSWORD, 'USER'))
     expect(onSuccess).toHaveBeenCalledOnce()
   })
 
@@ -62,11 +108,13 @@ describe('CreateUserModal', () => {
     const { getByLabelText, getByText, onCreate } = setup()
     fireEvent.change(getByLabelText('create.username'), { target: { value: '  bob  ' } })
     fireEvent.change(getByLabelText('create.email'), { target: { value: '  bob@test.com  ' } })
-    fireEvent.change(getByLabelText('create.password'), { target: { value: 'P@ss1!' } })
+    fireEvent.change(getByLabelText('create.password'), { target: { value: VALID_PASSWORD } })
     fireEvent.click(getByText('create.submit'))
-    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('bob', 'bob@test.com', 'P@ss1!', 'USER'))
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('bob', 'bob@test.com', VALID_PASSWORD, 'USER'))
   })
+})
 
+describe('CreateUserModal — errors', () => {
   it('shows conflict error on 409', async () => {
     const { getByLabelText, getByText, findByRole } = setup({
       onCreate: vi.fn().mockRejectedValue(new ConflictError()),

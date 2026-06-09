@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, Key } from 'lucide-react'
-import { Dialog, Button } from '@/shared/ui'
-import { NetworkError, RateLimitError } from '@/shared/lib'
-import type { AdminUser } from '../api/adminUsersApi'
+import { Key } from 'lucide-react'
+import { Alert, Dialog, Button } from '@/shared/ui'
+import type { AdminUser } from '@/entities/user'
+import { mapApiErrorToKey } from '../lib/mapApiErrorToKey'
 
 interface ResetTotpModalProps {
   user: AdminUser
@@ -27,13 +27,7 @@ export function ResetTotpModal({ user, onClose, onReset, onSuccess }: ResetTotpM
       await onReset(user.id)
       onSuccess()
     } catch (error) {
-      if (error instanceof RateLimitError) {
-        setErrorKey('reset_totp.error.rate_limit')
-      } else if (error instanceof NetworkError) {
-        setErrorKey('reset_totp.error.network')
-      } else {
-        setErrorKey('reset_totp.error.server')
-      }
+      setErrorKey(mapApiErrorToKey(error, 'reset_totp'))
     } finally {
       pendingRef.current = false
       setIsLoading(false)
@@ -54,15 +48,10 @@ export function ResetTotpModal({ user, onClose, onReset, onSuccess }: ResetTotpM
         <p className="text-sm text-fg-2 leading-relaxed">{t('reset_totp.body')}</p>
       </div>
 
-      <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-status-orange/25 bg-status-orange-dim px-3.5 py-2.5 text-sm text-status-orange">
-        <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
-        <span>{t('reset_totp.warning')}</span>
-      </div>
+      <Alert variant="warning" className="mb-5">{t('reset_totp.warning')}</Alert>
 
       {errorKey && (
-        <div role="alert" className="mb-4 rounded-lg border border-status-red/25 bg-status-red-dim px-3 py-2.5 text-sm text-status-red">
-          {t(errorKey)}
-        </div>
+        <Alert variant="error" className="mb-4">{t(errorKey)}</Alert>
       )}
 
       <div className="flex justify-end gap-2">
