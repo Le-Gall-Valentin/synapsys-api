@@ -1,3 +1,5 @@
 export type { User, UserRole } from './model/types'
 export { isAdminRole } from './model/types'
 export { getInitials } from './lib/getInitials'
+export type { AdminUser } from './lib/adminPermissions'
+export { canDeactivate, canActivate, canDelete, canResetTotp, canEditRole } from './lib/adminPermissions'
