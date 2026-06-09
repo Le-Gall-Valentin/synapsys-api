@@ -24,27 +24,37 @@ const ADMIN_USER = {
 
 beforeEach(() => { Object.values(mock).forEach(m => m.mockReset()) })
 
+const USERS_PAGE = {
+  content: [ADMIN_USER], totalElements: 1, totalPages: 1, number: 0, size: 20, first: true, last: true,
+}
+
 describe('listUsers', () => {
-  it('GET /users?page=0&size=500 and returns content array', async () => {
-    mock.get.mockResolvedValue({ data: { content: [ADMIN_USER] } })
-    const result = await adminUsersApi.listUsers()
-    expect(mock.get).toHaveBeenCalledWith('/users', { params: { page: 0, size: 500 } })
-    expect(result).toEqual([ADMIN_USER])
+  it('GET /users?page=0&size=20 and returns UsersPage', async () => {
+    mock.get.mockResolvedValue({ data: USERS_PAGE })
+    const result = await adminUsersApi.listUsers(0)
+    expect(mock.get).toHaveBeenCalledWith('/users', { params: { page: 0, size: 20 } })
+    expect(result).toEqual(USERS_PAGE)
+  })
+
+  it('GET /users?page=2&size=20 when page=2 requested', async () => {
+    mock.get.mockResolvedValue({ data: USERS_PAGE })
+    await adminUsersApi.listUsers(2)
+    expect(mock.get).toHaveBeenCalledWith('/users', { params: { page: 2, size: 20 } })
   })
 
   it('throws ServerError on 500', async () => {
     mock.get.mockRejectedValue(axiosErr(500))
-    await expect(adminUsersApi.listUsers()).rejects.toBeInstanceOf(ServerError)
+    await expect(adminUsersApi.listUsers(0)).rejects.toBeInstanceOf(ServerError)
   })
 
   it('throws RateLimitError on 429', async () => {
     mock.get.mockRejectedValue(axiosErr(429))
-    await expect(adminUsersApi.listUsers()).rejects.toBeInstanceOf(RateLimitError)
+    await expect(adminUsersApi.listUsers(0)).rejects.toBeInstanceOf(RateLimitError)
   })
 
   it('throws NetworkError on no response', async () => {
     mock.get.mockRejectedValue(new Error('network'))
-    await expect(adminUsersApi.listUsers()).rejects.toBeInstanceOf(NetworkError)
+    await expect(adminUsersApi.listUsers(0)).rejects.toBeInstanceOf(NetworkError)
   })
 })
 

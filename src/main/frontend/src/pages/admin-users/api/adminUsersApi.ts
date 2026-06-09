@@ -5,6 +5,16 @@ import type { AdminUser } from '@/entities/user'
 
 export type { AdminUser }
 
+export interface UsersPage {
+  content: AdminUser[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+  first: boolean
+  last: boolean
+}
+
 export class ConflictError extends Error {
   constructor() { super('Username or email already taken'); this.name = 'ConflictError' }
 }
@@ -23,12 +33,10 @@ function handleError(error: unknown): never {
 }
 
 export const adminUsersApi = {
-  async listUsers(): Promise<AdminUser[]> {
+  async listUsers(page: number, size = 20): Promise<UsersPage> {
     try {
-      const res = await client.get<{ content: AdminUser[] }>('/users', {
-        params: { page: 0, size: 500 },
-      })
-      return res.data.content
+      const res = await client.get<UsersPage>('/users', { params: { page, size } })
+      return res.data
     } catch (error) {
       handleError(error)
     }

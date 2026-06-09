@@ -31,6 +31,13 @@
   },
   "load_error": "Impossible de charger la liste des utilisateurs. Veuillez réessayer.",
   "mutation_error": "Une erreur est survenue. Les modifications ont été annulées.",
+  "pagination": {
+    "total_one": "{{count}} utilisateur",
+    "total_other": "{{count}} utilisateurs",
+    "page": "Page {{current}} sur {{total}}",
+    "prev": "Page précédente",
+    "next": "Page suivante"
+  },
   "create": {
     "title": "Créer un utilisateur",
     "username": "Identifiant",

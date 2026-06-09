@@ -1,9 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Shield, AlertTriangle } from 'lucide-react'
+import { Plus, Shield, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import { useAuth } from '@/features/auth'
-import { adminUsersApi } from '../api/adminUsersApi'
+import { useUsers } from '../model/useUsers'
+import {
+  useCreateUser,
+  useUpdateUserRole,
+  useDeleteUser,
+  useResetTotp,
+  useToggleUserActive,
+} from '../model/useUserMutations'
 import type { AdminUser } from '../api/adminUsersApi'
 import { UsersTable } from './UsersTable'
 import { CreateUserModal } from './CreateUserModal'
@@ -15,62 +22,39 @@ export function AdminUsersPage() {
   const { t } = useTranslation('adminUsers')
   const currentUser = useAuth(s => s.user)
 
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  const [mutationError, setMutationError] = useState(false)
+  const [page, setPage] = useState(0)
+  const { data, isPending, isError: loadError, isPlaceholderData } = useUsers(page)
 
+  const [toggleError, setToggleError] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<AdminUser | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
   const [resetTotpTarget, setResetTotpTarget] = useState<AdminUser | null>(null)
 
-  const loadedRef = useRef(false)
+  const createUser = useCreateUser()
+  const updateUserRole = useUpdateUserRole()
+  const deleteUser = useDeleteUser()
+  const resetTotp = useResetTotp()
+  const toggleActive = useToggleUserActive(page)
 
-  useEffect(() => {
-    if (loadedRef.current) return
-    loadedRef.current = true
-
-    adminUsersApi.listUsers().then(setUsers).catch(() => setLoadError(true)).finally(() => setIsLoading(false))
-  }, [])
-
-  function handleToggleActive(user: AdminUser) {
-    const previous = users
-    setMutationError(false)
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isActive: !u.isActive } : u))
-    const call = user.isActive ? adminUsersApi.deactivateUser : adminUsersApi.activateUser
-    call(user.id).catch(() => {
-      setUsers(previous)
-      setMutationError(true)
-    })
+  function handleToggle(user: AdminUser) {
+    setToggleError(false)
+    toggleActive.mutate(user, { onError: () => setToggleError(true) })
   }
 
   function handleDeleteSuccess() {
-    setUsers(prev => prev.filter(u => u.id !== deleteTarget!.id))
+    if (data && data.content.length === 1 && page > 0) {
+      setPage(p => p - 1)
+    }
     setDeleteTarget(null)
   }
 
-  function handleCreateSuccess() {
-    setCreateOpen(false)
-    setIsLoading(true)
-    loadedRef.current = false
-    adminUsersApi.listUsers().then(setUsers).catch(() => setLoadError(true)).finally(() => setIsLoading(false))
-    loadedRef.current = true
-  }
-
-  function handleEditRoleSuccess(newRole: 'USER' | 'ADMIN') {
-    if (!editTarget) return
-    setUsers(prev => prev.map(u => u.id === editTarget.id ? { ...u, role: newRole } : u))
-    setEditTarget(null)
-  }
-
-  function handleResetTotpSuccess() {
-    if (!resetTotpTarget) return
-    setUsers(prev => prev.map(u => u.id === resetTotpTarget.id ? { ...u, totpEnabled: false } : u))
-    setResetTotpTarget(null)
-  }
-
   if (!currentUser) return null
+
+  const users = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
+  const totalElements = data?.totalElements ?? 0
+  const showPagination = !isPending && totalPages > 1
 
   return (
     <div className="py-5 px-6 mx-auto">
@@ -98,14 +82,14 @@ export function AdminUsersPage() {
         </div>
       )}
 
-      {/* Mutation error */}
-      {mutationError && (
+      {/* Toggle/mutation error */}
+      {toggleError && (
         <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg border border-status-red/25 bg-status-red-dim px-3.5 py-2.5 text-sm text-status-red">
           <AlertTriangle className="size-4 shrink-0" />
           {t('mutation_error')}
           <button
             className="ml-auto text-status-red/70 hover:text-status-red"
-            onClick={() => setMutationError(false)}
+            onClick={() => setToggleError(false)}
             aria-label="Fermer"
           >
             ×
@@ -116,13 +100,43 @@ export function AdminUsersPage() {
       {/* Table */}
       <UsersTable
         users={users}
-        isLoading={isLoading}
+        isLoading={isPending}
         currentUser={currentUser}
-        onToggleActive={handleToggleActive}
+        onToggleActive={handleToggle}
         onEditRole={setEditTarget}
         onResetTotp={setResetTotpTarget}
         onDelete={setDeleteTarget}
       />
+
+      {/* Pagination */}
+      {showPagination && (
+        <div className={`flex items-center justify-between mt-3 transition-opacity ${isPlaceholderData ? 'opacity-50 pointer-events-none' : ''}`}>
+          <span className="text-xs text-fg-2">
+            {t('pagination.total', { count: totalElements })}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(p => p - 1)}
+              disabled={page === 0}
+              className="size-7 flex items-center justify-center rounded-md border border-transparent text-fg-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:border-border hover:enabled:bg-bg-2 hover:enabled:text-fg-0"
+              aria-label={t('pagination.prev')}
+            >
+              <ChevronLeft className="size-3.5" />
+            </button>
+            <span className="min-w-[5rem] text-center text-xs text-fg-1 tabular-nums">
+              {t('pagination.page', { current: page + 1, total: totalPages })}
+            </span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={page >= totalPages - 1}
+              className="size-7 flex items-center justify-center rounded-md border border-transparent text-fg-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:border-border hover:enabled:bg-bg-2 hover:enabled:text-fg-0"
+              aria-label={t('pagination.next')}
+            >
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Protection rules */}
       <div className="mt-3 rounded-md border border-border bg-bg-1 p-4">
@@ -144,8 +158,8 @@ export function AdminUsersPage() {
       {createOpen && (
         <CreateUserModal
           onClose={() => setCreateOpen(false)}
-          onCreate={adminUsersApi.createUser}
-          onSuccess={handleCreateSuccess}
+          onCreate={(u, e, p, r) => createUser.mutateAsync({ username: u, email: e, password: p, role: r })}
+          onSuccess={() => { setPage(0); setCreateOpen(false) }}
         />
       )}
 
@@ -154,8 +168,8 @@ export function AdminUsersPage() {
           target={editTarget}
           caller={currentUser}
           onClose={() => setEditTarget(null)}
-          onUpdate={adminUsersApi.updateUserRole}
-          onSuccess={handleEditRoleSuccess}
+          onUpdate={(id, role) => updateUserRole.mutateAsync({ id, role: role as 'USER' | 'ADMIN' })}
+          onSuccess={() => setEditTarget(null)}
         />
       )}
 
@@ -163,7 +177,7 @@ export function AdminUsersPage() {
         <DeleteUserModal
           user={deleteTarget}
           onClose={() => setDeleteTarget(null)}
-          onDelete={adminUsersApi.deleteUser}
+          onDelete={deleteUser.mutateAsync}
           onSuccess={handleDeleteSuccess}
         />
       )}
@@ -172,8 +186,8 @@ export function AdminUsersPage() {
         <ResetTotpModal
           user={resetTotpTarget}
           onClose={() => setResetTotpTarget(null)}
-          onReset={adminUsersApi.resetTotp}
-          onSuccess={handleResetTotpSuccess}
+          onReset={resetTotp.mutateAsync}
+          onSuccess={() => setResetTotpTarget(null)}
         />
       )}
     </div>

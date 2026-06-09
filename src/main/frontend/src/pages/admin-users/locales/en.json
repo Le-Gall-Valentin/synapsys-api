@@ -31,6 +31,13 @@
   },
   "load_error": "Unable to load the users list. Please try again.",
   "mutation_error": "An error occurred. The changes have been reverted.",
+  "pagination": {
+    "total_one": "{{count}} user",
+    "total_other": "{{count}} users",
+    "page": "Page {{current}} of {{total}}",
+    "prev": "Previous page",
+    "next": "Next page"
+  },
   "create": {
     "title": "Create a user",
     "username": "Username",
