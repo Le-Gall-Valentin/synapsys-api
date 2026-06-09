@@ -90,11 +90,8 @@ const MOCK_USER: AdminUser = {
 const MOCK_PAGE: UsersPage = {
   content: [MOCK_USER],
   totalElements: 1,
-  totalPages: 1,
-  number: 0,
+  page: 0,
   size: 20,
-  first: true,
-  last: true,
 }
 
 function setup() {

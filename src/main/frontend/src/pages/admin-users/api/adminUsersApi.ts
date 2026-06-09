@@ -8,11 +8,8 @@ export type { AdminUser }
 export interface UsersPage {
   content: AdminUser[]
   totalElements: number
-  totalPages: number
-  number: number
+  page: number
   size: number
-  first: boolean
-  last: boolean
 }
 
 export class ConflictError extends Error {

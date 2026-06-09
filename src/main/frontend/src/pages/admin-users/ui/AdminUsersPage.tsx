@@ -52,8 +52,9 @@ export function AdminUsersPage() {
   if (!currentUser) return null
 
   const users = data?.content ?? []
-  const totalPages = data?.totalPages ?? 1
   const totalElements = data?.totalElements ?? 0
+  const pageSize = data?.size ?? 20
+  const totalPages = totalElements > 0 ? Math.ceil(totalElements / pageSize) : 1
   const showPagination = !isPending && totalPages > 1
 
   return (

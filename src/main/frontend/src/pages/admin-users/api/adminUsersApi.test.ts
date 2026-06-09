@@ -25,7 +25,7 @@ const ADMIN_USER = {
 beforeEach(() => { Object.values(mock).forEach(m => m.mockReset()) })
 
 const USERS_PAGE = {
-  content: [ADMIN_USER], totalElements: 1, totalPages: 1, number: 0, size: 20, first: true, last: true,
+  content: [ADMIN_USER], totalElements: 1, page: 0, size: 20,
 }
 
 describe('listUsers', () => {
