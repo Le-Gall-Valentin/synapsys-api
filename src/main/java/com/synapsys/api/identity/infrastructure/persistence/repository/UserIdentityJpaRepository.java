@@ -42,8 +42,8 @@ public interface UserIdentityJpaRepository extends JpaRepository<UserIdentityEnt
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("UPDATE UserIdentityEntity u SET u.role = :role WHERE u.id = :id")
-    void updateRoleById(@Param("id") UUID id, @Param("role") Role role);
+    @Query("UPDATE UserIdentityEntity u SET u.role = :newRole WHERE u.id = :id AND u.role = :currentRole AND u.deleted = false")
+    int updateRoleById(@Param("id") UUID id, @Param("currentRole") Role currentRole, @Param("newRole") Role newRole);
 
     long countByDeletedFalse();
 

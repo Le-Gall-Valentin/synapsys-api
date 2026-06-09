@@ -98,8 +98,11 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     }
 
     @Override
-    public void updateRole(UUID userId, Role role) {
-        jpa.updateRoleById(userId, role);
+    public void updateRole(UUID userId, Role currentRole, Role newRole) {
+        int updated = jpa.updateRoleById(userId, currentRole, newRole);
+        if (updated == 0) {
+            throw new IdentityException.DataIntegrityError();
+        }
     }
 
     private IdentityException resolveConstraintViolation(DataIntegrityViolationException e) {

@@ -672,7 +672,7 @@ class UserControllerIT {
     }
 
     @Test
-    void updateUser_adminUpdatesUser_returns204() throws Exception {
+    void updateUser_adminTargetsUserWithSameRole_returns409() throws Exception {
         Cookie access = loginAs("adminuser", "adminpass2");
         UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
 
@@ -680,7 +680,7 @@ class UserControllerIT {
                 .cookie(access)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"role\":\"USER\"}"))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isConflict());
     }
 
     @Test
@@ -788,6 +788,30 @@ class UserControllerIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"role\":\"UNKNOWN_ROLE\"}"))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUser_sameRole_returns409() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("adminuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateUser_inactiveTarget_returns403() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID inactiveId = userIdentityJpaRepository.findByUsername("inactiveuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + inactiveId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+            .andExpect(status().isForbidden());
     }
 
     private void saveCredential(UUID userId, String rawPassword) {

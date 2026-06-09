@@ -7,7 +7,6 @@ import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
 import com.synapsys.api.identity.domain.port.out.UserRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
-import com.synapsys.api.shared.service.RoleHierarchy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,12 +32,14 @@ public class UpdateUserHandler implements UpdateUserUseCase {
         }
         User target = userRepository.findById(command.targetUserId())
             .orElseThrow(IdentityException.UserNotFound::new);
-        target.ensureCanBeUpdatedBy(command.callerRole());
-        if (!RoleHierarchy.canManage(command.callerRole(), command.newRole())) {
-            throw new IdentityException.InsufficientPermissions();
+        if (!target.isActive()) {
+            throw new IdentityException.UserNotActive();
         }
-        userCommandPort.updateRole(command.targetUserId(), command.newRole());
-        log.info("User {} role changed to {} by caller {} with role {}",
-            command.targetUserId(), command.newRole(), command.callerId(), command.callerRole());
+        target.ensureCanBeUpdatedBy(command.callerRole());
+        target.ensureRoleCanBeAssignedBy(command.callerRole(), command.newRole());
+        target.ensureRoleNotAlreadyAssigned(command.newRole());
+        userCommandPort.updateRole(command.targetUserId(), target.role(), command.newRole());
+        log.info("User {} role changed from {} to {} by caller {} with role {}",
+            command.targetUserId(), target.role(), command.newRole(), command.callerId(), command.callerRole());
     }
 }

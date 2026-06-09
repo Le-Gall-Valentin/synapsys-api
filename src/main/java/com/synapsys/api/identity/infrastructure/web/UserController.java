@@ -408,6 +408,8 @@ public class UserController {
             - Il n'est pas possible de modifier son propre compte via cet endpoint
             - Il n'est pas possible d'assigner le rôle `SUPER_ADMIN`
             - Un `ADMIN` ne peut pas assigner le rôle `ADMIN` (escalade de privilèges)
+            - Retourne `409` si l'utilisateur a déjà le rôle demandé
+            - Retourne `403` si le compte cible est désactivé
 
             Rate limit : 20 req/fenêtre.
             """
@@ -426,12 +428,17 @@ public class UserController {
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Rôle insuffisant ou tentative de modification de son propre compte",
+            description = "Rôle insuffisant, tentative de modification de son propre compte, ou compte cible désactivé",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
             responseCode = "404",
             description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "L'utilisateur a déjà ce rôle",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(

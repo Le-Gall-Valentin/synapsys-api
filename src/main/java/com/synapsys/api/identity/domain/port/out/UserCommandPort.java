@@ -10,7 +10,7 @@ public interface UserCommandPort {
     User createProfile(CreateUserProfileCommand command);
     void deactivate(UUID userId);
     void updateProfile(UpdateProfileCommand command);
-    void updateRole(UUID userId, Role role);
+    void updateRole(UUID userId, Role currentRole, Role newRole);
     void activate(UUID userId);
     void deleteGdpr(UUID userId);
 }

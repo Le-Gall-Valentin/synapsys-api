@@ -38,32 +38,22 @@ class UpdateUserHandlerTest {
 
     @Test
     void update_superAdminChangesUserRoleToAdmin_succeeds() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.USER)));
 
         assertThatCode(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.SUPER_ADMIN, Role.ADMIN)))
             .doesNotThrowAnyException();
 
-        verify(userCommandPort).updateRole(targetId, Role.ADMIN);
+        verify(userCommandPort).updateRole(targetId, Role.USER, Role.ADMIN);
     }
 
     @Test
     void update_superAdminChangesAdminRoleToUser_succeeds() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.ADMIN)));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.ADMIN)));
 
         assertThatCode(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.SUPER_ADMIN, Role.USER)))
             .doesNotThrowAnyException();
 
-        verify(userCommandPort).updateRole(targetId, Role.USER);
-    }
-
-    @Test
-    void update_adminChangesUserRoleToUser_succeeds() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
-
-        assertThatCode(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.ADMIN, Role.USER)))
-            .doesNotThrowAnyException();
-
-        verify(userCommandPort).updateRole(targetId, Role.USER);
+        verify(userCommandPort).updateRole(targetId, Role.ADMIN, Role.USER);
     }
 
     @Test
@@ -82,62 +72,85 @@ class UpdateUserHandlerTest {
         assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.SUPER_ADMIN, Role.USER)))
             .isInstanceOf(IdentityException.UserNotFound.class);
 
-        verify(userCommandPort, never()).updateRole(any(), any());
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
+    }
+
+    @Test
+    void update_inactiveTarget_throwsUserNotActive() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(inactive(targetId, Role.USER)));
+
+        assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.SUPER_ADMIN, Role.ADMIN)))
+            .isInstanceOf(IdentityException.UserNotActive.class);
+
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
     }
 
     @Test
     void update_adminCannotUpdateAdmin_throwsInsufficientPermissions() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.ADMIN)));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.ADMIN)));
 
         assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.ADMIN, Role.USER)))
             .isInstanceOf(IdentityException.InsufficientPermissions.class);
 
-        verify(userCommandPort, never()).updateRole(any(), any());
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
     }
 
     @Test
     void update_adminCannotAssignAdminRole_throwsInsufficientPermissions() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.USER)));
 
         assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.ADMIN, Role.ADMIN)))
             .isInstanceOf(IdentityException.InsufficientPermissions.class);
 
-        verify(userCommandPort, never()).updateRole(any(), any());
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
     }
 
     @Test
     void update_noneCanAssignSuperAdminRole_throwsInsufficientPermissions() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.USER)));
 
         assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.SUPER_ADMIN, Role.SUPER_ADMIN)))
             .isInstanceOf(IdentityException.InsufficientPermissions.class);
 
-        verify(userCommandPort, never()).updateRole(any(), any());
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
     }
 
     @Test
     void update_userCallerCannotUpdateAnyone_throwsInsufficientPermissions() {
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.USER)));
 
         assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.USER, Role.USER)))
             .isInstanceOf(IdentityException.InsufficientPermissions.class);
 
-        verify(userCommandPort, never()).updateRole(any(), any());
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
+    }
+
+    @Test
+    void update_sameRole_throwsRoleAlreadyAssigned() {
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.USER)));
+
+        assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.SUPER_ADMIN, Role.USER)))
+            .isInstanceOf(IdentityException.RoleAlreadyAssigned.class);
+
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
     }
 
     @Test
     void update_adminCannotLearnSuperAdminExists_throwsInsufficientPermissionsNotUserNotFound() {
-        // Role hierarchy check on target must fire before any other logic — admin must not
-        // learn whether the SUPER_ADMIN target exists at all
-        when(userRepository.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.SUPER_ADMIN)));
+        // isActive check fires before role hierarchy — admin must not learn the target's state
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(active(targetId, Role.SUPER_ADMIN)));
 
         assertThatThrownBy(() -> handler.update(new UpdateUserCommand(targetId, callerId, Role.ADMIN, Role.USER)))
             .isInstanceOf(IdentityException.InsufficientPermissions.class);
 
-        verify(userCommandPort, never()).updateRole(any(), any());
+        verify(userCommandPort, never()).updateRole(any(), any(), any());
     }
 
-    private User user(UUID id, Role role) {
+    private User active(UUID id, Role role) {
         return new User(id, "u-" + id, id + "@test.com", role, true, Instant.now());
+    }
+
+    private User inactive(UUID id, Role role) {
+        return new User(id, "u-" + id, id + "@test.com", role, false, Instant.now());
     }
 }
