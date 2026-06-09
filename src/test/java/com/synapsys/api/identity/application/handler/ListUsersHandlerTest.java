@@ -43,11 +43,11 @@ class ListUsersHandlerTest {
         User user2 = new User(id2, "bob", "bob@test.com", Role.ADMIN, false, Instant.now());
         SortRequest sort = SortRequest.descBy("createdAt");
 
-        when(userAdminPort.findAll(0, 20, sort))
+        when(userAdminPort.findAll(0, 20, sort, null))
             .thenReturn(new PageResult<>(List.of(user1, user2), 2L, 0, 20));
         when(totpStatusPort.findTotpEnabledAmong(Set.of(id1, id2))).thenReturn(Set.of(id1));
 
-        PageResult<UserAdminView> result = handler.listUsers(0, 20, sort);
+        PageResult<UserAdminView> result = handler.listUsers(0, 20, sort, null);
 
         assertThat(result.content()).hasSize(2);
         assertThat(result.totalElements()).isEqualTo(2L);
@@ -62,13 +62,24 @@ class ListUsersHandlerTest {
     @Test
     void listUsers_emptyPage_doesNotCallTotpPort() {
         SortRequest sort = SortRequest.descBy("createdAt");
-        when(userAdminPort.findAll(0, 20, sort))
+        when(userAdminPort.findAll(0, 20, sort, null))
             .thenReturn(new PageResult<>(List.of(), 0L, 0, 20));
 
-        PageResult<UserAdminView> result = handler.listUsers(0, 20, sort);
+        PageResult<UserAdminView> result = handler.listUsers(0, 20, sort, null);
 
         assertThat(result.content()).isEmpty();
         assertThat(result.totalElements()).isZero();
         verify(totpStatusPort, never()).findTotpEnabledAmong(any());
+    }
+
+    @Test
+    void listUsers_passesSearchThroughToPort() {
+        SortRequest sort = SortRequest.descBy("createdAt");
+        when(userAdminPort.findAll(0, 20, sort, "alice"))
+            .thenReturn(new PageResult<>(List.of(), 0L, 0, 20));
+
+        handler.listUsers(0, 20, sort, "alice");
+
+        verify(userAdminPort).findAll(0, 20, sort, "alice");
     }
 }

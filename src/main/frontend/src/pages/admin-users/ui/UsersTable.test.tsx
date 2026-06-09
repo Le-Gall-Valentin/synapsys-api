@@ -59,6 +59,18 @@ describe('UsersTable — loading', () => {
   })
 })
 
+describe('UsersTable — empty state', () => {
+  it('shows the empty message when there are no users', () => {
+    const { getByText } = setup(SA, [])
+    expect(getByText('table.empty')).toBeDefined()
+  })
+
+  it('does not show the empty message when users exist', () => {
+    const { queryByText } = setup()
+    expect(queryByText('table.empty')).toBeNull()
+  })
+})
+
 describe('UsersTable — rows', () => {
   it('renders a row for each user', () => {
     const { getAllByRole } = setup()

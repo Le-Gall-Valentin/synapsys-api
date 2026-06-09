@@ -6,6 +6,7 @@ export { setSessionExpiredCallback, triggerSessionExpired } from './sessionCallb
 export { setSessionHint, clearSessionHint, hasSessionHint } from './sessionHint'
 export { NetworkError, ServerError, RateLimitError } from './apiErrors'
 export { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_REGEX, isValidPassword } from './passwordPolicy'
+export { useDebouncedValue } from './useDebouncedValue'
 export { parseRetryAfter } from './parseRetryAfter'
 export { useTheme, type Theme } from './theme'
 export { useLanguage, type Language } from './language'

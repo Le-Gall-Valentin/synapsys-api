@@ -20,9 +20,14 @@
     "toggle_activate": "Réactiver",
     "btn_reset_totp": "Réinitialiser la 2FA de {{username}}",
     "btn_edit": "Modifier le rôle de {{username}}",
-    "btn_delete": "Supprimer le compte"
+    "btn_delete": "Supprimer le compte",
+    "empty": "Aucun utilisateur trouvé."
   },
   "close": "Fermer",
+  "search": {
+    "placeholder": "Rechercher par nom d'utilisateur ou email…",
+    "clear": "Effacer la recherche"
+  },
   "perm": {
     "super_admin_protected": "Le super administrateur est protégé.",
     "self": "Vous ne pouvez pas modifier votre propre compte.",

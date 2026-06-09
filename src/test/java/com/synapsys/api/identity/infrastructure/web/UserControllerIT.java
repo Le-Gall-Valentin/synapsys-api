@@ -576,6 +576,66 @@ class UserControllerIT {
     }
 
     @Test
+    void listUsers_searchMatchesUsernameAndEmail() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        // "admin" matches superadmin (username) and adminuser (username + admin@test.com)
+        mockMvc.perform(get("/api/users").param("search", "admin").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(2))
+            .andExpect(jsonPath("$.content[?(@.username == 'superadmin')]").exists())
+            .andExpect(jsonPath("$.content[?(@.username == 'adminuser')]").exists());
+    }
+
+    @Test
+    void listUsers_searchIsCaseInsensitive() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("search", "INACTIVE").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].username").value("inactiveuser"));
+    }
+
+    @Test
+    void listUsers_searchMatchesEmailOnly() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        // "@test.com" appears in every seeded email but in no username
+        mockMvc.perform(get("/api/users").param("search", "@test.com").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(5));
+    }
+
+    @Test
+    void listUsers_searchNoMatch_returnsEmptyPage() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("search", "zzz-no-match").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(0))
+            .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    void listUsers_searchLikeWildcardsAreEscaped() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        // '%' must be treated literally, not as a LIKE wildcard matching everything
+        mockMvc.perform(get("/api/users").param("search", "%").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void listUsers_searchTooLong_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(get("/api/users").param("search", "a".repeat(255)).cookie(access))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void activateUser_asSuperAdmin_activatesInactiveUser_returns204() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
         UUID inactiveId = userIdentityJpaRepository.findByUsername("inactiveuser").get().getId();

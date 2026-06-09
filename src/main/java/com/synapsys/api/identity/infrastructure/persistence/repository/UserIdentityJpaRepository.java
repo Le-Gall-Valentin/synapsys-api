@@ -23,6 +23,14 @@ public interface UserIdentityJpaRepository extends JpaRepository<UserIdentityEnt
     @Query("SELECT u FROM UserIdentityEntity u WHERE u.deleted = false")
     Page<UserIdentityEntity> findAllNotDeleted(Pageable pageable);
 
+    // The pattern is pre-escaped by the adapter ('!' escapes '!', '%' and '_').
+    @Query("""
+        SELECT u FROM UserIdentityEntity u
+        WHERE u.deleted = false
+          AND (LOWER(u.username) LIKE :pattern ESCAPE '!' OR LOWER(u.email) LIKE :pattern ESCAPE '!')
+        """)
+    Page<UserIdentityEntity> searchNotDeleted(@Param("pattern") String pattern, Pageable pageable);
+
     @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE UserIdentityEntity u SET u.active = false WHERE u.id = :id")

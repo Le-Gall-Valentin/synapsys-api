@@ -30,9 +30,11 @@ function handleError(error: unknown): never {
 }
 
 export const adminUsersApi = {
-  async listUsers(page: number, size = 20): Promise<UsersPage> {
+  async listUsers(page: number, size = 20, search?: string): Promise<UsersPage> {
     try {
-      const res = await client.get<UsersPage>('/users', { params: { page, size } })
+      const params: Record<string, string | number> = { page, size }
+      if (search) params.search = search
+      const res = await client.get<UsersPage>('/users', { params })
       return res.data
     } catch (error) {
       handleError(error)

@@ -188,6 +188,30 @@ describe('AdminUsersPage — reset totp modal', () => {
   })
 })
 
+describe('AdminUsersPage — search', () => {
+  it('fetches without search initially', async () => {
+    const { findByTestId } = setup()
+    await findByTestId('users-table')
+    expect(mockApi.listUsers).toHaveBeenCalledWith(0, 20, undefined)
+  })
+
+  it('refetches with the debounced search term on page 0', async () => {
+    const { findByTestId, getByRole } = setup()
+    await findByTestId('users-table')
+    fireEvent.change(getByRole('searchbox'), { target: { value: 'alice' } })
+    await waitFor(() => expect(mockApi.listUsers).toHaveBeenCalledWith(0, 20, 'alice'))
+  })
+
+  it('clear button resets the search', async () => {
+    const { findByTestId, getByRole } = setup()
+    await findByTestId('users-table')
+    fireEvent.change(getByRole('searchbox'), { target: { value: 'alice' } })
+    await waitFor(() => expect(mockApi.listUsers).toHaveBeenCalledWith(0, 20, 'alice'))
+    fireEvent.click(getByRole('button', { name: 'search.clear' }))
+    await waitFor(() => expect((getByRole('searchbox') as HTMLInputElement).value).toBe(''))
+  })
+})
+
 describe('AdminUsersPage — optimistic toggle', () => {
   it('calls deactivateUser when toggling an active user', async () => {
     const { findByTestId } = setup()

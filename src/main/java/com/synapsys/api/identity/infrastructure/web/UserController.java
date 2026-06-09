@@ -46,6 +46,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -140,6 +141,9 @@ public class UserController {
         description = """
             Retourne la liste paginée de tous les utilisateurs. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
 
+            Le paramètre optionnel `search` filtre les utilisateurs dont le nom d'utilisateur
+            ou l'email contient la chaîne fournie (insensible à la casse).
+
             Rate limit : 60 req/fenêtre.
             """
     )
@@ -184,9 +188,12 @@ public class UserController {
             @RequestParam(defaultValue = "createdAt") @Pattern(regexp = "username|email|role|active|createdAt", message = "must be one of: username, email, role, active, createdAt") String sortBy,
 
             @Parameter(description = "Direction du tri", schema = @Schema(allowableValues = {"asc", "desc"}))
-            @RequestParam(defaultValue = "desc") @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection) {
+            @RequestParam(defaultValue = "desc") @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection,
+
+            @Parameter(description = "Filtre optionnel : ne retourne que les utilisateurs dont le nom d'utilisateur ou l'email contient cette chaîne (insensible à la casse)", example = "alice")
+            @RequestParam(required = false) @Size(max = 254, message = "must be at most 254 characters") String search) {
         SortRequest sort = new SortRequest(sortBy, "asc".equalsIgnoreCase(sortDirection));
-        PageResult<UserAdminView> result = listUsersUseCase.listUsers(page, size, sort);
+        PageResult<UserAdminView> result = listUsersUseCase.listUsers(page, size, sort, search);
         PageResponse<UserAdminItemResponse> response = new PageResponse<>(
             result.content().stream()
                 .map(v -> new UserAdminItemResponse(

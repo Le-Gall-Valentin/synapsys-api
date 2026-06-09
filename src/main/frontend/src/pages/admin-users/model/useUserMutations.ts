@@ -46,17 +46,18 @@ export function useResetTotp() {
   })
 }
 
-export function useToggleUserActive(page: number) {
+export function useToggleUserActive(page: number, search = '') {
   const queryClient = useQueryClient()
+  const queryKey = [USERS_QUERY_KEY, page, search.trim()]
   return useMutation({
     mutationFn: (user: AdminUser) =>
       user.isActive
         ? adminUsersApi.deactivateUser(user.id)
         : adminUsersApi.activateUser(user.id),
     onMutate: async (user: AdminUser) => {
-      await queryClient.cancelQueries({ queryKey: [USERS_QUERY_KEY, page] })
-      const previous = queryClient.getQueryData<UsersPage>([USERS_QUERY_KEY, page])
-      queryClient.setQueryData<UsersPage>([USERS_QUERY_KEY, page], old => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<UsersPage>(queryKey)
+      queryClient.setQueryData<UsersPage>(queryKey, old => {
         if (!old) return old
         return {
           ...old,
@@ -69,9 +70,9 @@ export function useToggleUserActive(page: number) {
     },
     onError: (_err, _user, context) => {
       if (context?.previous) {
-        queryClient.setQueryData([USERS_QUERY_KEY, page], context.previous)
+        queryClient.setQueryData(queryKey, context.previous)
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY, page] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
   })
 }

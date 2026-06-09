@@ -42,6 +42,18 @@ describe('listUsers', () => {
     expect(mock.get).toHaveBeenCalledWith('/users', { params: { page: 2, size: 20 } })
   })
 
+  it('adds the search param when provided', async () => {
+    mock.get.mockResolvedValue({ data: USERS_PAGE })
+    await adminUsersApi.listUsers(0, 20, 'alice')
+    expect(mock.get).toHaveBeenCalledWith('/users', { params: { page: 0, size: 20, search: 'alice' } })
+  })
+
+  it('omits the search param when empty', async () => {
+    mock.get.mockResolvedValue({ data: USERS_PAGE })
+    await adminUsersApi.listUsers(0, 20, '')
+    expect(mock.get).toHaveBeenCalledWith('/users', { params: { page: 0, size: 20 } })
+  })
+
   it('throws ServerError on 500', async () => {
     mock.get.mockRejectedValue(axiosErr(500))
     await expect(adminUsersApi.listUsers(0)).rejects.toBeInstanceOf(ServerError)

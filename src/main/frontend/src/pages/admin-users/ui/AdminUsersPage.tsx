@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
-import { Alert, Button, Pagination, CTA_BUTTON_STYLE } from '@/shared/ui'
+import { Alert, Button, Pagination, SearchInput, CTA_BUTTON_STYLE } from '@/shared/ui'
+import { useDebouncedValue } from '@/shared/lib'
 import { useAuth } from '@/features/auth'
 import type { AdminUser } from '@/entities/user'
 import { useUsers } from '../model/useUsers'
@@ -24,7 +25,9 @@ export function AdminUsersPage() {
   const currentUser = useAuth(s => s.user)
 
   const [page, setPage] = useState(0)
-  const { data, isPending, isError: loadError, isPlaceholderData } = useUsers(page)
+  const [searchInput, setSearchInput] = useState('')
+  const search = useDebouncedValue(searchInput, 300)
+  const { data, isPending, isError: loadError, isPlaceholderData } = useUsers(page, search)
 
   const [toggleError, setToggleError] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
@@ -36,7 +39,12 @@ export function AdminUsersPage() {
   const updateUserRole = useUpdateUserRole()
   const deleteUser = useDeleteUser()
   const resetTotp = useResetTotp()
-  const toggleActive = useToggleUserActive(page)
+  const toggleActive = useToggleUserActive(page, search)
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value)
+    setPage(0)
+  }
 
   function handleToggle(user: AdminUser) {
     setToggleError(false)
@@ -90,6 +98,14 @@ export function AdminUsersPage() {
           {t('mutation_error')}
         </Alert>
       )}
+
+      <SearchInput
+        value={searchInput}
+        onChange={handleSearchChange}
+        placeholder={t('search.placeholder')}
+        clearLabel={t('search.clear')}
+        className="mb-3 max-w-md"
+      />
 
       <UsersTable
         users={users}

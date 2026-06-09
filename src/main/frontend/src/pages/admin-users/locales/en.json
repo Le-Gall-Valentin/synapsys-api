@@ -20,9 +20,14 @@
     "toggle_activate": "Reactivate",
     "btn_reset_totp": "Reset 2FA for {{username}}",
     "btn_edit": "Edit role of {{username}}",
-    "btn_delete": "Delete account"
+    "btn_delete": "Delete account",
+    "empty": "No users found."
   },
   "close": "Close",
+  "search": {
+    "placeholder": "Search by username or email…",
+    "clear": "Clear search"
+  },
   "perm": {
     "super_admin_protected": "The super administrator is protected.",
     "self": "You cannot modify your own account.",

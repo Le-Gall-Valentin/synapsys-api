@@ -58,6 +58,13 @@ export function UsersTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-fg-2">
+                  {t('table.empty')}
+                </td>
+              </tr>
+            )}
             {users.map(user => (
               <UserRow
                 key={user.id}

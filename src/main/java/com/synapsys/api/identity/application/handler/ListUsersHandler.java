@@ -28,8 +28,8 @@ public class ListUsersHandler implements ListUsersUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResult<UserAdminView> listUsers(int page, int size, SortRequest sort) {
-        PageResult<User> result = userAdminPort.findAll(page, size, sort);
+    public PageResult<UserAdminView> listUsers(int page, int size, SortRequest sort, String search) {
+        PageResult<User> result = userAdminPort.findAll(page, size, sort, search);
         if (result.content().isEmpty()) {
             return new PageResult<>(List.of(), result.totalElements(), page, size);
         }

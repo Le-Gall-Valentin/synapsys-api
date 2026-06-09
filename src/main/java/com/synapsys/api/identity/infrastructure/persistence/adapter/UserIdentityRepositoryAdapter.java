@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -64,13 +65,25 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     }
 
     @Override
-    public PageResult<User> findAll(int page, int size, SortRequest sort) {
+    public PageResult<User> findAll(int page, int size, SortRequest sort, String search) {
         Sort springSort = sort.ascending()
                 ? Sort.by(sort.field()).ascending()
                 : Sort.by(sort.field()).descending();
-        var result = jpa.findAllNotDeleted(PageRequest.of(page, size, springSort));
+        PageRequest pageRequest = PageRequest.of(page, size, springSort);
+        var result = (search == null || search.isBlank())
+                ? jpa.findAllNotDeleted(pageRequest)
+                : jpa.searchNotDeleted(toLikePattern(search), pageRequest);
         return new PageResult<>(result.getContent().stream().map(this::toDomain).toList(),
                 result.getTotalElements(), page, size);
+    }
+
+    /** Escapes LIKE wildcards with '!' (matching the ESCAPE clause in the query). */
+    private static String toLikePattern(String search) {
+        String escaped = search.trim().toLowerCase(Locale.ROOT)
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+        return "%" + escaped + "%";
     }
 
     @Override
