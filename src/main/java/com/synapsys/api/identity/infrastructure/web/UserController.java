@@ -5,6 +5,7 @@ import com.synapsys.api.identity.application.port.in.AdminResetTotpUseCase;
 import com.synapsys.api.identity.application.port.in.ChangeMyPasswordUseCase;
 import com.synapsys.api.identity.application.port.in.DeleteUserUseCase;
 import com.synapsys.api.identity.application.port.in.ListUsersUseCase;
+import com.synapsys.api.identity.application.port.in.UpdateUserUseCase;
 import com.synapsys.api.shared.security.AuthenticatedUser;
 import com.synapsys.api.shared.security.CurrentUser;
 import com.synapsys.api.identity.application.port.in.DeactivateUserUseCase;
@@ -18,6 +19,7 @@ import com.synapsys.api.identity.domain.model.DeactivateUserCommand;
 import com.synapsys.api.identity.domain.model.DeleteUserCommand;
 import com.synapsys.api.identity.domain.model.RegisterCommand;
 import com.synapsys.api.identity.domain.model.UpdateProfileCommand;
+import com.synapsys.api.identity.domain.model.UpdateUserCommand;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.model.UserAdminView;
 import com.synapsys.api.identity.domain.model.UserSelfView;
@@ -25,6 +27,7 @@ import com.synapsys.api.identity.infrastructure.web.dto.ChangePasswordRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.PageResponse;
 import com.synapsys.api.identity.infrastructure.web.dto.RegisterRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.UpdateProfileRequest;
+import com.synapsys.api.identity.infrastructure.web.dto.UpdateUserRequest;
 import com.synapsys.api.identity.infrastructure.web.dto.UserAdminItemResponse;
 import com.synapsys.api.identity.infrastructure.web.dto.UserInfoResponse;
 import com.synapsys.api.infrastructure.ratelimit.RateLimitMode;
@@ -68,6 +71,7 @@ public class UserController {
     private final ListUsersUseCase listUsersUseCase;
     private final ActivateUserUseCase activateUserUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
+    private final UpdateUserUseCase updateUserUseCase;
 
     public UserController(GetCurrentUserUseCase getCurrentUserUseCase,
                           RegisterUseCase registerUseCase,
@@ -77,7 +81,8 @@ public class UserController {
                           ChangeMyPasswordUseCase changeMyPasswordUseCase,
                           ListUsersUseCase listUsersUseCase,
                           ActivateUserUseCase activateUserUseCase,
-                          DeleteUserUseCase deleteUserUseCase) {
+                          DeleteUserUseCase deleteUserUseCase,
+                          UpdateUserUseCase updateUserUseCase) {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.registerUseCase = registerUseCase;
         this.deactivateUserUseCase = deactivateUserUseCase;
@@ -87,6 +92,7 @@ public class UserController {
         this.listUsersUseCase = listUsersUseCase;
         this.activateUserUseCase = activateUserUseCase;
         this.deleteUserUseCase = deleteUserUseCase;
+        this.updateUserUseCase = updateUserUseCase;
     }
 
     @Operation(
@@ -388,6 +394,67 @@ public class UserController {
             @Parameter(description = "UUID de l'utilisateur à désactiver") @PathVariable UUID id,
             @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
         deactivateUserUseCase.deactivate(new DeactivateUserCommand(id, caller.userId(), caller.role()));
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+        summary = "Modifier un utilisateur (admin)",
+        description = """
+            Modifie les informations d'un utilisateur. Accessible aux rôles `ADMIN` et `SUPER_ADMIN`.
+
+            **Règles d'autorisation :**
+            - Un `SUPER_ADMIN` peut modifier un `ADMIN` ou un `USER`
+            - Un `ADMIN` peut modifier un `USER` uniquement
+            - Il n'est pas possible de modifier son propre compte via cet endpoint
+            - Il n'est pas possible d'assigner le rôle `SUPER_ADMIN`
+            - Un `ADMIN` ne peut pas assigner le rôle `ADMIN` (escalade de privilèges)
+            - Retourne `409` si l'utilisateur a déjà le rôle demandé
+            - Retourne `403` si le compte cible est désactivé
+
+            Rate limit : 20 req/fenêtre.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Utilisateur modifié", content = @Content),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Corps de requête invalide (rôle manquant ou inconnu)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Rôle insuffisant, tentative de modification de son propre compte, ou compte cible désactivé",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "L'utilisateur a déjà ce rôle",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "429",
+            description = "Trop de requêtes",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        )
+    })
+    @PatchMapping("/{id}")
+    @RateLimiting(max = 20)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Void> updateUser(
+            @Parameter(description = "UUID de l'utilisateur à modifier") @PathVariable UUID id,
+            @Valid @RequestBody UpdateUserRequest request,
+            @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
+        updateUserUseCase.update(new UpdateUserCommand(id, caller.userId(), caller.role(), request.role()));
         return ResponseEntity.noContent().build();
     }
 

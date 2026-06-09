@@ -641,6 +641,179 @@ class UserControllerIT {
             .andExpect(status().isConflict());
     }
 
+    @Test
+    void updateUser_superAdminPromotesUserToAdmin_returns204AndPersists() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+            .andExpect(status().isNoContent());
+
+        assertThat(userIdentityJpaRepository.findByIdAndDeletedFalse(targetId).get().getRole())
+            .isEqualTo(Role.ADMIN);
+    }
+
+    @Test
+    void updateUser_superAdminDemotesAdminToUser_returns204AndPersists() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("adminuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isNoContent());
+
+        assertThat(userIdentityJpaRepository.findByIdAndDeletedFalse(targetId).get().getRole())
+            .isEqualTo(Role.USER);
+    }
+
+    @Test
+    void updateUser_adminTargetsUserWithSameRole_returns409() throws Exception {
+        Cookie access = loginAs("adminuser", "adminpass2");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateUser_adminCannotUpdateAdmin_returns403() throws Exception {
+        Cookie access = loginAs("adminuser", "adminpass2");
+        UserIdentityEntity secondAdmin = new UserIdentityEntity();
+        secondAdmin.setUsername("adminuser2");
+        secondAdmin.setEmail("adminuser2@test.com");
+        secondAdmin.setRole(Role.ADMIN);
+        userIdentityJpaRepository.saveAndFlush(secondAdmin);
+
+        mockMvc.perform(patch("/api/users/" + secondAdmin.getId())
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateUser_adminCannotAssignAdminRole_returns403() throws Exception {
+        Cookie access = loginAs("adminuser", "adminpass2");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateUser_noneCanAssignSuperAdminRole_returns403() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"SUPER_ADMIN\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateUser_asUser_returns403() throws Exception {
+        Cookie access = loginAs("testuser", "password");
+        UUID targetId = userIdentityJpaRepository.findByUsername("adminuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateUser_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(patch("/api/users/" + UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateUser_nonExistentUser_returns404() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+
+        mockMvc.perform(patch("/api/users/" + UUID.randomUUID())
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateUser_self_returns403() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID selfId = userIdentityJpaRepository.findByUsername("superadmin").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + selfId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"USER\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateUser_missingBody_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUser_invalidRoleValue_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("testuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"UNKNOWN_ROLE\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUser_sameRole_returns409() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID targetId = userIdentityJpaRepository.findByUsername("adminuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + targetId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    void updateUser_inactiveTarget_returns403() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        UUID inactiveId = userIdentityJpaRepository.findByUsername("inactiveuser").get().getId();
+
+        mockMvc.perform(patch("/api/users/" + inactiveId)
+                .cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+            .andExpect(status().isForbidden());
+    }
+
     private void saveCredential(UUID userId, String rawPassword) {
         UserCredentialEntity cred = new UserCredentialEntity();
         cred.setUserId(userId);

@@ -1,6 +1,7 @@
 package com.synapsys.api.identity.infrastructure.persistence.repository;
 
 import com.synapsys.api.identity.infrastructure.persistence.entity.UserIdentityEntity;
+import com.synapsys.api.shared.model.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,6 +39,11 @@ public interface UserIdentityJpaRepository extends JpaRepository<UserIdentityEnt
     void updateProfile(@Param("id") UUID id,
                        @Param("username") String username,
                        @Param("email") String email);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("UPDATE UserIdentityEntity u SET u.role = :newRole WHERE u.id = :id AND u.role = :currentRole AND u.deleted = false")
+    int updateRoleById(@Param("id") UUID id, @Param("currentRole") Role currentRole, @Param("newRole") Role newRole);
 
     long countByDeletedFalse();
 

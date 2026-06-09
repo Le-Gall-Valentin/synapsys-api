@@ -3,6 +3,7 @@ package com.synapsys.api.identity.infrastructure.persistence.adapter;
 import com.synapsys.api.identity.domain.model.CreateUserProfileCommand;
 import com.synapsys.api.identity.domain.model.UpdateProfileCommand;
 import com.synapsys.api.identity.domain.model.IdentityException;
+import com.synapsys.api.shared.model.Role;
 import com.synapsys.api.identity.domain.model.User;
 import com.synapsys.api.identity.domain.port.out.UserAdminPort;
 import com.synapsys.api.identity.domain.port.out.UserCommandPort;
@@ -93,6 +94,14 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
             jpa.updateProfile(command.userId(), command.username(), command.email());
         } catch (DataIntegrityViolationException ex) {
             throw resolveConstraintViolation(ex);
+        }
+    }
+
+    @Override
+    public void updateRole(UUID userId, Role currentRole, Role newRole) {
+        int updated = jpa.updateRoleById(userId, currentRole, newRole);
+        if (updated == 0) {
+            throw new IdentityException.DataIntegrityError();
         }
     }
 

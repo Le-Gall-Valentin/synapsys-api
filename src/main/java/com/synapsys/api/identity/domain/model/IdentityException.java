@@ -9,6 +9,7 @@ public abstract sealed class IdentityException extends RuntimeException
             IdentityException.EmailAlreadyExists,
             IdentityException.InsufficientPermissions,
             IdentityException.InvalidCurrentPassword,
+            IdentityException.RoleAlreadyAssigned,
             IdentityException.DataIntegrityError {
 
     private IdentityException(String message) { super(message); }
@@ -36,6 +37,10 @@ public abstract sealed class IdentityException extends RuntimeException
     }
     public static final class InvalidCurrentPassword extends IdentityException {
         public InvalidCurrentPassword() { super("Current password is incorrect"); }
+    }
+
+    public static final class RoleAlreadyAssigned extends IdentityException {
+        public RoleAlreadyAssigned() { super("User already has this role"); }
     }
 
     public static final class DataIntegrityError extends IdentityException {
