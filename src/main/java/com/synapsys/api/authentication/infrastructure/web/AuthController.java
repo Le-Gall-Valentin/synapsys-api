@@ -129,7 +129,7 @@ public class AuthController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         )
     })
-    @SecurityRequirement(name = "cookieAuth")
+    @SecurityRequirement(name = "refreshCookieAuth")
     @PostMapping("/refresh")
     @RateLimiting(max = 5)
     public ResponseEntity<Void> refresh(HttpServletRequest request,
@@ -146,8 +146,9 @@ public class AuthController {
     @Operation(
         summary = "Déconnexion",
         description = """
-            Révoque le `refresh_token` côté serveur et efface tous les cookies d'authentification
-            (`access_token`, `refresh_token`, `totp_challenge`).
+            Révoque le `refresh_token` côté serveur et efface les cookies `access_token`
+            et `refresh_token`. Le cookie `totp_challenge`, s'il est présent, n'est pas
+            effacé par cet appel — il expire naturellement après sa TTL.
 
             Si le cookie `refresh_token` est absent, la déconnexion reste effective
             (les cookies sont quand même effacés) — aucune erreur n'est levée.
@@ -163,7 +164,6 @@ public class AuthController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         )
     })
-    @SecurityRequirement(name = "cookieAuth")
     @PostMapping("/logout")
     @RateLimiting(max = 10)
     public ResponseEntity<Void> logout(HttpServletRequest request,

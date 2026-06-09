@@ -105,6 +105,16 @@ public class UserController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "Compte désactivé (le JWT est valide mais le compte a été désactivé entre-temps)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable (compte supprimé alors que la session était encore active)",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
             responseCode = "429",
             description = "Trop de requêtes",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
@@ -449,6 +459,16 @@ public class UserController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "Compte désactivé",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
             responseCode = "409",
             description = "Nom d'utilisateur ou email déjà utilisé",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
@@ -493,6 +513,11 @@ public class UserController {
         @ApiResponse(
             responseCode = "401",
             description = "Non authentifié",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Compte désactivé",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(

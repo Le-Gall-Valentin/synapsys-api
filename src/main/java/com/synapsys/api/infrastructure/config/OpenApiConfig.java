@@ -66,6 +66,11 @@ public class OpenApiConfig {
                                 .type(SecurityScheme.Type.APIKEY)
                                 .in(SecurityScheme.In.COOKIE)
                                 .name("access_token")
-                                .description("Cookie HttpOnly contenant le JWT d'accès. Posé automatiquement par `POST /api/auth/login`.")));
+                                .description("Cookie HttpOnly contenant le JWT d'accès. Posé automatiquement par `POST /api/auth/login`."))
+                        .addSecuritySchemes("refreshCookieAuth", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE)
+                                .name("refresh_token")
+                                .description("Cookie HttpOnly contenant le token de renouvellement. Requis uniquement sur `POST /api/auth/refresh`.")));
     }
 }

@@ -51,7 +51,8 @@ public class TotpChallengeController {
             et l'utilisateur est pleinement authentifié.
 
             Rate limit : 5 requêtes par fenêtre.
-            Après trop de tentatives échouées consécutives : `429` avec `error_code: totp_challenge_expired`.
+            Après un trop grand nombre de tentatives TOTP incorrectes : `429` sans error_code.
+            Si le cookie `totp_challenge` est absent ou expiré : `401` avec `error_code: totp_challenge_expired`.
             """
     )
     @ApiResponses({

@@ -76,6 +76,11 @@ public class TotpController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
             responseCode = "409",
             description = "Le TOTP est déjà activé et confirmé pour cet utilisateur",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
@@ -120,6 +125,11 @@ public class TotpController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
             responseCode = "422",
             description = "Aucun setup TOTP en cours — appeler d'abord `POST /api/auth/2fa/setup`",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
@@ -160,6 +170,11 @@ public class TotpController {
         @ApiResponse(
             responseCode = "401",
             description = "Non authentifié ou code TOTP incorrect",
+            content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Utilisateur introuvable",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
