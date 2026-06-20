@@ -14,6 +14,7 @@ import {
   useToggleUserActive,
 } from '../model/useUserMutations'
 import { UsersTable } from './UsersTable'
+import { UsersCardList } from './UsersCardList'
 import { CreateUserModal } from './CreateUserModal'
 import { EditUserRoleModal } from './EditUserRoleModal'
 import { DeleteUserModal } from './DeleteUserModal'
@@ -107,15 +108,29 @@ export function AdminUsersPage() {
         className="mb-3 max-w-md"
       />
 
-      <UsersTable
-        users={users}
-        isLoading={isPending}
-        currentUser={currentUser}
-        onToggleActive={handleToggle}
-        onEditRole={setEditTarget}
-        onResetTotp={setResetTotpTarget}
-        onDelete={setDeleteTarget}
-      />
+      {/* Desktop: table. Mobile: stacked cards (no horizontal scroll). */}
+      <div className="hidden md:block">
+        <UsersTable
+          users={users}
+          isLoading={isPending}
+          currentUser={currentUser}
+          onToggleActive={handleToggle}
+          onEditRole={setEditTarget}
+          onResetTotp={setResetTotpTarget}
+          onDelete={setDeleteTarget}
+        />
+      </div>
+      <div className="md:hidden">
+        <UsersCardList
+          users={users}
+          isLoading={isPending}
+          currentUser={currentUser}
+          onToggleActive={handleToggle}
+          onEditRole={setEditTarget}
+          onResetTotp={setResetTotpTarget}
+          onDelete={setDeleteTarget}
+        />
+      </div>
 
       {showPagination && (
         <div className="mt-3">

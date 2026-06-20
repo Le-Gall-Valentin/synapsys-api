@@ -50,6 +50,12 @@ vi.mock('./UsersTable', () => ({
   },
 }))
 
+// The page renders both layouts (CSS-toggled); the table mock drives the
+// orchestration assertions, so the card list is stubbed out here.
+vi.mock('./UsersCardList', () => ({
+  UsersCardList: () => null,
+}))
+
 vi.mock('./CreateUserModal', () => ({
   CreateUserModal: ({ onClose }: { onClose: () => void }) => (
     <div data-testid="create-modal">
