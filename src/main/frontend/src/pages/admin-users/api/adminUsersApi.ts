@@ -2,15 +2,10 @@ import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
 import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
 import type { AdminUser } from '@/entities/user'
+import type { IAdminUsersApi, UsersPage } from '../model/IAdminUsersApi'
 
 export type { AdminUser }
-
-export interface UsersPage {
-  content: AdminUser[]
-  totalElements: number
-  page: number
-  size: number
-}
+export type { UsersPage }
 
 export class ConflictError extends Error {
   constructor() { super('Username or email already taken'); this.name = 'ConflictError' }
@@ -29,7 +24,7 @@ function handleError(error: unknown): never {
   throw new NetworkError()
 }
 
-export const adminUsersApi = {
+export const adminUsersApi: IAdminUsersApi = {
   async listUsers(page: number, size = 20, search?: string): Promise<UsersPage> {
     try {
       const params: Record<string, string | number> = { page, size }

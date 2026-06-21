@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { adminUsersApi } from '../api/adminUsersApi'
 import type { UsersPage, AdminUser } from '../api/adminUsersApi'
+import { useAdminUsersApi } from './adminUsersApiContext'
 import { USERS_QUERY_KEY } from './useUsers'
 
 function useInvalidateUsers() {
@@ -9,6 +9,7 @@ function useInvalidateUsers() {
 }
 
 export function useCreateUser() {
+  const api = useAdminUsersApi()
   const invalidate = useInvalidateUsers()
   return useMutation({
     mutationFn: ({ username, email, password, role }: {
@@ -16,44 +17,48 @@ export function useCreateUser() {
       email: string
       password: string
       role: 'USER' | 'ADMIN'
-    }) => adminUsersApi.createUser(username, email, password, role),
+    }) => api.createUser(username, email, password, role),
     onSuccess: invalidate,
   })
 }
 
 export function useUpdateUserRole() {
+  const api = useAdminUsersApi()
   const invalidate = useInvalidateUsers()
   return useMutation({
     mutationFn: ({ id, role }: { id: string; role: 'USER' | 'ADMIN' }) =>
-      adminUsersApi.updateUserRole(id, role),
+      api.updateUserRole(id, role),
     onSuccess: invalidate,
   })
 }
 
 export function useDeleteUser() {
+  const api = useAdminUsersApi()
   const invalidate = useInvalidateUsers()
   return useMutation({
-    mutationFn: (id: string) => adminUsersApi.deleteUser(id),
+    mutationFn: (id: string) => api.deleteUser(id),
     onSuccess: invalidate,
   })
 }
 
 export function useResetTotp() {
+  const api = useAdminUsersApi()
   const invalidate = useInvalidateUsers()
   return useMutation({
-    mutationFn: (id: string) => adminUsersApi.resetTotp(id),
+    mutationFn: (id: string) => api.resetTotp(id),
     onSuccess: invalidate,
   })
 }
 
 export function useToggleUserActive(page: number, search = '') {
+  const api = useAdminUsersApi()
   const queryClient = useQueryClient()
   const queryKey = [USERS_QUERY_KEY, page, search.trim()]
   return useMutation({
     mutationFn: (user: AdminUser) =>
       user.isActive
-        ? adminUsersApi.deactivateUser(user.id)
-        : adminUsersApi.activateUser(user.id),
+        ? api.deactivateUser(user.id)
+        : api.activateUser(user.id),
     onMutate: async (user: AdminUser) => {
       await queryClient.cancelQueries({ queryKey })
       const previous = queryClient.getQueryData<UsersPage>(queryKey)
