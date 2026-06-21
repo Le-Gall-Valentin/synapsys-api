@@ -53,7 +53,7 @@ export function DeleteUserModal({ user, onClose, onDelete, onSuccess }: DeleteUs
         {' '}·{' '}
         <span className="font-mono text-xs">{user.email}</span>
         {' '}·{' '}
-        <span className="font-semibold">{user.role}</span>
+        <span className="font-semibold">{t(`user.role.${user.role}`, { ns: 'shell' })}</span>
       </div>
 
       {errorKey && (

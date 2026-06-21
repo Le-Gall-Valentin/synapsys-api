@@ -123,7 +123,7 @@ export function CreateUserModal({ caller, onClose, onCreate, onSuccess }: Create
             className="w-full rounded-lg border border-border bg-bg-1 px-3.5 py-3 text-sm text-fg-0 outline-none transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_var(--color-accent-ring)] disabled:opacity-50"
           >
             {roles.map(r => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{t(`user.role.${r}`, { ns: 'shell' })}</option>
             ))}
           </select>
           <p className="text-[11px] text-fg-3">{t('create.role_note')}</p>

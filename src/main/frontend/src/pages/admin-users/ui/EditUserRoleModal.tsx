@@ -74,7 +74,7 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
             className="w-full rounded-lg border border-border bg-bg-1 px-3.5 py-3 text-sm text-fg-0 outline-none transition-all hover:border-border-2 focus:border-accent focus:bg-bg-2 focus:shadow-[0_0_0_3px_var(--color-accent-ring)] disabled:opacity-50"
           >
             {availableRoles.map(r => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{t(`user.role.${r}`, { ns: 'shell' })}</option>
             ))}
           </select>
         </div>

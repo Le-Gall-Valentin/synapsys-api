@@ -40,11 +40,11 @@ function setup(overrides: { onDelete?: () => Promise<void> } = {}) {
 beforeEach(() => { vi.clearAllMocks() })
 
 describe('DeleteUserModal', () => {
-  it('displays username, email and role', () => {
+  it('displays username, email and the translated role', () => {
     const { getByText } = setup()
     expect(getByText('alice')).toBeDefined()
     expect(getByText('alice@test.com')).toBeDefined()
-    expect(getByText('USER')).toBeDefined()
+    expect(getByText('user.role.USER')).toBeDefined()
   })
 
   it('calls onDelete and onSuccess on confirm', async () => {

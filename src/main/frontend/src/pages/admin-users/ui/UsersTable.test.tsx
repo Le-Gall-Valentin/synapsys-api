@@ -83,6 +83,13 @@ describe('UsersTable — rows', () => {
     expect(getByText('table.you')).toBeDefined()
   })
 
+  it('renders the translated role label per row (shell namespace)', () => {
+    const { getAllByRole } = setup()
+    const rows = getAllByRole('row').slice(1) // skip header
+    expect(within(rows[0]).getByText('user.role.SUPER_ADMIN')).toBeDefined()
+    expect(within(rows[2]).getByText('user.role.USER')).toBeDefined()
+  })
+
   it('shows the totp_on pill on the row of a user with totp enabled', () => {
     const { getAllByRole } = setup()
     const rows = getAllByRole('row').slice(1) // skip header

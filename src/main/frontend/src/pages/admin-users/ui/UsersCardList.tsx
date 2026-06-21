@@ -59,6 +59,7 @@ export function UsersCardList({
             user={user}
             currentUser={currentUser}
             youLabel={t('table.you')}
+            roleLabel={t(`user.role.${user.role}`, { ns: 'shell' })}
             createdLabel={t('table.col_created')}
             createdDate={formatUserDate(user.createdAt, i18n.language)}
             onToggleActive={onToggleActive}
@@ -76,6 +77,7 @@ interface UserCardProps extends UserRowCallbacks {
   user: AdminUser
   currentUser: User
   youLabel: string
+  roleLabel: string
   createdLabel: string
   createdDate: string
 }
@@ -84,6 +86,7 @@ function UserCard({
   user,
   currentUser,
   youLabel,
+  roleLabel,
   createdLabel,
   createdDate,
   onToggleActive,
@@ -109,7 +112,7 @@ function UserCard({
           </div>
           <div className="font-mono text-xs text-fg-2 truncate">{user.email}</div>
         </div>
-        <RolePill role={user.role} />
+        <RolePill role={user.role} label={roleLabel} />
       </div>
 
       {/* Status / 2FA / created */}

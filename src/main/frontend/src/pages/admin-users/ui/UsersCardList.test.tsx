@@ -56,6 +56,12 @@ describe('UsersCardList', () => {
     expect(getByText('table.you')).toBeDefined()
   })
 
+  it('renders the translated role label per card (shell namespace)', () => {
+    const { getAllByRole } = setup()
+    const saCard = getAllByRole('listitem').find(c => within(c).queryByText('superadmin'))!
+    expect(within(saCard).getByText('user.role.SUPER_ADMIN')).toBeDefined()
+  })
+
   it('exposes the action buttons and status toggle per card', () => {
     const { getAllByRole, getByLabelText } = setup()
     // one switch per user

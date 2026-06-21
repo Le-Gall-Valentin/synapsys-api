@@ -69,6 +69,7 @@ export function UsersTable({
                 user={user}
                 currentUser={currentUser}
                 youLabel={t('table.you')}
+                roleLabel={t(`user.role.${user.role}`, { ns: 'shell' })}
                 createdDate={formatUserDate(user.createdAt, i18n.language)}
                 onToggleActive={onToggleActive}
                 onEditRole={onEditRole}
@@ -87,10 +88,11 @@ interface RowProps extends UserRowCallbacks {
   user: AdminUser
   currentUser: User
   youLabel: string
+  roleLabel: string
   createdDate: string
 }
 
-function UserRow({ user, currentUser, youLabel, createdDate, onToggleActive, onEditRole, onResetTotp, onDelete }: RowProps) {
+function UserRow({ user, currentUser, youLabel, roleLabel, createdDate, onToggleActive, onEditRole, onResetTotp, onDelete }: RowProps) {
   const isMe = user.id === currentUser.id
 
   return (
@@ -110,7 +112,7 @@ function UserRow({ user, currentUser, youLabel, createdDate, onToggleActive, onE
       <td className="px-4 py-3 font-mono text-xs text-fg-2">{user.email}</td>
 
       <td className="px-4 py-3">
-        <RolePill role={user.role} />
+        <RolePill role={user.role} label={roleLabel} />
       </td>
 
       <td className="px-4 py-3">
