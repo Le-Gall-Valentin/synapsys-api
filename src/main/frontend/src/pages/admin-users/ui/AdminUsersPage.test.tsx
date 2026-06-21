@@ -1,7 +1,6 @@
 import { fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AdminUsersPage } from './AdminUsersPage'
-import { AdminUsersApiProvider } from '../model/adminUsersApiContext'
 import { renderWithQuery } from '@/shared/test'
 import type { AdminUser, UsersPage } from '../api/adminUsersApi'
 import type { IAdminUsersApi } from '../model/IAdminUsersApi'
@@ -107,11 +106,7 @@ function setup() {
   mockUseAuth.mockImplementation((selector: (s: { user: User }) => unknown) =>
     selector({ user: MOCK_CURRENT_USER })
   )
-  return renderWithQuery(
-    <AdminUsersApiProvider api={mockApi as IAdminUsersApi}>
-      <AdminUsersPage />
-    </AdminUsersApiProvider>
-  )
+  return renderWithQuery(<AdminUsersPage api={mockApi as IAdminUsersApi} />)
 }
 
 beforeEach(() => {

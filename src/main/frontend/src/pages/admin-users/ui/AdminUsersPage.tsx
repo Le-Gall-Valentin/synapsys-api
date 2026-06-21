@@ -5,6 +5,9 @@ import { Alert, Button, Pagination, SearchInput, CTA_BUTTON_STYLE } from '@/shar
 import { useDebouncedValue } from '@/shared/lib'
 import { useAuth } from '@/features/auth'
 import type { AdminUser } from '@/entities/user'
+import { adminUsersApi } from '../api/adminUsersApi'
+import type { IAdminUsersApi } from '../model/IAdminUsersApi'
+import { AdminUsersApiProvider } from '../model/adminUsersApiContext'
 import { useUsers } from '../model/useUsers'
 import {
   useCreateUser,
@@ -21,7 +24,24 @@ import { DeleteUserModal } from './DeleteUserModal'
 import { ResetTotpModal } from './ResetTotpModal'
 import { ProtectionRulesPanel } from './ProtectionRulesPanel'
 
-export function AdminUsersPage() {
+interface AdminUsersPageProps {
+  /** Composition seam: defaults to the real implementation; tests inject a fake. */
+  api?: IAdminUsersApi
+}
+
+/**
+ * Slice composition root: provisions the admin users API at its own boundary,
+ * so the app/router never has to know about this dependency.
+ */
+export function AdminUsersPage({ api = adminUsersApi }: AdminUsersPageProps = {}) {
+  return (
+    <AdminUsersApiProvider api={api}>
+      <AdminUsersPageContent />
+    </AdminUsersApiProvider>
+  )
+}
+
+function AdminUsersPageContent() {
   const { t } = useTranslation('adminUsers')
   const currentUser = useAuth(s => s.user)
 
