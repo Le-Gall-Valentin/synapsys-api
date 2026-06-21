@@ -8,19 +8,27 @@ const VARIANT_CLASS = {
 
 type AlertVariant = keyof typeof VARIANT_CLASS
 
-interface AlertProps {
+interface AlertBaseProps {
   variant: AlertVariant
   children: React.ReactNode
-  /** Renders a dismiss button when provided. */
-  onDismiss?: () => void
-  dismissLabel?: string
   className?: string
 }
+
+/**
+ * A dismiss button is only rendered with an accessible name: `onDismiss` and
+ * `dismissLabel` must be supplied together or not at all.
+ */
+type AlertProps = AlertBaseProps & (
+  | { onDismiss?: undefined; dismissLabel?: undefined }
+  | { onDismiss: () => void; dismissLabel: string }
+)
 
 export function Alert({ variant, children, onDismiss, dismissLabel, className = '' }: AlertProps) {
   const Icon = variant === 'success' ? CheckCircle2 : AlertTriangle
   return (
     <div
+      // 'error' is assertive (role=alert); 'warning'/'success' are advisory
+      // and use the polite role=status on purpose.
       role={variant === 'error' ? 'alert' : 'status'}
       className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm ${VARIANT_CLASS[variant]} ${className}`}
     >

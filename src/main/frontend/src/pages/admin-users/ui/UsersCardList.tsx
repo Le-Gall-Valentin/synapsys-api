@@ -5,15 +5,12 @@ import { formatUserDate } from '../lib/formatUserDate'
 import { UserStatusToggle } from './UserStatusToggle'
 import { UserActions } from './UserActions'
 import { TotpBadge } from './TotpBadge'
+import type { UserRowCallbacks } from './userRowCallbacks'
 
-interface UsersCardListProps {
+interface UsersCardListProps extends UserRowCallbacks {
   users: AdminUser[]
   isLoading: boolean
   currentUser: User
-  onToggleActive: (user: AdminUser) => void
-  onEditRole: (user: AdminUser) => void
-  onResetTotp: (user: AdminUser) => void
-  onDelete: (user: AdminUser) => void
 }
 
 /** Mobile counterpart of UsersTable: one stacked card per user, no horizontal scroll. */
@@ -75,16 +72,12 @@ export function UsersCardList({
   )
 }
 
-interface UserCardProps {
+interface UserCardProps extends UserRowCallbacks {
   user: AdminUser
   currentUser: User
   youLabel: string
   createdLabel: string
   createdDate: string
-  onToggleActive: (user: AdminUser) => void
-  onEditRole: (user: AdminUser) => void
-  onResetTotp: (user: AdminUser) => void
-  onDelete: (user: AdminUser) => void
 }
 
 function UserCard({

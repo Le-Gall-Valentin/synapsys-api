@@ -17,7 +17,6 @@ export function SearchInput({ value, onChange, placeholder, label, clearLabel, c
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-fg-3 pointer-events-none" aria-hidden="true" />
       <input
         type="search"
-        role="searchbox"
         aria-label={label ?? placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}

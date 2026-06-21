@@ -34,7 +34,9 @@ export function canManage(callerRole: UserRole, targetRole: UserRole): boolean {
 
 /** Roles the caller is allowed to assign or create (RoleHierarchy.canManage on the new role). */
 export function assignableRoles(callerRole: UserRole): Array<'USER' | 'ADMIN'> {
-  return callerRole === 'SUPER_ADMIN' ? ['USER', 'ADMIN'] : ['USER']
+  if (callerRole === 'SUPER_ADMIN') return ['USER', 'ADMIN']
+  if (callerRole === 'ADMIN') return ['USER']
+  return []
 }
 
 function hierarchyDenialReason(caller: User, target: AdminUser): PermissionDenialReason {

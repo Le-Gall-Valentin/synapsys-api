@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { UsersTable } from './UsersTable'
 import type { AdminUser } from '../api/adminUsersApi'
@@ -83,14 +83,20 @@ describe('UsersTable — rows', () => {
     expect(getByText('table.you')).toBeDefined()
   })
 
-  it('shows totp_on pill for user with totp enabled', () => {
-    const { getAllByText } = setup()
-    expect(getAllByText('table.totp_on').length).toBeGreaterThan(0)
+  it('shows the totp_on pill on the row of a user with totp enabled', () => {
+    const { getAllByRole } = setup()
+    const rows = getAllByRole('row').slice(1) // skip header
+    const userRow = rows[2] // testuser, totpEnabled: true
+    expect(within(userRow).getByText('table.totp_on')).toBeDefined()
+    expect(within(userRow).queryByText('table.totp_off')).toBeNull()
   })
 
-  it('shows totp_off pill for user without totp', () => {
-    const { getAllByText } = setup()
-    expect(getAllByText('table.totp_off').length).toBeGreaterThan(0)
+  it('shows the totp_off pill on the row of a user without totp', () => {
+    const { getAllByRole } = setup()
+    const rows = getAllByRole('row').slice(1)
+    const inactiveRow = rows[3] // inactive, totpEnabled: false
+    expect(within(inactiveRow).getByText('table.totp_off')).toBeDefined()
+    expect(within(inactiveRow).queryByText('table.totp_on')).toBeNull()
   })
 })
 

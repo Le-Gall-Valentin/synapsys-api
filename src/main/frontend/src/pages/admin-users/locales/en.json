@@ -58,10 +58,13 @@
     "submit": "Create",
     "error": {
       "conflict": "This username or email address is already taken.",
+      "forbidden": "You do not have permission to create this user.",
+      "not_found": "User not found.",
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable.",
       "rate_limit": "Too many attempts. Please try again later.",
       "username_length": "Username must be between 3 and 50 characters.",
+      "email_invalid": "Please enter a valid email address.",
       "password_too_short": "Password must be at least 8 characters.",
       "password_weak": "Password must contain an uppercase letter, a digit and a special character."
     }
@@ -73,6 +76,8 @@
     "submit": "Save",
     "error": {
       "already_assigned": "This role is already assigned to this user.",
+      "forbidden": "You do not have permission to change this user's role.",
+      "not_found": "User not found.",
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable.",
       "rate_limit": "Too many attempts. Please try again later."
@@ -84,6 +89,8 @@
     "cancel": "Cancel",
     "submit": "Delete permanently",
     "error": {
+      "forbidden": "You do not have permission to delete this user.",
+      "not_found": "User not found.",
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable.",
       "rate_limit": "Too many attempts. Please try again later."
@@ -96,6 +103,8 @@
     "cancel": "Cancel",
     "submit": "Reset",
     "error": {
+      "forbidden": "You do not have permission to reset this user's 2FA.",
+      "not_found": "User not found.",
       "server": "An error occurred. Please try again.",
       "network": "Network unavailable.",
       "rate_limit": "Too many attempts. Please try again later."

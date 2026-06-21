@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 import { client } from '@/shared/api'
-import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
+import { NetworkError, RateLimitError, ServerError, ForbiddenError, NotFoundError } from '@/shared/lib'
 import type { AdminUser } from '@/entities/user'
 import type { IAdminUsersApi, UsersPage } from '../model/IAdminUsersApi'
 
@@ -19,6 +19,8 @@ function handleError(error: unknown): never {
   if (isAxiosError(error)) {
     const status = error.response?.status
     if (status === 429) throw new RateLimitError()
+    if (status === 403) throw new ForbiddenError()
+    if (status === 404) throw new NotFoundError()
     if (status !== undefined) throw new ServerError()
   }
   throw new NetworkError()
@@ -49,6 +51,8 @@ export const adminUsersApi: IAdminUsersApi = {
         const status = error.response?.status
         if (status === 409) throw new ConflictError()
         if (status === 429) throw new RateLimitError()
+        if (status === 403) throw new ForbiddenError()
+        if (status === 404) throw new NotFoundError()
         if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()
@@ -63,6 +67,8 @@ export const adminUsersApi: IAdminUsersApi = {
         const status = error.response?.status
         if (status === 409) throw new RoleAlreadyAssignedError()
         if (status === 429) throw new RateLimitError()
+        if (status === 403) throw new ForbiddenError()
+        if (status === 404) throw new NotFoundError()
         if (status !== undefined) throw new ServerError()
       }
       throw new NetworkError()

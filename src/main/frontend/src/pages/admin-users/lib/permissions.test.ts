@@ -51,6 +51,10 @@ describe('assignableRoles', () => {
     expect(assignableRoles('ADMIN')).toEqual(['USER'])
   })
 
+  it('USER caller gets no assignable roles (mirror of canManage)', () => {
+    expect(assignableRoles('USER')).toEqual([])
+  })
+
   it('never includes SUPER_ADMIN', () => {
     expect(assignableRoles('SUPER_ADMIN')).not.toContain('SUPER_ADMIN')
   })
@@ -87,12 +91,24 @@ describe('canActivate', () => {
     expect(canActivate(ADMIN, makeAdminUser('a1', 'ADMIN', { isActive: false }))).toEqual({ ok: false, reason: 'self' })
   })
 
+  it('denies SUPER_ADMIN target with super_admin_protected', () => {
+    expect(canActivate(SUPER_ADMIN, makeAdminUser('sa2', 'SUPER_ADMIN', { isActive: false }))).toEqual({ ok: false, reason: 'super_admin_protected' })
+  })
+
   it('denies ADMIN on inactive ADMIN', () => {
     expect(canActivate(ADMIN, makeAdminUser('a2', 'ADMIN', { isActive: false }))).toEqual({ ok: false, reason: 'admin_cannot_manage_admin' })
   })
 
+  it('denies USER caller', () => {
+    expect(canActivate(USER, makeAdminUser('u2', 'USER', { isActive: false }))).toEqual({ ok: false, reason: 'insufficient' })
+  })
+
   it('allows SUPER_ADMIN on inactive USER', () => {
     expect(canActivate(SUPER_ADMIN, makeAdminUser('u2', 'USER', { isActive: false }))).toEqual({ ok: true })
+  })
+
+  it('allows ADMIN on inactive USER', () => {
+    expect(canActivate(ADMIN, makeAdminUser('u2', 'USER', { isActive: false }))).toEqual({ ok: true })
   })
 })
 
@@ -109,14 +125,30 @@ describe('canDelete', () => {
     expect(canDelete(ADMIN, makeAdminUser('a2', 'ADMIN'))).toEqual({ ok: false, reason: 'admin_cannot_manage_admin' })
   })
 
+  it('denies USER caller', () => {
+    expect(canDelete(USER, makeAdminUser('u2', 'USER'))).toEqual({ ok: false, reason: 'insufficient' })
+  })
+
   it('allows SUPER_ADMIN on ADMIN', () => {
     expect(canDelete(SUPER_ADMIN, makeAdminUser('a2', 'ADMIN'))).toEqual({ ok: true })
+  })
+
+  it('allows ADMIN on USER', () => {
+    expect(canDelete(ADMIN, makeAdminUser('u2', 'USER'))).toEqual({ ok: true })
   })
 })
 
 describe('canResetTotp', () => {
   it('denies self', () => {
     expect(canResetTotp(SUPER_ADMIN, makeAdminUser('sa', 'SUPER_ADMIN'))).toEqual({ ok: false, reason: 'self' })
+  })
+
+  it('denies SUPER_ADMIN target with super_admin_protected', () => {
+    expect(canResetTotp(ADMIN, makeAdminUser('sa2', 'SUPER_ADMIN'))).toEqual({ ok: false, reason: 'super_admin_protected' })
+  })
+
+  it('denies USER caller', () => {
+    expect(canResetTotp(USER, makeAdminUser('u2', 'USER'))).toEqual({ ok: false, reason: 'insufficient' })
   })
 
   it('denies when target has no TOTP', () => {

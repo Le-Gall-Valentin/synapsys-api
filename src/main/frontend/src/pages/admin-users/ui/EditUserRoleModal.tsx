@@ -18,8 +18,11 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
 
   const availableRoles = assignableRoles(caller.role)
 
-  const initialRole: 'USER' | 'ADMIN' =
-    target.role === 'SUPER_ADMIN' ? 'USER' : (target.role as 'USER' | 'ADMIN')
+  // A SUPER_ADMIN is never a manageable target (backend canManage rejects it);
+  // the modal must stay non-actionable for one even if it is ever rendered,
+  // rather than coercing the role to USER and enabling a demotion.
+  const isEditableTarget = target.role !== 'SUPER_ADMIN'
+  const initialRole: 'USER' | 'ADMIN' = target.role === 'SUPER_ADMIN' ? 'USER' : target.role
 
   const [role, setRole] = useState<'USER' | 'ADMIN'>(initialRole)
   const [isLoading, setIsLoading] = useState(false)
@@ -27,11 +30,11 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
   const pendingRef = useRef(false)
 
   // Backend returns 409 RoleAlreadyAssigned on a no-op — block it upfront.
-  const isUnchanged = role === target.role
+  const submitDisabled = !isEditableTarget || role === target.role
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (isUnchanged || pendingRef.current) return
+    if (submitDisabled || pendingRef.current) return
     pendingRef.current = true
     setIsLoading(true)
     setErrorKey(null)
@@ -86,7 +89,7 @@ export function EditUserRoleModal({ target, caller, onClose, onUpdate, onSuccess
           </Button>
           <Button
             type="submit"
-            disabled={isUnchanged}
+            disabled={submitDisabled}
             isLoading={isLoading}
             className="border-transparent font-semibold"
             style={CTA_BUTTON_STYLE}

@@ -15,7 +15,7 @@ interface RolePillProps {
 export function RolePill({ role, label }: RolePillProps) {
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[10px] font-semibold font-mono uppercase tracking-[0.04em] whitespace-nowrap ${ROLE_PILL_CLASS[role]}`}
+      className={`inline-flex items-center px-[7px] py-[2px] rounded-full border text-[10px] font-semibold font-mono uppercase tracking-[0.04em] whitespace-nowrap ${ROLE_PILL_CLASS[role]}`}
     >
       {label ?? role}
     </span>

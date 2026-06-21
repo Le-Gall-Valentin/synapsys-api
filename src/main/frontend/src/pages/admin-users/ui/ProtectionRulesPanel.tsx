@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { useTranslation, Trans } from 'react-i18next'
 import { Shield } from 'lucide-react'
 
 const RULE_KEYS = ['super_admin', 'self', 'admin_admin', 'totp'] as const
@@ -14,7 +14,10 @@ export function ProtectionRulesPanel() {
           <div className="font-semibold text-fg-0 mb-2">{t('rules.title')}</div>
           <ul className="space-y-1 text-fg-2">
             {RULE_KEYS.map(key => (
-              <li key={key} dangerouslySetInnerHTML={{ __html: `· ${t(`rules.${key}`)}` }} />
+              <li key={key}>
+                {'· '}
+                <Trans t={t} i18nKey={`rules.${key}`} components={{ strong: <strong /> }} />
+              </li>
             ))}
           </ul>
         </div>

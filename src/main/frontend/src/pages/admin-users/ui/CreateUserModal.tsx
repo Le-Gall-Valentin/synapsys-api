@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert, Dialog, Button, Input, CTA_BUTTON_STYLE } from '@/shared/ui'
-import { isValidPassword, PASSWORD_MIN_LENGTH } from '@/shared/lib'
+import { isValidPassword, isValidEmail, PASSWORD_MIN_LENGTH } from '@/shared/lib'
 import type { User } from '@/entities/user'
 import { assignableRoles } from '../lib/permissions'
 import { mapApiErrorToKey } from '../lib/mapApiErrorToKey'
@@ -30,12 +30,13 @@ export function CreateUserModal({ caller, onClose, onCreate, onSuccess }: Create
 
   // Mirror of the backend RegisterRequest constraints.
   const usernameInvalid = trimmedUsername.length > 0 && (trimmedUsername.length < 3 || trimmedUsername.length > 50)
+  const emailInvalid = trimmedEmail.length > 0 && !isValidEmail(trimmedEmail)
   const passwordTooShort = password.length > 0 && password.length < PASSWORD_MIN_LENGTH
   const passwordWeak = password.length >= PASSWORD_MIN_LENGTH && !isValidPassword(password)
   const canSubmit =
     trimmedUsername.length >= 3 &&
     trimmedUsername.length <= 50 &&
-    trimmedEmail.length > 0 &&
+    isValidEmail(trimmedEmail) &&
     isValidPassword(password)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -96,15 +97,19 @@ export function CreateUserModal({ caller, onClose, onCreate, onSuccess }: Create
             label={t('create.password')}
             name="password"
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={e => setPassword(e.target.value)}
             disabled={isLoading}
           />
         </div>
 
-        {usernameInvalid && <p className="text-xs text-status-orange mb-2">{t('create.error.username_length')}</p>}
-        {passwordTooShort && <p className="text-xs text-status-orange mb-2">{t('create.error.password_too_short')}</p>}
-        {passwordWeak && <p className="text-xs text-status-orange mb-2">{t('create.error.password_weak')}</p>}
+        <div aria-live="polite">
+          {usernameInvalid && <p className="text-xs text-status-orange mb-2">{t('create.error.username_length')}</p>}
+          {emailInvalid && <p className="text-xs text-status-orange mb-2">{t('create.error.email_invalid')}</p>}
+          {passwordTooShort && <p className="text-xs text-status-orange mb-2">{t('create.error.password_too_short')}</p>}
+          {passwordWeak && <p className="text-xs text-status-orange mb-2">{t('create.error.password_weak')}</p>}
+        </div>
 
         <div className="mb-1 flex flex-col gap-2">
           <label htmlFor="create-role" className="text-xs font-medium text-fg-1">

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mapApiErrorToKey } from './mapApiErrorToKey'
 import { ConflictError, RoleAlreadyAssignedError } from '../api/adminUsersApi'
-import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
+import { NetworkError, RateLimitError, ServerError, ForbiddenError, NotFoundError } from '@/shared/lib'
 
 describe('mapApiErrorToKey', () => {
   it('maps ConflictError', () => {
@@ -10,6 +10,14 @@ describe('mapApiErrorToKey', () => {
 
   it('maps RoleAlreadyAssignedError', () => {
     expect(mapApiErrorToKey(new RoleAlreadyAssignedError(), 'edit_role')).toBe('edit_role.error.already_assigned')
+  })
+
+  it('maps ForbiddenError', () => {
+    expect(mapApiErrorToKey(new ForbiddenError(), 'delete')).toBe('delete.error.forbidden')
+  })
+
+  it('maps NotFoundError', () => {
+    expect(mapApiErrorToKey(new NotFoundError(), 'reset_totp')).toBe('reset_totp.error.not_found')
   })
 
   it('maps RateLimitError', () => {

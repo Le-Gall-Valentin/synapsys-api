@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios, { type AxiosError } from 'axios'
 import { adminUsersApi, ConflictError, RoleAlreadyAssignedError } from './adminUsersApi'
 import { client } from '@/shared/api'
-import { NetworkError, RateLimitError, ServerError } from '@/shared/lib'
+import { NetworkError, RateLimitError, ServerError, ForbiddenError, NotFoundError } from '@/shared/lib'
 
 vi.mock('@/shared/api', () => ({
   client: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
@@ -89,6 +89,16 @@ describe('createUser', () => {
     await expect(adminUsersApi.createUser('bob', 'bob@test.com', 'P@ss1!', 'USER')).rejects.toBeInstanceOf(RateLimitError)
   })
 
+  it('throws ForbiddenError on 403', async () => {
+    mock.post.mockRejectedValue(axiosErr(403))
+    await expect(adminUsersApi.createUser('bob', 'bob@test.com', 'P@ss1!', 'USER')).rejects.toBeInstanceOf(ForbiddenError)
+  })
+
+  it('throws NotFoundError on 404', async () => {
+    mock.post.mockRejectedValue(axiosErr(404))
+    await expect(adminUsersApi.createUser('bob', 'bob@test.com', 'P@ss1!', 'USER')).rejects.toBeInstanceOf(NotFoundError)
+  })
+
   it('throws ServerError on 500', async () => {
     mock.post.mockRejectedValue(axiosErr(500))
     await expect(adminUsersApi.createUser('bob', 'bob@test.com', 'P@ss1!', 'USER')).rejects.toBeInstanceOf(ServerError)
@@ -115,6 +125,16 @@ describe('updateUserRole', () => {
   it('throws RateLimitError on 429', async () => {
     mock.patch.mockRejectedValue(axiosErr(429))
     await expect(adminUsersApi.updateUserRole('u-1', 'ADMIN')).rejects.toBeInstanceOf(RateLimitError)
+  })
+
+  it('throws ForbiddenError on 403', async () => {
+    mock.patch.mockRejectedValue(axiosErr(403))
+    await expect(adminUsersApi.updateUserRole('u-1', 'ADMIN')).rejects.toBeInstanceOf(ForbiddenError)
+  })
+
+  it('throws NotFoundError on 404', async () => {
+    mock.patch.mockRejectedValue(axiosErr(404))
+    await expect(adminUsersApi.updateUserRole('u-1', 'ADMIN')).rejects.toBeInstanceOf(NotFoundError)
   })
 
   it('throws ServerError on 500', async () => {
@@ -187,6 +207,16 @@ describe('deleteUser', () => {
     mock.delete.mockResolvedValue({ status: 204 })
     await adminUsersApi.deleteUser('u-1')
     expect(mock.delete).toHaveBeenCalledWith('/users/u-1')
+  })
+
+  it('throws ForbiddenError on 403 (shared handleError path)', async () => {
+    mock.delete.mockRejectedValue(axiosErr(403))
+    await expect(adminUsersApi.deleteUser('u-1')).rejects.toBeInstanceOf(ForbiddenError)
+  })
+
+  it('throws NotFoundError on 404 (shared handleError path)', async () => {
+    mock.delete.mockRejectedValue(axiosErr(404))
+    await expect(adminUsersApi.deleteUser('u-1')).rejects.toBeInstanceOf(NotFoundError)
   })
 
   it('throws ServerError on 500', async () => {

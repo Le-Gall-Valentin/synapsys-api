@@ -5,15 +5,12 @@ import { formatUserDate } from '../lib/formatUserDate'
 import { UserStatusToggle } from './UserStatusToggle'
 import { UserActions } from './UserActions'
 import { TotpBadge } from './TotpBadge'
+import type { UserRowCallbacks } from './userRowCallbacks'
 
-interface UsersTableProps {
+interface UsersTableProps extends UserRowCallbacks {
   users: AdminUser[]
   isLoading: boolean
   currentUser: User
-  onToggleActive: (user: AdminUser) => void
-  onEditRole: (user: AdminUser) => void
-  onResetTotp: (user: AdminUser) => void
-  onDelete: (user: AdminUser) => void
 }
 
 export function UsersTable({
@@ -86,15 +83,11 @@ export function UsersTable({
   )
 }
 
-interface RowProps {
+interface RowProps extends UserRowCallbacks {
   user: AdminUser
   currentUser: User
   youLabel: string
   createdDate: string
-  onToggleActive: (user: AdminUser) => void
-  onEditRole: (user: AdminUser) => void
-  onResetTotp: (user: AdminUser) => void
-  onDelete: (user: AdminUser) => void
 }
 
 function UserRow({ user, currentUser, youLabel, createdDate, onToggleActive, onEditRole, onResetTotp, onDelete }: RowProps) {

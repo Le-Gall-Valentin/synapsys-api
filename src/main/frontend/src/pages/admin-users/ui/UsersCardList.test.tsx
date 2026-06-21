@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { UsersCardList } from './UsersCardList'
 import type { AdminUser } from '../api/adminUsersApi'
@@ -66,9 +66,13 @@ describe('UsersCardList', () => {
   })
 
   it('disables delete on the SUPER_ADMIN card but enables it on the standard user', () => {
-    const { getAllByLabelText } = setup()
-    // delete labels are not interpolated; cards keep the USERS order (SA first)
-    const [saDelete, userDelete] = getAllByLabelText('table.btn_delete') as HTMLButtonElement[]
+    const { getAllByRole } = setup()
+    const cards = getAllByRole('listitem')
+    // Locate each card by its identity rather than relying on render order.
+    const saCard = cards.find(c => within(c).queryByText('superadmin'))!
+    const userCard = cards.find(c => within(c).queryByText('testuser'))!
+    const saDelete = within(saCard).getByLabelText('table.btn_delete') as HTMLButtonElement
+    const userDelete = within(userCard).getByLabelText('table.btn_delete') as HTMLButtonElement
     expect(saDelete.disabled).toBe(true)
     expect(userDelete.disabled).toBe(false)
   })

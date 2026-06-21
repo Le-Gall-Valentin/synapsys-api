@@ -12,6 +12,7 @@ vi.mock('react-i18next', () => ({
     if (opts && opts.current) return `${k}:${opts.current}/${opts.total}`
     return k
   }}),
+  Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
 }))
 
 const mockUseAuth = vi.hoisted(() => vi.fn())

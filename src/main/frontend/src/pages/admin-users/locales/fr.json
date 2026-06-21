@@ -58,10 +58,13 @@
     "submit": "Créer",
     "error": {
       "conflict": "Ce nom d'utilisateur ou cette adresse e-mail est déjà utilisé(e).",
+      "forbidden": "Vous n'avez pas les droits nécessaires pour créer cet utilisateur.",
+      "not_found": "Utilisateur introuvable.",
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible.",
       "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard.",
       "username_length": "L'identifiant doit contenir entre 3 et 50 caractères.",
+      "email_invalid": "Veuillez saisir une adresse e-mail valide.",
       "password_too_short": "Le mot de passe doit contenir au moins 8 caractères.",
       "password_weak": "Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial."
     }
@@ -73,6 +76,8 @@
     "submit": "Enregistrer",
     "error": {
       "already_assigned": "Ce rôle est déjà attribué à cet utilisateur.",
+      "forbidden": "Vous n'avez pas les droits nécessaires pour modifier le rôle de cet utilisateur.",
+      "not_found": "Utilisateur introuvable.",
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible.",
       "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard."
@@ -84,6 +89,8 @@
     "cancel": "Annuler",
     "submit": "Supprimer définitivement",
     "error": {
+      "forbidden": "Vous n'avez pas les droits nécessaires pour supprimer cet utilisateur.",
+      "not_found": "Utilisateur introuvable.",
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible.",
       "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard."
@@ -96,6 +103,8 @@
     "cancel": "Annuler",
     "submit": "Réinitialiser",
     "error": {
+      "forbidden": "Vous n'avez pas les droits nécessaires pour réinitialiser la 2FA de cet utilisateur.",
+      "not_found": "Utilisateur introuvable.",
       "server": "Une erreur est survenue. Veuillez réessayer.",
       "network": "Réseau indisponible.",
       "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard."

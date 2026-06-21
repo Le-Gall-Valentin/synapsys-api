@@ -96,6 +96,15 @@ describe('CreateUserModal — validation', () => {
     expect(getByText('create.error.username_length')).toBeDefined()
   })
 
+  it('shows an email-invalid hint and keeps submit disabled for a malformed email', () => {
+    const { getByLabelText, getByText } = setup()
+    fireEvent.change(getByLabelText('create.username'), { target: { value: 'bob' } })
+    fireEvent.change(getByLabelText('create.email'), { target: { value: 'notanemail' } })
+    fireEvent.change(getByLabelText('create.password'), { target: { value: VALID_PASSWORD } })
+    expect(getByText('create.error.email_invalid')).toBeDefined()
+    expect((getByText('create.submit') as HTMLButtonElement).disabled).toBe(true)
+  })
+
   it('calls onCreate with trimmed values and selected role on submit', async () => {
     const { getByLabelText, getByText, onCreate, onSuccess } = setup()
     fillForm(getByLabelText)
@@ -160,5 +169,17 @@ describe('CreateUserModal — errors', () => {
     fireEvent.click(getByText('create.submit'))
     resolve()
     await waitFor(() => expect(onCreate).toHaveBeenCalledOnce())
+  })
+
+  it('clears the error alert on a successful resubmit', async () => {
+    const onCreate = vi.fn()
+      .mockRejectedValueOnce(new ServerError())
+      .mockResolvedValueOnce(undefined)
+    const { getByLabelText, getByText, findByRole, queryByRole } = setup({ onCreate })
+    fillForm(getByLabelText)
+    fireEvent.click(getByText('create.submit'))
+    expect((await findByRole('alert')).textContent).toContain('create.error.server')
+    fireEvent.click(getByText('create.submit'))
+    await waitFor(() => expect(queryByRole('alert')).toBeNull())
   })
 })

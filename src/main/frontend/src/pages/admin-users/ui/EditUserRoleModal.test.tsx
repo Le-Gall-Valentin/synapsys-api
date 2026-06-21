@@ -29,6 +29,7 @@ const TARGET_USER: AdminUser = {
   role: 'USER', isActive: true, createdAt: '2024-01-01T00:00:00Z', totpEnabled: false,
 }
 const TARGET_ADMIN: AdminUser = { ...TARGET_USER, id: 'a-t', username: 'carol', role: 'ADMIN' }
+const TARGET_SUPER_ADMIN: AdminUser = { ...TARGET_USER, id: 'sa-t', username: 'root', role: 'SUPER_ADMIN' }
 
 const SUPER_ADMIN_CALLER: User = {
   id: 'sa', username: 'sa', email: 'sa@test.com',
@@ -82,6 +83,22 @@ describe('EditUserRoleModal — SUPER_ADMIN caller', () => {
     fireEvent.click(getByText('edit_role.submit'))
     await waitFor(() => expect(onUpdate).toHaveBeenCalledWith('u-t', 'ADMIN'))
     expect(onSuccess).toHaveBeenCalledWith('ADMIN')
+  })
+
+  it('prevents double submit', async () => {
+    let resolve!: () => void
+    const onUpdate = vi.fn().mockImplementation(() => new Promise<void>(r => { resolve = r }))
+    const { getByText, getByRole } = setup(TARGET_USER, SUPER_ADMIN_CALLER, { onUpdate })
+    fireEvent.change(getByRole('combobox'), { target: { value: 'ADMIN' } })
+    fireEvent.click(getByText('edit_role.submit'))
+    fireEvent.click(getByText('edit_role.submit'))
+    resolve()
+    await waitFor(() => expect(onUpdate).toHaveBeenCalledOnce())
+  })
+
+  it('keeps submit disabled for a SUPER_ADMIN target (never demotable)', () => {
+    const { getByText } = setup(TARGET_SUPER_ADMIN, SUPER_ADMIN_CALLER)
+    expect((getByText('edit_role.submit') as HTMLButtonElement).disabled).toBe(true)
   })
 })
 
