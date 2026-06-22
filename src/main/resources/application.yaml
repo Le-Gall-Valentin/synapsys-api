@@ -26,6 +26,12 @@ springdoc:
     enabled: ${SWAGGER_ENABLED:false}
 
 synapsys:
+  agent:
+    enrollment-token-validity-hours: ${SYNAPSYS_AGENT_TOKEN_VALIDITY_HOURS:24}
+    challenge-ttl-seconds: ${SYNAPSYS_AGENT_CHALLENGE_TTL_SECONDS:30}
+    presence-ttl-seconds: ${SYNAPSYS_AGENT_PRESENCE_TTL_SECONDS:90}
+    token-prefix: ${SYNAPSYS_AGENT_TOKEN_PREFIX:synenr_}
+    websocket-path: ${SYNAPSYS_AGENT_WEBSOCKET_PATH:/ws/agents}
   jwt:
     secret: ${SYNAPSYS_JWT_SECRET}
     expiry-minutes: ${SYNAPSYS_JWT_EXPIRY_MINUTES:15}
