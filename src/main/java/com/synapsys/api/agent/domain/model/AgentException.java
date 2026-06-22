@@ -1,20 +1,36 @@
 package com.synapsys.api.agent.domain.model;
 
 public abstract sealed class AgentException extends RuntimeException
-    permits AgentException.TokenNotConsumable,
+    permits AgentException.TokenNotFound,
+            AgentException.TokenNotConsumable,
             AgentException.TokenNotRevocable,
+            AgentException.InvalidPublicKey,
+            AgentException.PublicKeyAlreadyRegistered,
+            AgentException.AgentNotFound,
             AgentException.AgentNotRevocable,
             AgentException.AgentNotDeletable,
             AgentException.HandshakeFailed,
-            AgentException.InvalidPublicKey {
+            AgentException.DataIntegrityError {
 
     private AgentException(String message) { super(message); }
 
+    public static final class TokenNotFound extends AgentException {
+        public TokenNotFound() { super("Enrollment token not found"); }
+    }
     public static final class TokenNotConsumable extends AgentException {
         public TokenNotConsumable() { super("Enrollment token is not consumable"); }
     }
     public static final class TokenNotRevocable extends AgentException {
         public TokenNotRevocable() { super("Enrollment token cannot be revoked"); }
+    }
+    public static final class InvalidPublicKey extends AgentException {
+        public InvalidPublicKey() { super("Public key is not a valid Ed25519 key"); }
+    }
+    public static final class PublicKeyAlreadyRegistered extends AgentException {
+        public PublicKeyAlreadyRegistered() { super("Public key is already registered"); }
+    }
+    public static final class AgentNotFound extends AgentException {
+        public AgentNotFound() { super("Agent not found"); }
     }
     public static final class AgentNotRevocable extends AgentException {
         public AgentNotRevocable() { super("Agent cannot be revoked"); }
@@ -25,8 +41,7 @@ public abstract sealed class AgentException extends RuntimeException
     public static final class HandshakeFailed extends AgentException {
         public HandshakeFailed() { super("Agent handshake failed"); }
     }
-    public static final class InvalidPublicKey extends AgentException {
-        public InvalidPublicKey() { super("Public key is not a valid Ed25519 key"); }
+    public static final class DataIntegrityError extends AgentException {
+        public DataIntegrityError() { super("Unexpected data integrity violation"); }
     }
 }
-
