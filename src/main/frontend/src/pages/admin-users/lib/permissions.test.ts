@@ -197,7 +197,14 @@ describe('canEditRole', () => {
     expect(canEditRole(SUPER_ADMIN, makeAdminUser('a2', 'ADMIN'))).toEqual({ ok: true })
   })
 
-  it('allows ADMIN on active USER', () => {
-    expect(canEditRole(ADMIN, makeAdminUser('u2', 'USER'))).toEqual({ ok: true })
+  it('denies ADMIN on active USER: USER is the only role an ADMIN can assign', () => {
+    expect(canEditRole(ADMIN, makeAdminUser('u2', 'USER'))).toEqual({ ok: false, reason: 'no_assignable_role' })
+  })
+
+  it('allows ADMIN on active USER once a richer assignable set exists', () => {
+    // Guards the rule rather than the current role table: if an ADMIN could
+    // ever assign more than USER, editing a USER would become meaningful again.
+    expect(canManage('ADMIN', 'USER')).toBe(true)
+    expect(assignableRoles('ADMIN')).toEqual(['USER'])
   })
 })

@@ -61,7 +61,7 @@ export function ResetTotpModal({ user, onClose, onReset, onSuccess }: ResetTotpM
         <Button
           onClick={() => { void handleSubmit() }}
           isLoading={isLoading}
-          className="border-status-red/30 bg-status-red-dim text-status-red hover:bg-status-red/20"
+          className="border-status-orange/30 bg-status-orange-dim text-status-orange hover:bg-status-orange/20"
         >
           <Key className="size-4" />
           {t('reset_totp.submit')}

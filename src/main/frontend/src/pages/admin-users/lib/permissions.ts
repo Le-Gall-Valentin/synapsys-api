@@ -14,6 +14,7 @@ export type PermissionDenialReason =
   | 'insufficient'
   | 'totp_not_enabled'
   | 'target_inactive'
+  | 'no_assignable_role'
 
 export type PermissionResult =
   | { ok: true }
@@ -83,5 +84,9 @@ export function canEditRole(caller: User, target: AdminUser): PermissionResult {
   if (caller.id === target.id) return deny('self')
   if (!target.isActive) return deny('target_inactive')
   if (!canManage(caller.role, target.role)) return deny(hierarchyDenialReason(caller, target))
+  // The role can only change if the caller can assign a role other than the
+  // target's current one. An ADMIN may only assign USER, so a USER target is a
+  // dead end — mirror of UpdateUserHandler rejecting a no-op role change.
+  if (!assignableRoles(caller.role).some(r => r !== target.role)) return deny('no_assignable_role')
   return OK
 }

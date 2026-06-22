@@ -34,7 +34,8 @@
     "admin_cannot_manage_admin": "Un administrateur ne peut pas gérer un autre administrateur.",
     "insufficient": "Action réservée aux administrateurs.",
     "totp_not_enabled": "La 2FA n'est pas activée sur ce compte.",
-    "target_inactive": "Le compte doit être actif pour modifier son rôle."
+    "target_inactive": "Le compte doit être actif pour modifier son rôle.",
+    "no_assignable_role": "Aucun autre rôle ne peut être attribué à cet utilisateur."
   },
   "load_error": "Impossible de charger la liste des utilisateurs. Veuillez réessayer.",
   "mutation_error": "Une erreur est survenue. Les modifications ont été annulées.",
@@ -66,6 +67,7 @@
       "username_length": "L'identifiant doit contenir entre 3 et 50 caractères.",
       "email_invalid": "Veuillez saisir une adresse e-mail valide.",
       "password_too_short": "Le mot de passe doit contenir au moins 8 caractères.",
+      "password_too_long": "Le mot de passe ne doit pas dépasser 72 caractères.",
       "password_weak": "Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial."
     }
   },

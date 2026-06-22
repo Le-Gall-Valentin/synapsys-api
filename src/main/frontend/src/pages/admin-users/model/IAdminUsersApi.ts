@@ -1,9 +1,14 @@
 import type { AdminUser } from '@/entities/user'
 
-/** Paginated users payload returned by the backend (Spring-style page). */
+/** Paginated users payload returned by the backend (mirrors `PageResponse`). */
 export interface UsersPage {
   content: AdminUser[]
   totalElements: number
+  /**
+   * Zero-based page index echoed by the backend. The UI drives pagination from
+   * its own `page` state, so this field is part of the wire contract rather
+   * than a value the page reads back.
+   */
   page: number
   size: number
 }

@@ -90,6 +90,15 @@ describe('CreateUserModal — validation', () => {
     expect(getByText('create.error.password_too_short')).toBeDefined()
   })
 
+  it('shows a too-long hint (not the weak hint) for a password over 72 chars', () => {
+    const { getByLabelText, getByText, queryByText } = setup()
+    // Otherwise-valid (upper/digit/special) but longer than the 72-char limit.
+    fillForm(getByLabelText, `P@ssw0rd${'a'.repeat(72)}`)
+    expect((getByText('create.submit') as HTMLButtonElement).disabled).toBe(true)
+    expect(getByText('create.error.password_too_long')).toBeDefined()
+    expect(queryByText('create.error.password_weak')).toBeNull()
+  })
+
   it('shows hint when username is shorter than 3 chars', () => {
     const { getByLabelText, getByText } = setup()
     fireEvent.change(getByLabelText('create.username'), { target: { value: 'ab' } })

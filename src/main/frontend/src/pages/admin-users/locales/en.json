@@ -34,7 +34,8 @@
     "admin_cannot_manage_admin": "An administrator cannot manage another administrator.",
     "insufficient": "Action reserved for administrators.",
     "totp_not_enabled": "2FA is not enabled on this account.",
-    "target_inactive": "The account must be active to change its role."
+    "target_inactive": "The account must be active to change its role.",
+    "no_assignable_role": "No other role can be assigned to this user."
   },
   "load_error": "Unable to load the users list. Please try again.",
   "mutation_error": "An error occurred. The changes have been reverted.",
@@ -66,6 +67,7 @@
       "username_length": "Username must be between 3 and 50 characters.",
       "email_invalid": "Please enter a valid email address.",
       "password_too_short": "Password must be at least 8 characters.",
+      "password_too_long": "Password must be at most 72 characters.",
       "password_weak": "Password must contain an uppercase letter, a digit and a special character."
     }
   },
