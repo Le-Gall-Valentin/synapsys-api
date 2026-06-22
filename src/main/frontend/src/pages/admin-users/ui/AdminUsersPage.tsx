@@ -73,7 +73,10 @@ function AdminUsersPageContent() {
   }
 
   function handleDeleteSuccess() {
-    if (data && data.content.length === 1 && page > 0) {
+    // Step back a page when the deleted row was the last one on a page beyond
+    // the first. Guard on committed (non-placeholder) data so a mid-transition
+    // previous page never drives the decision.
+    if (!isPlaceholderData && data && data.content.length === 1 && page > 0) {
       setPage(p => p - 1)
     }
     setDeleteTarget(null)
@@ -82,6 +85,7 @@ function AdminUsersPageContent() {
   if (!currentUser) return null
 
   const users = data?.content ?? []
+  const pendingToggleId = toggleActive.isPending ? toggleActive.variables?.id : null
   const totalElements = data?.totalElements ?? 0
   const pageSize = data?.size ?? 20
   const totalPages = totalElements > 0 ? Math.ceil(totalElements / pageSize) : 1
@@ -134,6 +138,7 @@ function AdminUsersPageContent() {
           users={users}
           isLoading={isPending}
           currentUser={currentUser}
+          pendingToggleId={pendingToggleId}
           onToggleActive={handleToggle}
           onEditRole={setEditTarget}
           onResetTotp={setResetTotpTarget}
@@ -145,6 +150,7 @@ function AdminUsersPageContent() {
           users={users}
           isLoading={isPending}
           currentUser={currentUser}
+          pendingToggleId={pendingToggleId}
           onToggleActive={handleToggle}
           onEditRole={setEditTarget}
           onResetTotp={setResetTotpTarget}

@@ -11,6 +11,8 @@ interface UsersCardListProps extends UserRowCallbacks {
   users: AdminUser[]
   isLoading: boolean
   currentUser: User
+  /** Id of the user whose active/inactive toggle is currently in flight. */
+  pendingToggleId?: string | null
 }
 
 /** Mobile counterpart of UsersTable: one stacked card per user, no horizontal scroll. */
@@ -18,6 +20,7 @@ export function UsersCardList({
   users,
   isLoading,
   currentUser,
+  pendingToggleId,
   onToggleActive,
   onEditRole,
   onResetTotp,
@@ -62,6 +65,7 @@ export function UsersCardList({
             roleLabel={t(`user.role.${user.role}`, { ns: 'shell' })}
             createdLabel={t('table.col_created')}
             createdDate={formatUserDate(user.createdAt, i18n.language)}
+            isToggling={user.id === pendingToggleId}
             onToggleActive={onToggleActive}
             onEditRole={onEditRole}
             onResetTotp={onResetTotp}
@@ -80,6 +84,7 @@ interface UserCardProps extends UserRowCallbacks {
   roleLabel: string
   createdLabel: string
   createdDate: string
+  isToggling: boolean
 }
 
 function UserCard({
@@ -89,6 +94,7 @@ function UserCard({
   roleLabel,
   createdLabel,
   createdDate,
+  isToggling,
   onToggleActive,
   onEditRole,
   onResetTotp,
@@ -117,7 +123,7 @@ function UserCard({
 
       {/* Status / 2FA / created */}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3">
-        <UserStatusToggle user={user} currentUser={currentUser} onToggle={onToggleActive} />
+        <UserStatusToggle user={user} currentUser={currentUser} onToggle={onToggleActive} isPending={isToggling} />
         <TotpBadge enabled={user.totpEnabled} />
         <span className="font-mono text-[11px] text-fg-3">
           {createdLabel} · {createdDate}

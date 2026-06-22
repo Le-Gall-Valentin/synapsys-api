@@ -55,4 +55,16 @@ describe('UserStatusToggle', () => {
     const { getByRole } = setup(SA, target({ id: 'sa', role: 'SUPER_ADMIN' }))
     expect((getByRole('switch') as HTMLButtonElement).disabled).toBe(true)
   })
+
+  it('is disabled and ignores clicks while the toggle is in flight', () => {
+    const user = target()
+    const onToggle = vi.fn()
+    const { getByRole } = render(
+      <UserStatusToggle user={user} currentUser={SA} onToggle={onToggle} isPending />
+    )
+    const sw = getByRole('switch') as HTMLButtonElement
+    expect(sw.disabled).toBe(true)
+    fireEvent.click(sw)
+    expect(onToggle).not.toHaveBeenCalled()
+  })
 })

@@ -11,12 +11,15 @@ interface UsersTableProps extends UserRowCallbacks {
   users: AdminUser[]
   isLoading: boolean
   currentUser: User
+  /** Id of the user whose active/inactive toggle is currently in flight. */
+  pendingToggleId?: string | null
 }
 
 export function UsersTable({
   users,
   isLoading,
   currentUser,
+  pendingToggleId,
   onToggleActive,
   onEditRole,
   onResetTotp,
@@ -71,6 +74,7 @@ export function UsersTable({
                 youLabel={t('table.you')}
                 roleLabel={t(`user.role.${user.role}`, { ns: 'shell' })}
                 createdDate={formatUserDate(user.createdAt, i18n.language)}
+                isToggling={user.id === pendingToggleId}
                 onToggleActive={onToggleActive}
                 onEditRole={onEditRole}
                 onResetTotp={onResetTotp}
@@ -90,9 +94,10 @@ interface RowProps extends UserRowCallbacks {
   youLabel: string
   roleLabel: string
   createdDate: string
+  isToggling: boolean
 }
 
-function UserRow({ user, currentUser, youLabel, roleLabel, createdDate, onToggleActive, onEditRole, onResetTotp, onDelete }: RowProps) {
+function UserRow({ user, currentUser, youLabel, roleLabel, createdDate, isToggling, onToggleActive, onEditRole, onResetTotp, onDelete }: RowProps) {
   const isMe = user.id === currentUser.id
 
   return (
@@ -116,7 +121,7 @@ function UserRow({ user, currentUser, youLabel, roleLabel, createdDate, onToggle
       </td>
 
       <td className="px-4 py-3">
-        <UserStatusToggle user={user} currentUser={currentUser} onToggle={onToggleActive} />
+        <UserStatusToggle user={user} currentUser={currentUser} onToggle={onToggleActive} isPending={isToggling} />
       </td>
 
       <td className="px-4 py-3">
