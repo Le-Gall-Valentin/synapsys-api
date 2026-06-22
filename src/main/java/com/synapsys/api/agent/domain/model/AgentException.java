@@ -5,7 +5,8 @@ public abstract sealed class AgentException extends RuntimeException
             AgentException.TokenNotRevocable,
             AgentException.AgentNotRevocable,
             AgentException.AgentNotDeletable,
-            AgentException.HandshakeFailed {
+            AgentException.HandshakeFailed,
+            AgentException.InvalidPublicKey {
 
     private AgentException(String message) { super(message); }
 
@@ -24,4 +25,8 @@ public abstract sealed class AgentException extends RuntimeException
     public static final class HandshakeFailed extends AgentException {
         public HandshakeFailed() { super("Agent handshake failed"); }
     }
+    public static final class InvalidPublicKey extends AgentException {
+        public InvalidPublicKey() { super("Public key is not a valid Ed25519 key"); }
+    }
 }
+
