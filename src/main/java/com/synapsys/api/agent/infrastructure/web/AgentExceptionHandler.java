@@ -26,6 +26,7 @@ public class AgentExceptionHandler {
             case AgentException.TokenNotRevocable ex -> response(409, ex, "Enrollment token cannot be revoked.");
             case AgentException.InvalidPublicKey ex -> response(400, ex, "Public key is not a valid Ed25519 key.");
             case AgentException.PublicKeyAlreadyRegistered ex -> response(409, ex, "Public key is already registered.");
+            case AgentException.ServerNameInUse ex -> response(409, ex, "Server name is already in use.");
             case AgentException.AgentNotFound ex -> response(404, ex, "Agent not found.");
             case AgentException.AgentNotRevocable ex -> response(409, ex, "Agent cannot be revoked.");
             case AgentException.AgentNotDeletable ex -> response(409, ex, "Agent must be revoked before deletion.");

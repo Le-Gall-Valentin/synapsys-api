@@ -6,6 +6,7 @@ public abstract sealed class AgentException extends RuntimeException
             AgentException.TokenNotRevocable,
             AgentException.InvalidPublicKey,
             AgentException.PublicKeyAlreadyRegistered,
+            AgentException.ServerNameInUse,
             AgentException.AgentNotFound,
             AgentException.AgentNotRevocable,
             AgentException.AgentNotDeletable,
@@ -28,6 +29,9 @@ public abstract sealed class AgentException extends RuntimeException
     }
     public static final class PublicKeyAlreadyRegistered extends AgentException {
         public PublicKeyAlreadyRegistered() { super("Public key is already registered"); }
+    }
+    public static final class ServerNameInUse extends AgentException {
+        public ServerNameInUse() { super("Server name is already in use by a non-revoked agent"); }
     }
     public static final class AgentNotFound extends AgentException {
         public AgentNotFound() { super("Agent not found"); }
