@@ -6,13 +6,19 @@ import { useAuth } from '@/features/auth'
 import { totpApi } from '@/features/totp'
 import { Button } from '@/shared/ui'
 import { accountApi } from '../api/accountApi'
+import type { IAccountApi } from '../model/IAccountApi'
 import { ProfileSummaryCard } from './ProfileSummaryCard'
 import { ProfileEditSection } from './ProfileEditSection'
 import { TwoFactorSection } from './TwoFactorSection'
 import { PreferencesSection } from './PreferencesSection'
 import { ChangePasswordSection } from './ChangePasswordSection'
 
-export function AccountPage() {
+interface AccountPageProps {
+  /** Composition seam: defaults to the real implementation; tests inject a fake. */
+  api?: IAccountApi
+}
+
+export function AccountPage({ api = accountApi }: AccountPageProps = {}) {
   const { t } = useTranslation('account')
   const { user, logout, patchUser } = useAuth(
     useShallow(s => ({ user: s.user, logout: s.logout, patchUser: s.patchUser }))
@@ -66,7 +72,7 @@ export function AccountPage() {
       <ProfileEditSection
         user={user}
         onPatch={patchUser}
-        onUpdateProfile={accountApi.updateProfile}
+        onUpdateProfile={api.updateProfile}
       />
 
       <TwoFactorSection
@@ -78,7 +84,7 @@ export function AccountPage() {
       <PreferencesSection />
 
       <ChangePasswordSection
-        onChangePassword={accountApi.changePassword}
+        onChangePassword={api.changePassword}
       />
     </div>
   )

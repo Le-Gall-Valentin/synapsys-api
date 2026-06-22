@@ -1,6 +1,7 @@
 import { render, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AccountPage } from './AccountPage'
+import type { IAccountApi } from '../model/IAccountApi'
 import type { User } from '@/entities/user'
 
 vi.mock('react-i18next', () => ({
@@ -16,13 +17,13 @@ vi.mock('zustand/react/shallow', () => ({
   useShallow: (fn: unknown) => fn,
 }))
 
-vi.mock('../api/accountApi', () => ({
-  accountApi: { updateProfile: vi.fn(), changePassword: vi.fn() },
-}))
-
 vi.mock('@/features/totp', () => ({
   totpApi: {},
 }))
+
+// The account api is injected through the page's composition seam (api prop).
+const fakeApi: IAccountApi = { updateProfile: vi.fn(), changePassword: vi.fn() }
+const renderPage = () => render(<AccountPage api={fakeApi} />)
 
 vi.mock('./ProfileSummaryCard', () => ({
   ProfileSummaryCard: () => <div data-testid="profile-summary" />,
@@ -66,13 +67,13 @@ beforeEach(() => {
 describe('AccountPage', () => {
   it('returns null when user is null and no error', () => {
     makeState({ user: null })
-    const { container } = render(<AccountPage />)
+    const { container } = renderPage()
     expect(container.firstChild).toBeNull()
   })
 
   it('renders all sections when user is present', () => {
     makeState()
-    const { getByTestId } = render(<AccountPage />)
+    const { getByTestId } = renderPage()
     expect(getByTestId('profile-summary')).toBeDefined()
     expect(getByTestId('profile-edit')).toBeDefined()
     expect(getByTestId('totp-section')).toBeDefined()
@@ -82,20 +83,20 @@ describe('AccountPage', () => {
 
   it('renders logout button', () => {
     makeState()
-    const { getByRole } = render(<AccountPage />)
+    const { getByRole } = renderPage()
     expect(getByRole('button', { name: 'action.logout' })).toBeDefined()
   })
 
   it('calls logout when logout button is clicked', async () => {
     const { logout } = makeState()
-    const { getByRole } = render(<AccountPage />)
+    const { getByRole } = renderPage()
     fireEvent.click(getByRole('button', { name: 'action.logout' }))
     await waitFor(() => expect(logout).toHaveBeenCalledOnce())
   })
 
   it('shows logout error when logout fails and user is still present', async () => {
     makeState({ logout: vi.fn().mockRejectedValue(new Error('network')) })
-    const { getByRole, findByRole } = render(<AccountPage />)
+    const { getByRole, findByRole } = renderPage()
     fireEvent.click(getByRole('button', { name: 'action.logout' }))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('error.logout_failed')
@@ -108,7 +109,7 @@ describe('AccountPage', () => {
       throw new Error('logout failed')
     })
     makeState({ logout })
-    const { getByRole, findByRole } = render(<AccountPage />)
+    const { getByRole, findByRole } = renderPage()
     fireEvent.click(getByRole('button', { name: 'action.logout' }))
     const alert = await findByRole('alert')
     expect(alert.textContent).toContain('error.logout_failed')
@@ -120,7 +121,7 @@ describe('AccountPage', () => {
       () => new Promise<void>(r => { resolve = r })
     )
     makeState({ logout })
-    const { getByRole } = render(<AccountPage />)
+    const { getByRole } = renderPage()
     fireEvent.click(getByRole('button', { name: 'action.logout' }))
     fireEvent.click(getByRole('button', { name: 'action.logout' }))
     resolve()

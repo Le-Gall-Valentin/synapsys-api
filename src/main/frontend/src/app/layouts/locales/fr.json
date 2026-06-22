@@ -46,8 +46,8 @@
   },
   "user": {
     "role": {
-      "SUPER_ADMIN": "Super admin",
-      "ADMIN": "Admin",
+      "SUPER_ADMIN": "Super Administrateur",
+      "ADMIN": "Administrateur",
       "USER": "Utilisateur"
     }
   },

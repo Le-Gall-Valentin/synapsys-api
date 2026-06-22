@@ -6,5 +6,10 @@ import com.synapsys.api.shared.model.SortRequest;
 
 public interface UserAdminPort {
     boolean isEmpty();
-    PageResult<User> findAll(int page, int size, SortRequest sort);
+
+    /**
+     * @param search optional case-insensitive filter matching username or email
+     *               (substring); null or blank means no filtering
+     */
+    PageResult<User> findAll(int page, int size, SortRequest sort, String search);
 }

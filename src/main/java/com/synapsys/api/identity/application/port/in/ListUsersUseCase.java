@@ -5,5 +5,9 @@ import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
 
 public interface ListUsersUseCase {
-    PageResult<UserAdminView> listUsers(int page, int size, SortRequest sort);
+    /**
+     * @param search optional case-insensitive filter matching username or email
+     *               (substring); null or blank means no filtering
+     */
+    PageResult<UserAdminView> listUsers(int page, int size, SortRequest sort, String search);
 }
