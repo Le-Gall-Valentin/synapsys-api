@@ -11,7 +11,8 @@ public abstract sealed class AgentException extends RuntimeException
             AgentException.AgentNotRevocable,
             AgentException.AgentNotDeletable,
             AgentException.HandshakeFailed,
-            AgentException.DataIntegrityError {
+            AgentException.DataIntegrityError,
+            AgentException.EnrollmentRejected {
 
     private AgentException(String message) { super(message); }
 
@@ -48,4 +49,8 @@ public abstract sealed class AgentException extends RuntimeException
     public static final class DataIntegrityError extends AgentException {
         public DataIntegrityError() { super("Unexpected data integrity violation"); }
     }
+    public static final class EnrollmentRejected extends AgentException {
+        public EnrollmentRejected() { super("Enrollment rejected"); }
+    }
 }
+

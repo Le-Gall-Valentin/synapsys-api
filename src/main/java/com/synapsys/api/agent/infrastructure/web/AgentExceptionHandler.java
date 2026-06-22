@@ -35,6 +35,7 @@ public class AgentExceptionHandler {
                 log.error("Data integrity violation on {}", request.getRequestURI(), ex);
                 yield response(500, ex, "An unexpected error occurred. Please try again later.");
             }
+            case AgentException.EnrollmentRejected ex -> response(422, ex, "Enrollment rejected.");
         };
         ProblemDetail problem = ProblemDetailFactory.of(
             HttpStatus.valueOf(r.status()), r.title(), r.detail(), URI.create(request.getRequestURI()));
