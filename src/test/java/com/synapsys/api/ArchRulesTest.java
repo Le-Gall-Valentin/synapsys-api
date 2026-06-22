@@ -21,7 +21,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class ArchRulesTest {
 
     private static final String BASE = "com.synapsys.api.";
-    private static final List<String> BCS = List.of("authentication", "identity", "mfa");
+    private static final List<String> BCS = List.of("authentication", "identity", "mfa", "agent");
 
     private final JavaClasses classes = new ClassFileImporter()
         .importPackages("com.synapsys.api");
