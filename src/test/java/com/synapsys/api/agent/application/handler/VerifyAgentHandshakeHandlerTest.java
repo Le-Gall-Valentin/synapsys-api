@@ -105,6 +105,24 @@ class VerifyAgentHandshakeHandlerTest {
     }
 
     @Test
+    void isConnectable_enrolledAgent_returnsTrue() {
+        when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent(AgentLifecycleStatus.ENROLLED)));
+        org.assertj.core.api.Assertions.assertThat(handler.isConnectable(agentId)).isTrue();
+    }
+
+    @Test
+    void isConnectable_revokedAgent_returnsFalse() {
+        when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent(AgentLifecycleStatus.REVOKED)));
+        org.assertj.core.api.Assertions.assertThat(handler.isConnectable(agentId)).isFalse();
+    }
+
+    @Test
+    void isConnectable_unknownAgent_returnsFalse() {
+        when(agentRepository.findById(agentId)).thenReturn(Optional.empty());
+        org.assertj.core.api.Assertions.assertThat(handler.isConnectable(agentId)).isFalse();
+    }
+
+    @Test
     void verify_badSignature_throwsHandshakeFailed() {
         when(challengeStore.consumeChallenge("conn-1")).thenReturn(Optional.of("nonce"));
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent(AgentLifecycleStatus.ENROLLED)));

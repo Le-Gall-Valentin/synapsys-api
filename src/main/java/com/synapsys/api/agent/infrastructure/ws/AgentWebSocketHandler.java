@@ -106,6 +106,14 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
         }
         session.getAttributes().put(ATTR_AUTHENTICATED, Boolean.TRUE);
         localSessions.register(agentId, session);
+        // A revoke committing during the window between the handshake commit and this registration
+        // may have published its close before the session existed (fan-out miss). Re-check and tear
+        // down so a revoked agent never keeps a live channel; any later revoke now sees the mapping.
+        if (!verifyHandshake.isConnectable(agentId)) {
+            localSessions.unregister(agentId, session);
+            close(session, CloseStatus.POLICY_VIOLATION);
+            return;
+        }
         send(session, Map.of("type", "connected"));
     }
 

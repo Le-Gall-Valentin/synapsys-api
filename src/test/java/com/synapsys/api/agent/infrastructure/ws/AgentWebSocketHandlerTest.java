@@ -75,12 +75,32 @@ class AgentWebSocketHandlerTest {
     void verify_success_registersSessionAndSendsConnected() throws Exception {
         attributes.put("agentId", agentId.toString());
         attributes.put("ip", "1.2.3.4");
+        when(verifyHandshake.isConnectable(agentId)).thenReturn(true);
 
         handler.handleTextMessage(session, msg("{\"type\":\"verify\",\"signature\":\"AAAA\"}"));
 
         verify(verifyHandshake).verify(any(), eq("1.2.3.4"), any());
         verify(localSessions).register(eq(agentId), eq(session));
         assertThat(attributes).containsEntry("authenticated", Boolean.TRUE);
+        ArgumentCaptor<TextMessage> sent = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session).sendMessage(sent.capture());
+        assertThat(objectMapper.readTree(sent.getValue().getPayload()).get("type").asText()).isEqualTo("connected");
+    }
+
+    @Test
+    void verify_revokedDuringRegisterWindow_tearsDownSession() throws Exception {
+        attributes.put("agentId", agentId.toString());
+        attributes.put("ip", "1.2.3.4");
+        // Handshake passes, but a concurrent revoke committed during the register window: the
+        // post-register re-check must unregister and close the session rather than send "connected".
+        when(verifyHandshake.isConnectable(agentId)).thenReturn(false);
+
+        handler.handleTextMessage(session, msg("{\"type\":\"verify\",\"signature\":\"AAAA\"}"));
+
+        verify(localSessions).register(eq(agentId), eq(session));
+        verify(localSessions).unregister(agentId, session);
+        verify(session).close(CloseStatus.POLICY_VIOLATION);
+        verify(session, never()).sendMessage(any());
     }
 
     @Test

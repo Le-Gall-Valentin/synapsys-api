@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.UUID;
 
 @ApplicationService
 public class VerifyAgentHandshakeHandler implements VerifyAgentHandshakeUseCase {
@@ -52,5 +53,11 @@ public class VerifyAgentHandshakeHandler implements VerifyAgentHandshakeUseCase 
             throw new AgentException.HandshakeFailed();
         }
         presence.markPresent(agent.id(), nodeId, ip, now);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isConnectable(UUID agentId) {
+        return agentRepository.findById(agentId).map(Agent::isConnectable).orElse(false);
     }
 }

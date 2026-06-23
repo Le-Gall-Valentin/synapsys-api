@@ -33,7 +33,11 @@ public record Agent(
         if (status != AgentLifecycleStatus.REVOKED) throw new AgentException.AgentNotDeletable();
     }
 
+    public boolean isConnectable() {
+        return status != AgentLifecycleStatus.REVOKED;
+    }
+
     public void ensureConnectable() {
-        if (status == AgentLifecycleStatus.REVOKED) throw new AgentException.HandshakeFailed();
+        if (!isConnectable()) throw new AgentException.HandshakeFailed();
     }
 }
