@@ -8,6 +8,7 @@ import com.synapsys.api.agent.domain.port.out.AgentRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,7 @@ public class ListAgentsHandler implements ListAgentsUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResult<AgentView> list(int page, int size, SortRequest sort) {
         PageResult<Agent> result = agentRepository.findAll(page, size, sort);
         Set<UUID> present = presence.presentAgentIds(result.content().stream().map(Agent::id).toList());

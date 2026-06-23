@@ -7,6 +7,7 @@ import com.synapsys.api.agent.domain.port.out.EnrollmentTokenRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,6 +22,7 @@ public class ListEnrollmentTokensHandler implements ListEnrollmentTokensUseCase 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResult<EnrollmentTokenView> list(int page, int size, SortRequest sort) {
         Instant now = Instant.now();
         PageResult<EnrollmentToken> result = repository.findAll(page, size, sort);
