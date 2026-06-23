@@ -44,16 +44,6 @@ class EnrollmentTokenTest {
     }
 
     @Test
-    void ensureConsumable_passesWhenActive_throwsOtherwise() {
-        assertThatCode(() -> token(null, null, now.plus(1, ChronoUnit.HOURS)).ensureConsumable(now))
-            .doesNotThrowAnyException();
-        assertThatThrownBy(() -> token(now, null, now.plus(1, ChronoUnit.HOURS)).ensureConsumable(now))
-            .isInstanceOf(AgentException.TokenNotConsumable.class);
-        assertThatThrownBy(() -> token(null, null, now).ensureConsumable(now))
-            .isInstanceOf(AgentException.TokenNotConsumable.class);
-    }
-
-    @Test
     void ensureRevocable_passesWhenActive_throwsOtherwise() {
         assertThatCode(() -> token(null, null, now.plus(1, ChronoUnit.HOURS)).ensureRevocable(now))
             .doesNotThrowAnyException();

@@ -20,12 +20,6 @@ public record EnrollmentToken(
         return EnrollmentTokenStatus.ACTIVE;
     }
 
-    public void ensureConsumable(Instant now) {
-        if (deriveStatus(now) != EnrollmentTokenStatus.ACTIVE) {
-            throw new AgentException.TokenNotConsumable();
-        }
-    }
-
     public void ensureRevocable(Instant now) {
         if (deriveStatus(now) != EnrollmentTokenStatus.ACTIVE) {
             throw new AgentException.TokenNotRevocable();

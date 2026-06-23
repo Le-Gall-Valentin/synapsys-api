@@ -10,7 +10,6 @@ class AgentExceptionTest {
     void allSubtypesAreAgentExceptionsWithMessages() {
         AgentException[] all = {
             new AgentException.TokenNotFound(),
-            new AgentException.TokenNotConsumable(),
             new AgentException.TokenNotRevocable(),
             new AgentException.InvalidPublicKey(),
             new AgentException.PublicKeyAlreadyRegistered(),
