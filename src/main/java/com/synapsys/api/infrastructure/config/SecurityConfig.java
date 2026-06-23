@@ -48,6 +48,7 @@ public class SecurityConfig {
                 // TOTP challenge verification — authenticated via challenge cookie, not JWT
                 .requestMatchers(HttpMethod.POST, "/api/auth/2fa/verify").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/agents/enroll").permitAll()
+                .requestMatchers("/ws/agents").permitAll()
                 // /api/** must be evaluated before the SPA fallback so extensionless
                 // paths like /api/users/me are never matched by the GET wildcard.
                 .requestMatchers("/api/**").authenticated()
