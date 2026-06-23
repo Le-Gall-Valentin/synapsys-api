@@ -15,7 +15,7 @@ Les règles sont vérifiées automatiquement à chaque build par ArchUnit (voir 
 
 ### Bounded Contexts
 
-Le domaine est découpé en trois BCs isolés. Aucun BC ne dépend du domaine ou de l'application d'un autre.
+Le domaine est découpé en quatre BCs isolés. Aucun BC ne dépend du domaine ou de l'application d'un autre.
 
 ```
 com.synapsys.api/
@@ -57,6 +57,20 @@ com.synapsys.api/
 │       ├── security/        ← TotpServiceAdapter, RedisTotpCodeReplayStore…
 │       ├── config/          ← TotpEncryptionConfig (chiffrement AES-256/GCM par userId)
 │       └── web/             ← TotpController, MfaExceptionHandler
+│
+├── agent/                   ← Enrôlement et connectivité des agents serveur
+│   ├── domain/
+│   │   ├── model/           ← Agent, EnrollmentToken, Ed25519PublicKey, VerifyHandshakeCommand…
+│   │   └── port/out/        ← AgentRepository, AgentPresencePort, AgentChallengeStorePort, AgentSignatureVerifierPort…
+│   ├── application/
+│   │   ├── handler/         ← EnrollAgentHandler, VerifyAgentHandshakeHandler, RevokeAgentHandler…
+│   │   └── port/in/         ← EnrollAgentUseCase, OpenAgentChallengeUseCase, VerifyAgentHandshakeUseCase…
+│   └── infrastructure/
+│       ├── persistence/     ← AgentRepositoryAdapter, EnrollmentTokenRepositoryAdapter
+│       ├── security/        ← Ed25519SignatureVerifier, AgentFingerprintDeriver, Sha256AgentTokenHasher
+│       ├── redis/           ← RedisAgentPresenceStore, RedisAgentChallengeStore, AgentConnectionRegistry (Pub/Sub révocation)
+│       ├── ws/              ← AgentWebSocketHandler, LocalAgentSessions, AgentRevocationSubscriber
+│       └── web/             ← AgentController, AgentEnrollmentController, EnrollmentTokenController
 │
 ├── shared/                  ← Types transverses uniquement
 │   ├── model/               ← Role (enum), TotpPolicy (MAX_ATTEMPTS)
@@ -115,6 +129,7 @@ Toute autre dépendance cross-BC dans les couches infra ou application casse le 
 - **TOTP** : secret chiffré AES-256/GCM (clé maître `SYNAPSYS_ENCRYPTION_SECRET`, sel par userId), anti-replay Redis SETNX, lockout 429 après 5 échecs
 - **Cookies** : HttpOnly, Secure, SameSite=Strict, paths séparés (`/api/auth` vs `/api/auth/2fa`)
 - **Timing attack** : dummy BCrypt hash précompilé pour les usernames inconnus
+- **Connectivité agents** : handshake WebSocket challenge-response Ed25519 (nonce CSPRNG à usage unique en Redis, TTL court) ; présence et heartbeat via Redis ; révocation live propagée multi-instances par Redis Pub/Sub (fermeture du socket sur le nœud qui le détient)
 
 ---
 
