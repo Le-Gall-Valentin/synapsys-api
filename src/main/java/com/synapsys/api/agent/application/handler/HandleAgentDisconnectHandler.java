@@ -22,8 +22,12 @@ public class HandleAgentDisconnectHandler implements HandleAgentDisconnectUseCas
 
     @Override
     @Transactional
-    public void disconnect(UUID agentId, String ip) {
-        agentRepository.updateActivitySnapshot(agentId, Instant.now(), ip);
-        presence.clear(agentId);
+    public void disconnect(UUID agentId, String ip, String nodeId) {
+        // Only the node that still owns the presence finalizes the disconnect. A stale session on
+        // another node (the agent reconnected elsewhere) must not clear the live presence nor
+        // overwrite the activity snapshot.
+        if (presence.clearIfOwnedBy(agentId, nodeId)) {
+            agentRepository.updateActivitySnapshot(agentId, Instant.now(), ip);
+        }
     }
 }

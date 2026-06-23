@@ -44,12 +44,6 @@ class RedisAgentPresenceStoreTest {
     }
 
     @Test
-    void refresh_extendsTtl() {
-        store.refresh(agentId);
-        verify(redis).expire("agent:presence:" + agentId, Duration.ofSeconds(90));
-    }
-
-    @Test
     void clear_deletesKey() {
         store.clear(agentId);
         verify(redis).delete("agent:presence:" + agentId);

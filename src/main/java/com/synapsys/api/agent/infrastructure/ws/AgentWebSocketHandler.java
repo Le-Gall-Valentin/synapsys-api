@@ -115,7 +115,8 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
         }
         String agentIdStr = (String) session.getAttributes().get(ATTR_AGENT_ID);
         if (agentIdStr != null) {
-            recordHeartbeat.heartbeat(UUID.fromString(agentIdStr));
+            recordHeartbeat.heartbeat(UUID.fromString(agentIdStr), nodeId,
+                (String) session.getAttributes().get(ATTR_IP));
         }
     }
 
@@ -136,7 +137,7 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         try {
-            handleDisconnect.disconnect(agentId, ip);
+            handleDisconnect.disconnect(agentId, ip, nodeId);
         } catch (Exception e) {
             log.warn("Disconnect flush failed for agent {}", agentId, e);
         }

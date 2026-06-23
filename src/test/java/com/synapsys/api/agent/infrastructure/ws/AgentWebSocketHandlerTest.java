@@ -103,20 +103,21 @@ class AgentWebSocketHandlerTest {
     }
 
     @Test
-    void heartbeat_whenAuthenticated_refreshesPresence() throws Exception {
+    void heartbeat_whenAuthenticated_reassertsPresence() throws Exception {
         attributes.put("agentId", agentId.toString());
         attributes.put("authenticated", Boolean.TRUE);
+        attributes.put("ip", "1.2.3.4");
 
         handler.handleTextMessage(session, msg("{\"type\":\"heartbeat\"}"));
 
-        verify(recordHeartbeat).heartbeat(agentId);
+        verify(recordHeartbeat).heartbeat(eq(agentId), any(), eq("1.2.3.4"));
     }
 
     @Test
     void heartbeat_whenNotAuthenticated_isIgnored() throws Exception {
         attributes.put("agentId", agentId.toString());
         handler.handleTextMessage(session, msg("{\"type\":\"heartbeat\"}"));
-        verify(recordHeartbeat, never()).heartbeat(any());
+        verify(recordHeartbeat, never()).heartbeat(any(), any(), any());
     }
 
     @Test
@@ -130,7 +131,7 @@ class AgentWebSocketHandlerTest {
 
         verify(connectionLimiter).release("1.2.3.4");
         verify(localSessions).unregister(agentId, session);
-        verify(handleDisconnect).disconnect(agentId, "1.2.3.4");
+        verify(handleDisconnect).disconnect(eq(agentId), eq("1.2.3.4"), any());
     }
 
     @Test
@@ -143,7 +144,7 @@ class AgentWebSocketHandlerTest {
         handler.afterConnectionClosed(session, CloseStatus.NORMAL);
 
         verify(connectionLimiter).release("1.2.3.4");
-        verify(handleDisconnect, never()).disconnect(any(), any());
+        verify(handleDisconnect, never()).disconnect(any(), any(), any());
     }
 
     @Test
@@ -154,6 +155,6 @@ class AgentWebSocketHandlerTest {
 
         verify(connectionLimiter).release("1.2.3.4");
         verify(localSessions, never()).unregister(any(), any());
-        verify(handleDisconnect, never()).disconnect(any(), any());
+        verify(handleDisconnect, never()).disconnect(any(), any(), any());
     }
 }

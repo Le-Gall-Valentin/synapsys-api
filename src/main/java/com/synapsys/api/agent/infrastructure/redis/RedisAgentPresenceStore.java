@@ -3,6 +3,7 @@ package com.synapsys.api.agent.infrastructure.redis;
 import com.synapsys.api.agent.domain.port.out.AgentPresencePort;
 import com.synapsys.api.agent.infrastructure.config.AgentProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -18,6 +19,17 @@ public class RedisAgentPresenceStore implements AgentPresencePort {
 
     private static final String PRESENCE_PREFIX = "agent:presence:";
 
+    // Atomic compare-and-delete: only removes the key when its value still belongs to this node
+    // (value layout: "{nodeId}|{ip}|{connectedAtMillis}"), so a stale node cannot clear presence
+    // that the agent has re-established elsewhere.
+    private static final RedisScript<Long> CLEAR_IF_OWNED = RedisScript.of("""
+        local current = redis.call('GET', KEYS[1])
+        if current and string.sub(current, 1, string.len(ARGV[1])) == ARGV[1] then
+            return redis.call('DEL', KEYS[1])
+        end
+        return 0
+        """, Long.class);
+
     private final StringRedisTemplate redis;
     private final Duration presenceTtl;
 
@@ -32,13 +44,14 @@ public class RedisAgentPresenceStore implements AgentPresencePort {
     }
 
     @Override
-    public void refresh(UUID agentId) {
-        redis.expire(key(agentId), presenceTtl);
+    public void clear(UUID agentId) {
+        redis.delete(key(agentId));
     }
 
     @Override
-    public void clear(UUID agentId) {
-        redis.delete(key(agentId));
+    public boolean clearIfOwnedBy(UUID agentId, String nodeId) {
+        Long removed = redis.execute(CLEAR_IF_OWNED, List.of(key(agentId)), nodeId + "|");
+        return removed != null && removed > 0;
     }
 
     @Override
