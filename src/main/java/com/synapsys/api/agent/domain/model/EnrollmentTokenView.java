@@ -4,4 +4,5 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record EnrollmentTokenView(
-    UUID id, String serverName, EnrollmentTokenStatus status, Instant expiresAt, UUID createdBy, Instant createdAt) {}
+    UUID id, String serverName, EnrollmentTokenStatus status,
+    Instant expiresAt, TokenCreator createdBy, Instant createdAt) {}

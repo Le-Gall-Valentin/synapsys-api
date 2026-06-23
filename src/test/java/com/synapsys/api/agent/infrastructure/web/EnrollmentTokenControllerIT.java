@@ -169,6 +169,8 @@ class EnrollmentTokenControllerIT {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].serverName").value("web-01"))
             .andExpect(jsonPath("$.content[0].status").value("ACTIVE"))
+            .andExpect(jsonPath("$.content[0].createdBy.id").value(adminId.toString()))
+            .andExpect(jsonPath("$.content[0].createdBy.username").value("superadmin"))
             .andExpect(jsonPath("$.content[0].token").doesNotExist())
             .andExpect(jsonPath("$.content[0].tokenHash").doesNotExist());
     }

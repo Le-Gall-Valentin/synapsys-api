@@ -12,6 +12,7 @@ import com.synapsys.api.agent.infrastructure.web.dto.CreateEnrollmentTokenReques
 import com.synapsys.api.agent.infrastructure.web.dto.CreatedTokenResponse;
 import com.synapsys.api.agent.infrastructure.web.dto.EnrollmentTokenResponse;
 import com.synapsys.api.agent.infrastructure.web.dto.PageResponse;
+import com.synapsys.api.agent.infrastructure.web.dto.TokenCreatorResponse;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
@@ -114,7 +115,10 @@ public class EnrollmentTokenController {
         PageResult<EnrollmentTokenView> result = listUseCase.list(page, size, sort);
         PageResponse<EnrollmentTokenResponse> response = new PageResponse<>(
             result.content().stream()
-                .map(v -> new EnrollmentTokenResponse(v.id(), v.serverName(), v.status(), v.expiresAt(), v.createdBy(), v.createdAt()))
+                .map(v -> new EnrollmentTokenResponse(
+                    v.id(), v.serverName(), v.status(), v.expiresAt(),
+                    new TokenCreatorResponse(v.createdBy().id(), v.createdBy().username()),
+                    v.createdAt()))
                 .toList(),
             result.totalElements(), result.page(), result.size());
         return ResponseEntity.ok(response);
