@@ -18,6 +18,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +51,14 @@ public class UserIdentityRepositoryAdapter implements UserRepository, UserComman
     @Override
     public Optional<User> findById(UUID id) {
         return jpa.findByIdAndDeletedFalse(id).map(this::toDomain);
+    }
+
+    @Override
+    public List<User> findByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jpa.findByIdInAndDeletedFalse(ids).stream().map(this::toDomain).toList();
     }
 
     @Override
