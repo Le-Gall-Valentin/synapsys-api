@@ -64,7 +64,8 @@ public class AgentEntity {
     @Column(name = "last_activity_at")
     private Instant lastActivityAt;
 
-    @Column(name = "ip_address", length = 45)
+    // 64 leaves headroom over the 45-char IPv6 max for zone ids / proxy-appended values.
+    @Column(name = "ip_address", length = 64)
     private String ipAddress;
 
     @Column(name = "revoked_at")

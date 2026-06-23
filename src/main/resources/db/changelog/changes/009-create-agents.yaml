@@ -62,7 +62,7 @@ databaseChangeLog:
                   type: TIMESTAMPTZ
               - column:
                   name: ip_address
-                  type: VARCHAR(45)
+                  type: VARCHAR(64)
               - column:
                   name: revoked_at
                   type: TIMESTAMPTZ
