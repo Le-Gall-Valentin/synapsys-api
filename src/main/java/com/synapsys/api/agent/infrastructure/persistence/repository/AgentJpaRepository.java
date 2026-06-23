@@ -21,7 +21,7 @@ public interface AgentJpaRepository extends JpaRepository<AgentEntity, UUID> {
     @Query("""
         UPDATE AgentEntity a
         SET a.firstConnectedAt = COALESCE(a.firstConnectedAt, :when), a.lastActivityAt = :when, a.ipAddress = :ip
-        WHERE a.id = :id
+        WHERE a.id = :id AND a.revokedAt IS NULL
         """)
     int markConnected(@Param("id") UUID id, @Param("when") Instant when, @Param("ip") String ip);
 
@@ -44,9 +44,11 @@ public interface AgentJpaRepository extends JpaRepository<AgentEntity, UUID> {
     @Query("DELETE FROM AgentEntity a WHERE a.id = :id AND a.revokedAt IS NOT NULL")
     int deleteIfRevoked(@Param("id") UUID id);
 
-    @Query("SELECT a FROM AgentEntity a WHERE a.revokedAt IS NULL")
+    // Filter on the indexed status column (idx_agents_status) rather than revoked_at,
+    // so the planner can use the index; status REVOKED <=> revoked_at set (see markRevoked).
+    @Query("SELECT a FROM AgentEntity a WHERE a.status = ENROLLED")
     List<AgentEntity> findAllNonRevoked();
 
-    @Query("SELECT COUNT(a) FROM AgentEntity a WHERE a.revokedAt IS NOT NULL")
+    @Query("SELECT COUNT(a) FROM AgentEntity a WHERE a.status = REVOKED")
     long countRevoked();
 }

@@ -46,7 +46,11 @@ public class VerifyAgentHandshakeHandler implements VerifyAgentHandshakeUseCase 
         if (!signatureVerifier.verify(agent.publicKey(), message, command.signature())) {
             throw new AgentException.HandshakeFailed();
         }
-        agentRepository.markConnected(agent.id(), now, ip);
+        // Atomic guard: if the agent was revoked between the read above and here, no row changes
+        // and we reject rather than marking a revoked agent present.
+        if (!agentRepository.markConnected(agent.id(), now, ip)) {
+            throw new AgentException.HandshakeFailed();
+        }
         presence.markPresent(agent.id(), nodeId, ip, now);
     }
 }

@@ -104,6 +104,15 @@ class AgentJpaRepositoryIT {
     }
 
     @Test
+    void markConnected_skipsRevokedAgent() {
+        AgentEntity a = agents.saveAndFlush(newAgent("web-01", "pk-1", "fp-1"));
+        agents.markRevoked(a.getId(), userId, Instant.now(), AgentLifecycleStatus.REVOKED);
+
+        assertThat(agents.markConnected(a.getId(), Instant.now(), "1.1.1.1")).isZero();
+        assertThat(agents.findById(a.getId()).orElseThrow().getFirstConnectedAt()).isNull();
+    }
+
+    @Test
     void findAllNonRevoked_and_countRevoked() {
         agents.saveAndFlush(newAgent("web-01", "pk-1", "fp-1"));
         AgentEntity b = agents.saveAndFlush(newAgent("web-02", "pk-2", "fp-2"));

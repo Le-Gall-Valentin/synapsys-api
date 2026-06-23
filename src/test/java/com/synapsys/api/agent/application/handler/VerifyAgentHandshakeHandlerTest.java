@@ -58,11 +58,25 @@ class VerifyAgentHandshakeHandlerTest {
         when(challengeStore.consumeChallenge("conn-1")).thenReturn(Optional.of("nonce"));
         when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent(AgentLifecycleStatus.ENROLLED)));
         when(signatureVerifier.verify(any(), any(), eq(signature))).thenReturn(true);
+        when(agentRepository.markConnected(eq(agentId), any(), eq("1.2.3.4"))).thenReturn(true);
 
         assertThatCode(() -> handler.verify(cmd(), "1.2.3.4", "node-A")).doesNotThrowAnyException();
 
         verify(agentRepository).markConnected(eq(agentId), any(), eq("1.2.3.4"));
         verify(presence).markPresent(eq(agentId), eq("node-A"), eq("1.2.3.4"), any());
+    }
+
+    @Test
+    void verify_agentRevokedMidConnect_throwsHandshakeFailed_andSkipsPresence() {
+        when(challengeStore.consumeChallenge("conn-1")).thenReturn(Optional.of("nonce"));
+        when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent(AgentLifecycleStatus.ENROLLED)));
+        when(signatureVerifier.verify(any(), any(), eq(signature))).thenReturn(true);
+        // Concurrent revoke between the read and the update: no row changes.
+        when(agentRepository.markConnected(eq(agentId), any(), eq("1.2.3.4"))).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.verify(cmd(), "1.2.3.4", "node-A"))
+            .isInstanceOf(AgentException.HandshakeFailed.class);
+        verify(presence, never()).markPresent(any(), any(), any(), any());
     }
 
     @Test

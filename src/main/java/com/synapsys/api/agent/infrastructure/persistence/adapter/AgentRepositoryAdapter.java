@@ -53,8 +53,8 @@ public class AgentRepositoryAdapter implements AgentRepository {
     }
 
     @Override
-    public void markConnected(UUID id, Instant when, String ip) {
-        jpa.markConnected(id, when, ip);
+    public boolean markConnected(UUID id, Instant when, String ip) {
+        return jpa.markConnected(id, when, ip) == 1;
     }
 
     @Override

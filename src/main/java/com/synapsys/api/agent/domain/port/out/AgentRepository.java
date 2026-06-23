@@ -15,8 +15,11 @@ public interface AgentRepository {
     Agent insert(NewAgent newAgent);
     Optional<Agent> findById(UUID id);
     boolean existsByPublicKey(byte[] publicKey);
-    /** Sets first_connected_at (only if null), last_activity_at and ip_address. */
-    void markConnected(UUID id, Instant when, String ip);
+    /**
+     * Sets first_connected_at (only if null), last_activity_at and ip_address for a non-revoked agent.
+     * Returns true if exactly one row changed; false if the agent was revoked concurrently.
+     */
+    boolean markConnected(UUID id, Instant when, String ip);
     /** Flushes last_activity_at and ip_address (e.g. on disconnect). */
     void updateActivitySnapshot(UUID id, Instant lastActivityAt, String ip);
     /** Atomic guard: ENROLLED -> REVOKED; true if exactly one row changed. */
