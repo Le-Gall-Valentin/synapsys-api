@@ -65,10 +65,13 @@ class ArchRulesTest {
 
     @Test
     void application_should_not_depend_on_spring_except_transactions() {
+        // The application layer may use Spring's transaction API (declarative @Transactional and
+        // programmatic transaction support such as TransactionSynchronization for after-commit hooks),
+        // but nothing else from Spring.
         DescribedPredicate<JavaClass> springExceptTransactions = DescribedPredicate.describe(
-            "reside in org.springframework.. but not org.springframework.transaction.annotation..",
+            "reside in org.springframework.. but not org.springframework.transaction..",
             clazz -> clazz.getPackageName().startsWith("org.springframework.")
-                     && !clazz.getPackageName().startsWith("org.springframework.transaction.annotation")
+                     && !clazz.getPackageName().startsWith("org.springframework.transaction")
         );
         noClasses()
             .that().resideInAPackage("..application..")

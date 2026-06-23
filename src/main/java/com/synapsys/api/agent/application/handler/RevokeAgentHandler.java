@@ -9,6 +9,8 @@ import com.synapsys.api.agent.domain.port.out.AgentPresencePort;
 import com.synapsys.api.agent.domain.port.out.AgentRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 
@@ -36,8 +38,26 @@ public class RevokeAgentHandler implements RevokeAgentUseCase {
         if (!agentRepository.markRevoked(command.agentId(), command.callerId(), now)) {
             throw new AgentException.AgentNotRevocable();
         }
-        // Redis side effects (outside the JPA transaction, documented trade-off):
-        presence.clear(command.agentId());
-        connectionRegistry.requestClose(command.agentId());
+        // Run the Redis side effects only once the revocation is durably committed: a rolled-back
+        // transaction must never leave a live connection closed / presence cleared for an agent
+        // whose row is still ENROLLED (it would otherwise reconnect freely).
+        runAfterCommit(() -> {
+            presence.clear(command.agentId());
+            connectionRegistry.requestClose(command.agentId());
+        });
+    }
+
+    private static void runAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            // No active transaction (e.g. unit tests): run inline.
+            action.run();
+        }
     }
 }

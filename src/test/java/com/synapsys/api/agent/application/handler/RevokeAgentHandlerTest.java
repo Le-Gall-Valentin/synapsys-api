@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -52,6 +54,28 @@ class RevokeAgentHandlerTest {
         assertThatCode(() -> handler.revoke(new RevokeAgentCommand(agentId, caller))).doesNotThrowAnyException();
         verify(presence).clear(agentId);
         verify(connectionRegistry).requestClose(agentId);
+    }
+
+    @Test
+    void revoke_withActiveTransaction_defersSideEffectsUntilCommit() {
+        when(agentRepository.findById(agentId)).thenReturn(Optional.of(agent(AgentLifecycleStatus.ENROLLED)));
+        when(agentRepository.markRevoked(eq(agentId), eq(caller), any())).thenReturn(true);
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            handler.revoke(new RevokeAgentCommand(agentId, caller));
+
+            // Registered, but not run until the transaction commits.
+            verify(presence, never()).clear(any());
+            verify(connectionRegistry, never()).requestClose(any());
+
+            for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+                sync.afterCommit();
+            }
+            verify(presence).clear(agentId);
+            verify(connectionRegistry).requestClose(agentId);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
