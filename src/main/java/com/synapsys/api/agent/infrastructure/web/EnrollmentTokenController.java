@@ -12,6 +12,7 @@ import com.synapsys.api.agent.infrastructure.web.dto.CreateEnrollmentTokenReques
 import com.synapsys.api.agent.infrastructure.web.dto.CreatedTokenResponse;
 import com.synapsys.api.agent.infrastructure.web.dto.EnrollmentTokenResponse;
 import com.synapsys.api.agent.infrastructure.web.dto.PageResponse;
+import com.synapsys.api.agent.infrastructure.web.dto.TokenCreatorResponse;
 import com.synapsys.api.infrastructure.ratelimit.RateLimiting;
 import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
@@ -36,6 +37,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.UUID;
 
 @Tag(name = "Agents - Tokens d'enrôlement")
@@ -58,11 +60,12 @@ public class EnrollmentTokenController {
     }
 
     @Operation(summary = "Créer un token d'enrôlement (admin)",
-        description = "Génère un token à usage unique (validité 24h). Le token en clair n'est renvoyé qu'ici. Rate limit : 20 req/fenêtre.")
+        description = "Génère un token à usage unique. ttlMinutes optionnel : omis = maximum configuré (24h par défaut), " +
+            "sinon durée de validité demandée. Le token en clair n'est renvoyé qu'ici. Rate limit : 20 req/fenêtre.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Token créé",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = CreatedTokenResponse.class))),
-        @ApiResponse(responseCode = "400", description = "serverName invalide",
+        @ApiResponse(responseCode = "400", description = "serverName invalide, ou ttlMinutes hors bornes (< 1 ou supérieur au maximum configuré)",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))),
         @ApiResponse(responseCode = "401", description = "Non authentifié",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))),
@@ -76,7 +79,9 @@ public class EnrollmentTokenController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<CreatedTokenResponse> create(@Valid @RequestBody CreateEnrollmentTokenRequest request,
                                                         @Parameter(hidden = true) @CurrentUser AuthenticatedUser caller) {
-        IssuedToken issued = createUseCase.create(new CreateEnrollmentTokenCommand(request.serverName(), caller.userId()));
+        Duration ttl = request.ttlMinutes() == null ? null : Duration.ofMinutes(request.ttlMinutes());
+        IssuedToken issued = createUseCase.create(
+            new CreateEnrollmentTokenCommand(request.serverName(), ttl, caller.userId()));
         URI location = URI.create("/api/agents/enrollment-tokens/" + issued.id());
         // A freshly issued token is ACTIVE by construction (IssuedToken carries no status: not yet consumed/revoked/expired).
         return ResponseEntity.created(location).body(new CreatedTokenResponse(
@@ -110,7 +115,10 @@ public class EnrollmentTokenController {
         PageResult<EnrollmentTokenView> result = listUseCase.list(page, size, sort);
         PageResponse<EnrollmentTokenResponse> response = new PageResponse<>(
             result.content().stream()
-                .map(v -> new EnrollmentTokenResponse(v.id(), v.serverName(), v.status(), v.expiresAt(), v.createdBy(), v.createdAt()))
+                .map(v -> new EnrollmentTokenResponse(
+                    v.id(), v.serverName(), v.status(), v.expiresAt(),
+                    new TokenCreatorResponse(v.createdBy().id(), v.createdBy().username()),
+                    v.createdAt()))
                 .toList(),
             result.totalElements(), result.page(), result.size());
         return ResponseEntity.ok(response);

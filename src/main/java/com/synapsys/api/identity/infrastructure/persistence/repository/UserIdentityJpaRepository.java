@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,6 +21,8 @@ public interface UserIdentityJpaRepository extends JpaRepository<UserIdentityEnt
 
     @Query("SELECT u FROM UserIdentityEntity u WHERE u.id = :id AND u.deleted = false")
     Optional<UserIdentityEntity> findByIdAndDeletedFalse(@Param("id") UUID id);
+
+    List<UserIdentityEntity> findByIdInAndDeletedFalse(Collection<UUID> ids);
 
     @Query("SELECT u FROM UserIdentityEntity u WHERE u.deleted = false")
     Page<UserIdentityEntity> findAllNotDeleted(Pageable pageable);

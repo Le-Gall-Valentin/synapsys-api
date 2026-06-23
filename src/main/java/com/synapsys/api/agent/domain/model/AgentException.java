@@ -3,6 +3,7 @@ package com.synapsys.api.agent.domain.model;
 public abstract sealed class AgentException extends RuntimeException
     permits AgentException.TokenNotFound,
             AgentException.TokenNotRevocable,
+            AgentException.InvalidTokenTtl,
             AgentException.InvalidPublicKey,
             AgentException.PublicKeyAlreadyRegistered,
             AgentException.ServerNameInUse,
@@ -20,6 +21,9 @@ public abstract sealed class AgentException extends RuntimeException
     }
     public static final class TokenNotRevocable extends AgentException {
         public TokenNotRevocable() { super("Enrollment token cannot be revoked"); }
+    }
+    public static final class InvalidTokenTtl extends AgentException {
+        public InvalidTokenTtl() { super("Requested token TTL exceeds the configured maximum"); }
     }
     public static final class InvalidPublicKey extends AgentException {
         public InvalidPublicKey() { super("Public key is not a valid Ed25519 key"); }

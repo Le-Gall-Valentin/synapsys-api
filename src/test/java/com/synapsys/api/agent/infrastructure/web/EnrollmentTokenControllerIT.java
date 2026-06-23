@@ -128,6 +128,41 @@ class EnrollmentTokenControllerIT {
     }
 
     @Test
+    void create_withTtlMinutes_setsShorterExpiry() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        Instant before = Instant.now();
+        MvcResult result = mockMvc.perform(post("/api/agents/enrollment-tokens").cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"serverName\":\"web-01\",\"ttlMinutes\":15}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+        String expiresAt = objectMapper.readTree(result.getResponse().getContentAsString())
+            .get("expiresAt").asText();
+        Instant exp = Instant.parse(expiresAt);
+        org.assertj.core.api.Assertions.assertThat(exp)
+            .isAfter(before.plus(14, ChronoUnit.MINUTES))
+            .isBefore(before.plus(16, ChronoUnit.MINUTES));
+    }
+
+    @Test
+    void create_ttlAboveMaximum_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(post("/api/agents/enrollment-tokens").cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"serverName\":\"web-01\",\"ttlMinutes\":1500}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_ttlBelowOne_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(post("/api/agents/enrollment-tokens").cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"serverName\":\"web-01\",\"ttlMinutes\":0}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void list_neverLeaksTokenOrHash() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
         tokenRepository.saveAndFlush(new EnrollmentTokenEntity(
@@ -136,6 +171,8 @@ class EnrollmentTokenControllerIT {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].serverName").value("web-01"))
             .andExpect(jsonPath("$.content[0].status").value("ACTIVE"))
+            .andExpect(jsonPath("$.content[0].createdBy.id").value(adminId.toString()))
+            .andExpect(jsonPath("$.content[0].createdBy.username").value("superadmin"))
             .andExpect(jsonPath("$.content[0].token").doesNotExist())
             .andExpect(jsonPath("$.content[0].tokenHash").doesNotExist());
     }

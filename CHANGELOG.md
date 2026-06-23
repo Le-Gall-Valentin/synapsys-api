@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added — BC `agent` (connectivité & enrôlement)
 - Bounded context `agent` : enrôlement par token single-use, clé publique Ed25519 épinglée, registre admin (liste/statistiques/révocation/suppression)
 - Enrôlement anti-énumération : rejet uniforme (token inconnu/expiré/consommé/révoqué), token haché SHA-256, usage unique garanti par garde atomique
+- Création de token : durée de validité paramétrable par requête (`ttlMinutes`), plafonnée par `SYNAPSYS_AGENT_TOKEN_VALIDITY_HOURS` (au-delà → 400)
+- Liste des tokens d'enrôlement : créateur exposé en objet `{ id, username }`, usernames résolus en une requête batch via ACL vers le BC `identity`
 - Authentification agent par challenge-response Ed25519 : nonce CSPRNG à usage unique en Redis (TTL court), aucune PKI/mTLS
 - Connectivité WebSocket (`/ws/agents`) : présence et heartbeat via Redis, statut dérivé (PENDING/ACTIVE/INACTIVE/REVOKED)
 - Révocation live propagée multi-instances par Redis Pub/Sub (fermeture du socket sur le nœud qui le détient)

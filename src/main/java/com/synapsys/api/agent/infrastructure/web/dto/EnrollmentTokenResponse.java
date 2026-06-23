@@ -12,6 +12,6 @@ public record EnrollmentTokenResponse(
     String serverName,
     EnrollmentTokenStatus status,
     Instant expiresAt,
-    UUID createdBy,
+    TokenCreatorResponse createdBy,
     Instant createdAt
 ) {}

@@ -19,6 +19,6 @@ public class CreateEnrollmentTokenHandler implements CreateEnrollmentTokenUseCas
     @Override
     @Transactional
     public IssuedToken create(CreateEnrollmentTokenCommand command) {
-        return issuer.issue(command.serverName(), command.createdBy());
+        return issuer.issue(command.serverName(), command.ttl(), command.createdBy());
     }
 }

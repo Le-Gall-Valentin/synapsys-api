@@ -84,7 +84,7 @@ Key variables:
 | `SYNAPSYS_SEED_USERNAME` | Initial super-admin username |
 | `SYNAPSYS_SEED_EMAIL` | Initial super-admin email |
 | `SYNAPSYS_SEED_PASSWORD` | Initial super-admin password (min 8 chars) |
-| `SYNAPSYS_AGENT_TOKEN_VALIDITY_HOURS` | Enrollment token validity in hours (default: 24) |
+| `SYNAPSYS_AGENT_TOKEN_VALIDITY_HOURS` | Maximum and default enrollment token validity in hours; per-request `ttlMinutes` may request a shorter window but never longer (default: 24) |
 | `SYNAPSYS_AGENT_CHALLENGE_TTL_SECONDS` | Handshake challenge (nonce) TTL in seconds (default: 30) |
 | `SYNAPSYS_AGENT_PRESENCE_TTL_SECONDS` | Agent presence TTL; agent is "down" past this without a heartbeat (default: 90) |
 | `SYNAPSYS_AGENT_MAX_CONNECTIONS_PER_IP` | Max concurrent agent WebSocket connections per client IP (default: 10) |
