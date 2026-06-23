@@ -19,21 +19,38 @@ public class LocalAgentSessions {
     private final ConcurrentMap<UUID, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     public void register(UUID agentId, WebSocketSession session) {
-        sessions.put(agentId, session);
+        WebSocketSession previous = sessions.put(agentId, session);
+        // A reconnecting agent supersedes its previous session: close the stale one so it
+        // does not linger half-open. Its later afterConnectionClosed is a no-op (identity check).
+        if (previous != null && previous != session) {
+            closeQuietly(previous);
+        }
     }
 
-    public void unregister(UUID agentId) {
-        sessions.remove(agentId);
+    /**
+     * Removes the mapping only if {@code session} is still the registered one.
+     * Returns {@code true} when this session was the live mapping. A stale session closing
+     * after the agent already reconnected returns {@code false} and must not evict the new session.
+     */
+    public boolean unregister(UUID agentId, WebSocketSession session) {
+        return sessions.remove(agentId, session);
     }
 
     public void close(UUID agentId) {
         WebSocketSession session = sessions.remove(agentId);
-        if (session != null && session.isOpen()) {
-            try {
-                session.close(CloseStatus.POLICY_VIOLATION);
-            } catch (IOException e) {
-                log.debug("Failed to close session for revoked agent {}", agentId, e);
-            }
+        if (session != null) {
+            closeQuietly(session);
+        }
+    }
+
+    private void closeQuietly(WebSocketSession session) {
+        if (!session.isOpen()) {
+            return;
+        }
+        try {
+            session.close(CloseStatus.POLICY_VIOLATION);
+        } catch (IOException e) {
+            log.debug("Failed to close session {}", session.getId(), e);
         }
     }
 }

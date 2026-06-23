@@ -32,7 +32,7 @@ class EnrollmentTokenGeneratorTest {
 
     @BeforeEach
     void setUp() {
-        var props = new AgentProperties(24, 30, 90, "synenr_", "/ws/agents");
+        var props = new AgentProperties(24, 30, 90, 10, "synenr_", "/ws/agents");
         generator = new EnrollmentTokenGenerator(repository, hashPort, props);
     }
 

@@ -34,6 +34,7 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
     private final RecordAgentHeartbeatUseCase recordHeartbeat;
     private final HandleAgentDisconnectUseCase handleDisconnect;
     private final LocalAgentSessions localSessions;
+    private final AgentConnectionLimiter connectionLimiter;
     private final ObjectMapper objectMapper;
     private final String nodeId = UUID.randomUUID().toString();
 
@@ -42,12 +43,14 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
                                  RecordAgentHeartbeatUseCase recordHeartbeat,
                                  HandleAgentDisconnectUseCase handleDisconnect,
                                  LocalAgentSessions localSessions,
+                                 AgentConnectionLimiter connectionLimiter,
                                  ObjectMapper objectMapper) {
         this.openChallenge = openChallenge;
         this.verifyHandshake = verifyHandshake;
         this.recordHeartbeat = recordHeartbeat;
         this.handleDisconnect = handleDisconnect;
         this.localSessions = localSessions;
+        this.connectionLimiter = connectionLimiter;
         this.objectMapper = objectMapper;
     }
 
@@ -118,14 +121,22 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        String ip = (String) session.getAttributes().get(ATTR_IP);
+        if (ip != null) {
+            connectionLimiter.release(ip);
+        }
         String agentIdStr = (String) session.getAttributes().get(ATTR_AGENT_ID);
         if (agentIdStr == null || !Boolean.TRUE.equals(session.getAttributes().get(ATTR_AUTHENTICATED))) {
             return;
         }
         UUID agentId = UUID.fromString(agentIdStr);
-        localSessions.unregister(agentId);
+        // Flush only when this session is still the live mapping. A stale session closing after the
+        // agent reconnected must not unregister or clear the presence of the new session.
+        if (!localSessions.unregister(agentId, session)) {
+            return;
+        }
         try {
-            handleDisconnect.disconnect(agentId, (String) session.getAttributes().get(ATTR_IP));
+            handleDisconnect.disconnect(agentId, ip);
         } catch (Exception e) {
             log.warn("Disconnect flush failed for agent {}", agentId, e);
         }

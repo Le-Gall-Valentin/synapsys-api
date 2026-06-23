@@ -6,6 +6,8 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,15 +35,47 @@ class LocalAgentSessionsTest {
     }
 
     @Test
-    void unregister_removesSession_soCloseDoesNothing() throws Exception {
+    void unregister_removesMatchingSession_soCloseDoesNothing() throws Exception {
         LocalAgentSessions sessions = new LocalAgentSessions();
         UUID agentId = UUID.randomUUID();
         WebSocketSession session = mock(WebSocketSession.class);
         sessions.register(agentId, session);
-        sessions.unregister(agentId);
+
+        assertThat(sessions.unregister(agentId, session)).isTrue();
 
         sessions.close(agentId);
+        verify(session, never()).close(any());
+    }
 
-        verify(session, never()).close(CloseStatus.POLICY_VIOLATION);
+    @Test
+    void unregister_staleSession_doesNotEvictTheReconnectedOne() throws Exception {
+        LocalAgentSessions sessions = new LocalAgentSessions();
+        UUID agentId = UUID.randomUUID();
+        WebSocketSession stale = mock(WebSocketSession.class);
+        WebSocketSession current = mock(WebSocketSession.class);
+        when(current.isOpen()).thenReturn(true);
+        sessions.register(agentId, stale);
+        sessions.register(agentId, current); // agent reconnected: current supersedes stale
+
+        // The stale session closing late must not remove the current mapping...
+        assertThat(sessions.unregister(agentId, stale)).isFalse();
+
+        // ...so a revocation still reaches the live connection.
+        sessions.close(agentId);
+        verify(current).close(CloseStatus.POLICY_VIOLATION);
+    }
+
+    @Test
+    void register_supersedingSession_closesThePreviousOne() throws Exception {
+        LocalAgentSessions sessions = new LocalAgentSessions();
+        UUID agentId = UUID.randomUUID();
+        WebSocketSession previous = mock(WebSocketSession.class);
+        WebSocketSession next = mock(WebSocketSession.class);
+        when(previous.isOpen()).thenReturn(true);
+
+        sessions.register(agentId, previous);
+        sessions.register(agentId, next);
+
+        verify(previous).close(CloseStatus.POLICY_VIOLATION);
     }
 }

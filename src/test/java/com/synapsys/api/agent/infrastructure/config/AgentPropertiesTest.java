@@ -12,25 +12,31 @@ class AgentPropertiesTest {
 
     @Test
     void rejectsNonPositiveValidityHours() {
-        var props = new AgentProperties(0, 30, 90, "synenr_", "/ws/agents");
+        var props = new AgentProperties(0, 30, 90, 10, "synenr_", "/ws/agents");
         assertThat(validator.validate(props)).isNotEmpty();
     }
 
     @Test
     void rejectsNonPositiveChallengeTtl() {
-        var props = new AgentProperties(24, 0, 90, "synenr_", "/ws/agents");
+        var props = new AgentProperties(24, 0, 90, 10, "synenr_", "/ws/agents");
         assertThat(validator.validate(props)).isNotEmpty();
     }
 
     @Test
     void rejectsNonPositivePresenceTtl() {
-        var props = new AgentProperties(24, 30, -1, "synenr_", "/ws/agents");
+        var props = new AgentProperties(24, 30, -1, 10, "synenr_", "/ws/agents");
+        assertThat(validator.validate(props)).isNotEmpty();
+    }
+
+    @Test
+    void rejectsNonPositiveMaxConnectionsPerIp() {
+        var props = new AgentProperties(24, 30, 90, 0, "synenr_", "/ws/agents");
         assertThat(validator.validate(props)).isNotEmpty();
     }
 
     @Test
     void acceptsValidValues() {
-        var props = new AgentProperties(24, 30, 90, "synenr_", "/ws/agents");
+        var props = new AgentProperties(24, 30, 90, 10, "synenr_", "/ws/agents");
         assertThat(validator.validate(props)).isEmpty();
     }
 }

@@ -38,6 +38,7 @@ class AgentWebSocketHandlerTest {
     @Mock RecordAgentHeartbeatUseCase recordHeartbeat;
     @Mock HandleAgentDisconnectUseCase handleDisconnect;
     @Mock LocalAgentSessions localSessions;
+    @Mock AgentConnectionLimiter connectionLimiter;
     @Mock WebSocketSession session;
 
     private AgentWebSocketHandler handler;
@@ -48,7 +49,7 @@ class AgentWebSocketHandlerTest {
     @BeforeEach
     void setUp() {
         handler = new AgentWebSocketHandler(openChallenge, verifyHandshake, recordHeartbeat,
-            handleDisconnect, localSessions, objectMapper);
+            handleDisconnect, localSessions, connectionLimiter, objectMapper);
         lenient().when(session.getId()).thenReturn("conn-1");
         lenient().when(session.getAttributes()).thenReturn(attributes);
         lenient().when(session.isOpen()).thenReturn(true);
@@ -123,10 +124,36 @@ class AgentWebSocketHandlerTest {
         attributes.put("agentId", agentId.toString());
         attributes.put("authenticated", Boolean.TRUE);
         attributes.put("ip", "1.2.3.4");
+        when(localSessions.unregister(agentId, session)).thenReturn(true);
 
         handler.afterConnectionClosed(session, CloseStatus.NORMAL);
 
-        verify(localSessions).unregister(agentId);
+        verify(connectionLimiter).release("1.2.3.4");
+        verify(localSessions).unregister(agentId, session);
         verify(handleDisconnect).disconnect(agentId, "1.2.3.4");
+    }
+
+    @Test
+    void afterConnectionClosed_staleSession_releasesSlotButDoesNotFlush() {
+        attributes.put("agentId", agentId.toString());
+        attributes.put("authenticated", Boolean.TRUE);
+        attributes.put("ip", "1.2.3.4");
+        when(localSessions.unregister(agentId, session)).thenReturn(false); // agent already reconnected
+
+        handler.afterConnectionClosed(session, CloseStatus.NORMAL);
+
+        verify(connectionLimiter).release("1.2.3.4");
+        verify(handleDisconnect, never()).disconnect(any(), any());
+    }
+
+    @Test
+    void afterConnectionClosed_unauthenticated_stillReleasesSlot() {
+        attributes.put("ip", "1.2.3.4");
+
+        handler.afterConnectionClosed(session, CloseStatus.NORMAL);
+
+        verify(connectionLimiter).release("1.2.3.4");
+        verify(localSessions, never()).unregister(any(), any());
+        verify(handleDisconnect, never()).disconnect(any(), any());
     }
 }

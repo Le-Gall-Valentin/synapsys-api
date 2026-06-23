@@ -29,7 +29,7 @@ class RedisAgentChallengeStoreTest {
     @BeforeEach
     void setUp() {
         lenient().when(redis.opsForValue()).thenReturn(valueOps);
-        store = new RedisAgentChallengeStore(redis, new AgentProperties(24, 30, 90, "synenr_", "/ws/agents"));
+        store = new RedisAgentChallengeStore(redis, new AgentProperties(24, 30, 90, 10, "synenr_", "/ws/agents"));
     }
 
     @Test
