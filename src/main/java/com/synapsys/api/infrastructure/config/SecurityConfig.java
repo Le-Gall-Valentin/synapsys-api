@@ -1,5 +1,6 @@
 package com.synapsys.api.infrastructure.config;
 
+import com.synapsys.api.agent.infrastructure.config.AgentProperties;
 import com.synapsys.api.authentication.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtAuthenticationFilter jwtFilter,
                                     SynapsysProperties properties,
+                                    AgentProperties agentProperties,
                                     UnauthorizedEntryPoint unauthorizedEntryPoint,
                                     ForbiddenAccessDeniedHandler forbiddenAccessDeniedHandler) throws Exception {
         return http
@@ -48,7 +50,8 @@ public class SecurityConfig {
                 // TOTP challenge verification — authenticated via challenge cookie, not JWT
                 .requestMatchers(HttpMethod.POST, "/api/auth/2fa/verify").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/agents/enroll").permitAll()
-                .requestMatchers("/ws/agents").permitAll()
+                // Single source of truth: the WS handler registers at this same configurable path.
+                .requestMatchers(agentProperties.websocketPath()).permitAll()
                 // /api/** must be evaluated before the SPA fallback so extensionless
                 // paths like /api/users/me are never matched by the GET wildcard.
                 .requestMatchers("/api/**").authenticated()
