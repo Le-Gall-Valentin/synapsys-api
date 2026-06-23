@@ -10,6 +10,7 @@ import com.synapsys.api.agent.infrastructure.config.AgentProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class EnrollmentTokenGeneratorTest {
@@ -52,6 +53,23 @@ class EnrollmentTokenGeneratorTest {
         assertThat(issued.rawToken()).startsWith("synenr_");
         assertThat(issued.expiresAt()).isAfter(before.plus(23, ChronoUnit.HOURS));
         assertThat(issued.expiresAt()).isBefore(before.plus(25, ChronoUnit.HOURS));
+    }
+
+    @Test
+    void issue_persistsHashOfRawToken_serverName_andCreator() {
+        ArgumentCaptor<NewEnrollmentToken> captor = ArgumentCaptor.forClass(NewEnrollmentToken.class);
+
+        IssuedToken issued = generator.issue("web-01", null, creator);
+
+        verify(repository).save(captor.capture());
+        NewEnrollmentToken persisted = captor.getValue();
+        // the raw token (not the server name) is what gets hashed and stored
+        verify(hashPort).hash(issued.rawToken());
+        assertThat(persisted.tokenHash()).isEqualTo("the-hash");
+        assertThat(persisted.serverName()).isEqualTo("web-01");
+        assertThat(persisted.createdBy()).isEqualTo(creator);
+        // 32 random bytes, base64url without padding ~ 43 chars after the prefix
+        assertThat(issued.rawToken().length()).isGreaterThan("synenr_".length() + 40);
     }
 
     @Test

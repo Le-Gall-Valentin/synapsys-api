@@ -33,9 +33,13 @@ class EnrollmentTokenTtlTest {
     }
 
     @Test
-    void resolve_zeroOrNegative_throws() {
+    void resolve_zero_throws() {
         assertThatThrownBy(() -> EnrollmentTokenTtl.resolve(Duration.ZERO, MAX))
             .isInstanceOf(AgentException.InvalidTokenTtl.class);
+    }
+
+    @Test
+    void resolve_negative_throws() {
         assertThatThrownBy(() -> EnrollmentTokenTtl.resolve(Duration.ofMinutes(-5), MAX))
             .isInstanceOf(AgentException.InvalidTokenTtl.class);
     }

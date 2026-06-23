@@ -54,7 +54,7 @@ class ListEnrollmentTokensHandlerTest {
         assertThat(result.content()).extracting(v -> v.createdBy().username())
             .containsExactly("superadmin", "superadmin");
         // both tokens share one creator → a single deduped id is queried
-        assertThat(idsCaptor.getValue()).containsExactly(creator);
+        assertThat(idsCaptor.getValue()).hasSize(1).containsOnly(creator);
     }
 
     @Test
