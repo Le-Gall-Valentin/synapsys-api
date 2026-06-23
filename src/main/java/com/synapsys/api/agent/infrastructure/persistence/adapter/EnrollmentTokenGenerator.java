@@ -1,7 +1,7 @@
 package com.synapsys.api.agent.infrastructure.persistence.adapter;
 
-import com.synapsys.api.agent.domain.model.AgentException;
 import com.synapsys.api.agent.domain.model.EnrollmentToken;
+import com.synapsys.api.agent.domain.model.EnrollmentTokenTtl;
 import com.synapsys.api.agent.domain.model.IssuedToken;
 import com.synapsys.api.agent.domain.model.NewEnrollmentToken;
 import com.synapsys.api.agent.domain.port.out.AgentTokenHashPort;
@@ -36,10 +36,7 @@ public class EnrollmentTokenGenerator implements EnrollmentTokenIssuerPort {
     @Override
     public IssuedToken issue(String serverName, Duration requestedTtl, UUID createdBy) {
         Duration max = Duration.ofHours(properties.enrollmentTokenValidityHours());
-        Duration effective = requestedTtl == null ? max : requestedTtl;
-        if (effective.isZero() || effective.isNegative() || effective.compareTo(max) > 0) {
-            throw new AgentException.InvalidTokenTtl();
-        }
+        Duration effective = EnrollmentTokenTtl.resolve(requestedTtl, max);
         byte[] tokenBytes = new byte[32];
         SECURE_RANDOM.nextBytes(tokenBytes);
         String raw = properties.tokenPrefix()

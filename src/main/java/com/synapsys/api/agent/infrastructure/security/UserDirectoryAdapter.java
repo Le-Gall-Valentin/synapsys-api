@@ -24,6 +24,7 @@ public class UserDirectoryAdapter implements UserDirectoryPort {
             return Map.of();
         }
         return findUser.findByIds(ids).stream()
+            .filter(u -> u.username() != null)
             .collect(Collectors.toMap(u -> u.id(), u -> u.username()));
     }
 }

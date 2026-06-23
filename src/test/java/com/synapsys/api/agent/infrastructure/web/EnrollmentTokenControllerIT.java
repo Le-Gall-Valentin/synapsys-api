@@ -139,7 +139,9 @@ class EnrollmentTokenControllerIT {
         String expiresAt = objectMapper.readTree(result.getResponse().getContentAsString())
             .get("expiresAt").asText();
         Instant exp = Instant.parse(expiresAt);
-        org.assertj.core.api.Assertions.assertThat(exp).isBefore(before.plus(16, ChronoUnit.MINUTES));
+        org.assertj.core.api.Assertions.assertThat(exp)
+            .isAfter(before.plus(14, ChronoUnit.MINUTES))
+            .isBefore(before.plus(16, ChronoUnit.MINUTES));
     }
 
     @Test

@@ -38,4 +38,15 @@ class UserDirectoryAdapterTest {
         Map<UUID, String> result = new UserDirectoryAdapter(findUser).usernamesByIds(Set.of());
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void usernamesByIds_nullUsername_isOmittedWithoutFailing() {
+        UUID a = UUID.randomUUID();
+        when(findUser.findByIds(Set.of(a))).thenReturn(List.of(
+            new User(a, null, "ghost@example.com", Role.USER, true, Instant.now())));
+
+        Map<UUID, String> result = new UserDirectoryAdapter(findUser).usernamesByIds(Set.of(a));
+
+        assertThat(result).doesNotContainKey(a);
+    }
 }
