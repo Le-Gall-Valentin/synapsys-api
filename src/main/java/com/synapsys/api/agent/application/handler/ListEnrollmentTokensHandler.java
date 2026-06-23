@@ -1,6 +1,7 @@
 package com.synapsys.api.agent.application.handler;
 
 import com.synapsys.api.agent.application.port.in.ListEnrollmentTokensUseCase;
+import com.synapsys.api.agent.domain.model.EnrollmentToken;
 import com.synapsys.api.agent.domain.model.EnrollmentTokenView;
 import com.synapsys.api.agent.domain.port.out.EnrollmentTokenRepository;
 import com.synapsys.api.shared.annotation.ApplicationService;
@@ -22,7 +23,7 @@ public class ListEnrollmentTokensHandler implements ListEnrollmentTokensUseCase 
     @Override
     public PageResult<EnrollmentTokenView> list(int page, int size, SortRequest sort) {
         Instant now = Instant.now();
-        PageResult<com.synapsys.api.agent.domain.model.EnrollmentToken> result = repository.findAll(page, size, sort);
+        PageResult<EnrollmentToken> result = repository.findAll(page, size, sort);
         List<EnrollmentTokenView> views = result.content().stream()
             .map(t -> new EnrollmentTokenView(
                 t.id(), t.serverName(), t.deriveStatus(now), t.expiresAt(), t.createdBy(), t.createdAt()))
