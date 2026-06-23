@@ -128,6 +128,39 @@ class EnrollmentTokenControllerIT {
     }
 
     @Test
+    void create_withTtlMinutes_setsShorterExpiry() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        Instant before = Instant.now();
+        MvcResult result = mockMvc.perform(post("/api/agents/enrollment-tokens").cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"serverName\":\"web-01\",\"ttlMinutes\":15}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+        String expiresAt = objectMapper.readTree(result.getResponse().getContentAsString())
+            .get("expiresAt").asText();
+        Instant exp = Instant.parse(expiresAt);
+        org.assertj.core.api.Assertions.assertThat(exp).isBefore(before.plus(16, ChronoUnit.MINUTES));
+    }
+
+    @Test
+    void create_ttlAboveMaximum_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(post("/api/agents/enrollment-tokens").cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"serverName\":\"web-01\",\"ttlMinutes\":1500}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_ttlBelowOne_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(post("/api/agents/enrollment-tokens").cookie(access)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"serverName\":\"web-01\",\"ttlMinutes\":0}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void list_neverLeaksTokenOrHash() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
         tokenRepository.saveAndFlush(new EnrollmentTokenEntity(

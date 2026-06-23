@@ -23,6 +23,7 @@ public class AgentExceptionHandler {
         AgentErrorResponse r = switch (e) {
             case AgentException.TokenNotFound ex -> response(404, ex, "Enrollment token not found.");
             case AgentException.TokenNotRevocable ex -> response(409, ex, "Enrollment token cannot be revoked.");
+            case AgentException.InvalidTokenTtl ex -> response(400, ex, "Requested token TTL exceeds the configured maximum.");
             case AgentException.InvalidPublicKey ex -> response(400, ex, "Public key is not a valid Ed25519 key.");
             case AgentException.PublicKeyAlreadyRegistered ex -> response(409, ex, "Public key is already registered.");
             case AgentException.ServerNameInUse ex -> response(409, ex, "Server name is already in use.");
