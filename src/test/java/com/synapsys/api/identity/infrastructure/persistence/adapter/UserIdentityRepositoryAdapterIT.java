@@ -48,4 +48,17 @@ class UserIdentityRepositoryAdapterIT {
         assertThat(found).extracting(User::username)
             .containsExactlyInAnyOrder("alice", "bob");
     }
+
+    @Test
+    void findByIds_excludesSoftDeletedUsers() {
+        UUID alive = repositoryAdapter.createProfile(
+            new CreateUserProfileCommand("carol", "carol@example.com", Role.USER)).id();
+        UUID deleted = repositoryAdapter.createProfile(
+            new CreateUserProfileCommand("dave", "dave@example.com", Role.USER)).id();
+        repositoryAdapter.deleteGdpr(deleted);
+
+        List<User> found = repositoryAdapter.findByIds(List.of(alive, deleted));
+
+        assertThat(found).extracting(User::username).containsExactly("carol");
+    }
 }

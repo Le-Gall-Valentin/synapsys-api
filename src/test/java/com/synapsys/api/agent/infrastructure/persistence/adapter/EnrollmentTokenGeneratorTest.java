@@ -67,4 +67,12 @@ class EnrollmentTokenGeneratorTest {
         assertThatThrownBy(() -> generator.issue("web-01", Duration.ofHours(25), creator))
             .isInstanceOf(AgentException.InvalidTokenTtl.class);
     }
+
+    @Test
+    void issue_zeroOrNegativeTtl_throwsInvalidTokenTtl() {
+        assertThatThrownBy(() -> generator.issue("web-01", java.time.Duration.ZERO, creator))
+            .isInstanceOf(AgentException.InvalidTokenTtl.class);
+        assertThatThrownBy(() -> generator.issue("web-01", java.time.Duration.ofMinutes(-5), creator))
+            .isInstanceOf(AgentException.InvalidTokenTtl.class);
+    }
 }

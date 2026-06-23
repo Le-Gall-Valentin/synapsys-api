@@ -37,7 +37,7 @@ public class EnrollmentTokenGenerator implements EnrollmentTokenIssuerPort {
     public IssuedToken issue(String serverName, Duration requestedTtl, UUID createdBy) {
         Duration max = Duration.ofHours(properties.enrollmentTokenValidityHours());
         Duration effective = requestedTtl == null ? max : requestedTtl;
-        if (effective.compareTo(max) > 0) {
+        if (effective.isZero() || effective.isNegative() || effective.compareTo(max) > 0) {
             throw new AgentException.InvalidTokenTtl();
         }
         byte[] tokenBytes = new byte[32];

@@ -2,7 +2,6 @@ package com.synapsys.api.agent.infrastructure.security;
 
 import com.synapsys.api.agent.domain.port.out.UserDirectoryPort;
 import com.synapsys.api.identity.application.port.in.FindUserUseCase;
-import com.synapsys.api.identity.domain.model.User;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -25,6 +24,6 @@ public class UserDirectoryAdapter implements UserDirectoryPort {
             return Map.of();
         }
         return findUser.findByIds(ids).stream()
-            .collect(Collectors.toMap(User::id, User::username));
+            .collect(Collectors.toMap(u -> u.id(), u -> u.username()));
     }
 }
