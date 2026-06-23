@@ -7,18 +7,18 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-class ClientIpResolver {
+public class ClientIpResolver {
 
     private final List<String> trustedProxies;
 
-    ClientIpResolver(SynapsysProperties properties) {
+    public ClientIpResolver(SynapsysProperties properties) {
         var rateLimit = properties.rateLimit();
         this.trustedProxies = rateLimit != null
             ? rateLimit.trustedProxies().stream().filter(s -> !s.isBlank()).toList()
             : List.of();
     }
 
-    String resolve(HttpServletRequest request) {
+    public String resolve(HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
         if (trustedProxies.contains(remoteAddr)) {
             String xff = request.getHeader("X-Forwarded-For");
