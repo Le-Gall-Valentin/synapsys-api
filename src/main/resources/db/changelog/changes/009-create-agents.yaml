@@ -1,0 +1,113 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-agents
+      author: synapsys
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: agents
+      changes:
+        - createTable:
+            tableName: agents
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: server_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: public_key
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fingerprint
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enrollment_token_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enrolled_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enrolled_by
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_connected_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: last_activity_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: ip_address
+                  type: VARCHAR(64)
+              - column:
+                  name: revoked_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: revoked_by
+                  type: UUID
+        - addUniqueConstraint:
+            tableName: agents
+            columnNames: public_key
+            constraintName: uq_agents_public_key
+        - addUniqueConstraint:
+            tableName: agents
+            columnNames: fingerprint
+            constraintName: uq_agents_fingerprint
+        - addForeignKeyConstraint:
+            baseTableName: agents
+            baseColumnNames: enrollment_token_id
+            referencedTableName: agent_enrollment_tokens
+            referencedColumnNames: id
+            constraintName: fk_agents_enrollment_token
+        - addForeignKeyConstraint:
+            baseTableName: agents
+            baseColumnNames: enrolled_by
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_agents_enrolled_by
+        - addForeignKeyConstraint:
+            baseTableName: agents
+            baseColumnNames: revoked_by
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_agents_revoked_by
+        - createIndex:
+            indexName: idx_agents_status
+            tableName: agents
+            columns:
+              - column:
+                  name: status
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_agents_server_name_active ON agents(server_name) WHERE status <> 'REVOKED'
+            splitStatements: false
+      rollback:
+        - dropIndex:
+            indexName: uq_agents_server_name_active
+            tableName: agents
+        - dropTable:
+            tableName: agents
+            cascadeConstraints: true

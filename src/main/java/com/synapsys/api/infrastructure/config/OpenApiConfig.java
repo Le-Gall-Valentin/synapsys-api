@@ -60,7 +60,10 @@ public class OpenApiConfig {
                         new Tag().name("Authentication").description("Login, logout et renouvellement de token"),
                         new Tag().name("2FA - Challenge").description("Vérification du code TOTP lors du login à deux facteurs"),
                         new Tag().name("2FA - Management").description("Configuration et gestion du TOTP pour l'utilisateur connecté"),
-                        new Tag().name("Users").description("Gestion des utilisateurs (profil personnel et administration)")))
+                        new Tag().name("Users").description("Gestion des utilisateurs (profil personnel et administration)"),
+                        new Tag().name("Agents - Tokens d'enrôlement").description("Création, liste et révocation des tokens d'enrôlement des agents"),
+                        new Tag().name("Agents").description("Registre et gestion des agents (admin)"),
+                        new Tag().name("Agents - Enrôlement").description("Enrôlement des agents (endpoint agent, non soumis aux rôles utilisateurs)")))
                 .components(new Components()
                         .addSecuritySchemes("cookieAuth", new SecurityScheme()
                                 .type(SecurityScheme.Type.APIKEY)
