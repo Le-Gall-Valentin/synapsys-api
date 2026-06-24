@@ -57,6 +57,12 @@ export function GenerateTokenModal({ onClose, onCreate, onSuccess }: GenerateTok
     onClose()
   }
 
+  // Illustrative agent command (always English): enrollment + WebSocket endpoints
+  // are verified server-side; the host stays a <host> placeholder for the operator.
+  const command = created
+    ? `synapsys-agent \\\n    --enroll-url ${ENROLL_ENDPOINT} \\\n    --connect-url ${WS_ENDPOINT} \\\n    --token ${created.token}`
+    : ''
+
   return (
     <Dialog open onClose={handleClose} title={t('create.title')} maxWidth="max-w-lg">
       <div className="mb-5">
@@ -109,17 +115,8 @@ export function GenerateTokenModal({ onClose, onCreate, onSuccess }: GenerateTok
           <div className="mb-3 rounded-lg border border-border bg-bg-2 p-3 font-mono text-xs text-accent break-all">
             {created.token}
           </div>
-          <p className="text-xs text-fg-2 mb-1">{t('create.endpoints_label')}</p>
-          <div className="mb-4 space-y-2 rounded-lg border border-border bg-bg-2 p-3 font-mono text-[11px] text-fg-1">
-            <div>
-              <div className="text-fg-3">{t('create.enroll_endpoint')}</div>
-              <div className="break-all">POST {ENROLL_ENDPOINT}</div>
-            </div>
-            <div>
-              <div className="text-fg-3">{t('create.ws_endpoint')}</div>
-              <div className="break-all">{WS_ENDPOINT}</div>
-            </div>
-          </div>
+          <p className="text-xs text-fg-2 mb-1">{t('create.command_label')}</p>
+          <pre className="mb-4 overflow-x-auto rounded-lg border border-border bg-bg-2 p-3 font-mono text-[11px] text-fg-1 whitespace-pre">{command}</pre>
           <div className="flex justify-end gap-2">
             <Button type="button" onClick={() => { void navigator.clipboard?.writeText(created.token) }}>
               <Copy className="size-4" />
