@@ -26,7 +26,7 @@ public interface AgentRepository {
     boolean markRevoked(UUID id, UUID revokedBy, Instant now);
     /** Atomic guard: deletes only if status is REVOKED; true if exactly one row removed. */
     boolean delete(UUID id);
-    PageResult<Agent> findAll(int page, int size, SortRequest sort);
+    PageResult<Agent> findAll(int page, int size, SortRequest sort, String search);
     List<Agent> findAllNonRevoked();
     long countRevoked();
 }

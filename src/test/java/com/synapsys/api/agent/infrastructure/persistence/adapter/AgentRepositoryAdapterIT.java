@@ -106,8 +106,31 @@ class AgentRepositoryAdapterIT {
         Agent b = adapter.insert(newAgent("web-02", (byte) 2));
         adapter.markRevoked(b.id(), userId, Instant.now());
         assertThat(adapter.countRevoked()).isEqualTo(1);
-        PageResult<Agent> all = adapter.findAll(0, 20, SortRequest.descBy("enrolledAt"));
+        PageResult<Agent> all = adapter.findAll(0, 20, SortRequest.descBy("enrolledAt"), null);
         assertThat(all.totalElements()).isEqualTo(2);
         assertThat(adapter.findAllNonRevoked()).hasSize(1);
+    }
+
+    @Test
+    void findAll_search_filtersByServerNameCaseInsensitive() {
+        adapter.insert(newAgent("prod-backend-01", (byte) 1));
+        adapter.insert(newAgent("staging-db", (byte) 2));
+        PageResult<Agent> result = adapter.findAll(0, 20, SortRequest.descBy("enrolledAt"), "BACKEND");
+        assertThat(result.totalElements()).isEqualTo(1);
+        assertThat(result.content().get(0).serverName()).isEqualTo("prod-backend-01");
+    }
+
+    @Test
+    void findAll_blankSearch_returnsAll() {
+        adapter.insert(newAgent("web-01", (byte) 1));
+        adapter.insert(newAgent("web-02", (byte) 2));
+        assertThat(adapter.findAll(0, 20, SortRequest.descBy("enrolledAt"), "   ").totalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void findAll_search_escapesLikeWildcards() {
+        adapter.insert(newAgent("web-01", (byte) 1));
+        // '%' must be treated literally, not as a wildcard: no server name contains a literal '%'.
+        assertThat(adapter.findAll(0, 20, SortRequest.descBy("enrolledAt"), "%").totalElements()).isZero();
     }
 }

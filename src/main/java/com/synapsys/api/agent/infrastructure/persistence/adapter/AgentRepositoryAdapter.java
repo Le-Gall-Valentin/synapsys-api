@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -73,13 +74,25 @@ public class AgentRepositoryAdapter implements AgentRepository {
     }
 
     @Override
-    public PageResult<Agent> findAll(int page, int size, SortRequest sort) {
+    public PageResult<Agent> findAll(int page, int size, SortRequest sort, String search) {
         Sort springSort = sort.ascending()
             ? Sort.by(sort.field()).ascending()
             : Sort.by(sort.field()).descending();
-        Page<AgentEntity> result = jpa.findAll(PageRequest.of(page, size, springSort));
+        PageRequest pageRequest = PageRequest.of(page, size, springSort);
+        Page<AgentEntity> result = (search == null || search.isBlank())
+            ? jpa.findAll(pageRequest)
+            : jpa.searchAll(toLikePattern(search), pageRequest);
         return new PageResult<>(result.getContent().stream().map(this::toDomain).toList(),
             result.getTotalElements(), page, size);
+    }
+
+    /** Échappe les wildcards LIKE avec '!' (cohérent avec la clause ESCAPE de la requête). */
+    private static String toLikePattern(String search) {
+        String escaped = search.trim().toLowerCase(Locale.ROOT)
+            .replace("!", "!!")
+            .replace("%", "!%")
+            .replace("_", "!_");
+        return "%" + escaped + "%";
     }
 
     @Override
