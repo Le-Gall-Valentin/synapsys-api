@@ -16,7 +16,7 @@ export function formatRelativeTime(iso: string, lang: string, now: Date = new Da
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
   let duration = (date.getTime() - now.getTime()) / 1000
   for (const division of DIVISIONS) {
-    if (Math.abs(duration) <= division.amount) {
+    if (Math.abs(duration) < division.amount) {
       return rtf.format(Math.round(duration), division.unit)
     }
     duration /= division.amount

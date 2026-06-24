@@ -5,8 +5,8 @@ const NOW = new Date('2026-06-24T12:00:00Z')
 
 describe('formatRelativeTime', () => {
   it('returns a days-ago string in French', () => {
-    const out = formatRelativeTime('2026-06-17T12:00:00Z', 'fr', NOW)
-    expect(out).toContain('7')
+    const out = formatRelativeTime('2026-06-21T12:00:00Z', 'fr', NOW)
+    expect(out).toContain('3')
   })
 
   it('returns a string in English without throwing', () => {
