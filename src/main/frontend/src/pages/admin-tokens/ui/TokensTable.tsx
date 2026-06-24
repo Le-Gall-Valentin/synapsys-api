@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import type { EnrollmentToken } from '../model/IEnrollmentTokensApi'
-import { formatRelativeTime } from '../lib/formatRelativeTime'
+import { formatRelativeTime } from '@/shared/lib'
 import { formatExpiry } from '../lib/formatExpiry'
 import { TokenStatusPill } from './TokenStatusPill'
 
