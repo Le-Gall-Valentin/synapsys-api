@@ -1,10 +1,10 @@
 {
   "title": "Tokens d'enrôlement",
-  "subtitle": "Tokens nominatifs à usage unique pour l'enrôlement mTLS d'un nouvel agent.",
+  "subtitle": "Tokens nominatifs à usage unique pour l'enrôlement d'un nouvel agent (authentification par clé Ed25519).",
   "action": { "create": "Générer un token" },
   "procedure": {
     "title": "Procédure d'enrôlement (3 étapes)",
-    "body": "1. Générez un token nominatif (TTL 15 min recommandé). 2. Déposez le token sur le serveur cible et lancez l'agent. 3. L'agent envoie un CSR, l'API signe avec son CA interne, l'agent apparaît automatiquement comme actif."
+    "body": "1. Générez un token nominatif (TTL 15 min recommandé). 2. Déposez le token sur le serveur cible et lancez l'agent : il génère une paire de clés Ed25519 et s'enrôle avec le token (à usage unique). 3. L'agent apparaît d'abord EN ATTENTE, puis se connecte en WebSocket et signe un défi ; une fois la signature vérifiée, il passe ACTIF."
   },
   "status": {
     "ACTIVE": "Actif",

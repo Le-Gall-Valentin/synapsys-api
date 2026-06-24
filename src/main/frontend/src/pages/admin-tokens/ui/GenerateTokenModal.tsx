@@ -51,7 +51,7 @@ export function GenerateTokenModal({ onClose, onCreate, onSuccess }: GenerateTok
   }
 
   const command = created
-    ? `synapsys-agent \\\n    --api-url wss://api.synapsys.local \\\n    --enrollment-token ${created.token} \\\n    --cert-dir /var/lib/synapsys`
+    ? `synapsys-agent \\\n    --api-url wss://api.synapsys.local \\\n    --enrollment-token ${created.token} \\\n    --data-dir /var/lib/synapsys`
     : ''
 
   return (

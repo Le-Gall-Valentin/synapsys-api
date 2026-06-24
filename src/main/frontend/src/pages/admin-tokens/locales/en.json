@@ -1,10 +1,10 @@
 {
   "title": "Enrollment tokens",
-  "subtitle": "Single-use, named tokens for the mTLS enrollment of a new agent.",
+  "subtitle": "Single-use, named tokens to enroll a new agent (Ed25519 key authentication).",
   "action": { "create": "Generate token" },
   "procedure": {
     "title": "Enrollment procedure (3 steps)",
-    "body": "1. Generate a named token (15 min TTL recommended). 2. Drop the token on the target server and start the agent. 3. The agent sends a CSR, the API signs it with its internal CA, and the agent automatically appears as active."
+    "body": "1. Generate a named token (15 min TTL recommended). 2. Drop the token on the target server and start the agent: it generates an Ed25519 key pair and enrolls with the token (single-use). 3. The agent first appears as PENDING, then connects over WebSocket and signs a challenge; once the signature is verified, it becomes ACTIVE."
   },
   "status": {
     "ACTIVE": "Active",
