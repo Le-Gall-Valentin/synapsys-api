@@ -161,4 +161,33 @@ class AgentControllerIT {
             .andExpect(jsonPath("$.active").value(0))
             .andExpect(jsonPath("$.total").value(1));
     }
+
+    @Test
+    void list_search_filtersByServerName() throws Exception {
+        seedAgent("prod-backend-01", "pk-1", "fp-1");
+        seedAgent("staging-db", "pk-2", "fp-2");
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(get("/api/agents").param("search", "backend").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].serverName").value("prod-backend-01"));
+    }
+
+    @Test
+    void list_blankSearch_returnsAll() throws Exception {
+        seedAgent("web-01", "pk-1", "fp-1");
+        seedAgent("web-02", "pk-2", "fp-2");
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(get("/api/agents").param("search", "  ").cookie(access))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void list_searchTooLong_returns400() throws Exception {
+        Cookie access = loginAs("superadmin", "adminpass");
+        mockMvc.perform(get("/api/agents").param("search", "a".repeat(255)).cookie(access))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
+    }
 }

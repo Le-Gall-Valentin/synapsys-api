@@ -27,8 +27,8 @@ public class ListAgentsHandler implements ListAgentsUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResult<AgentView> list(int page, int size, SortRequest sort) {
-        PageResult<Agent> result = agentRepository.findAll(page, size, sort);
+    public PageResult<AgentView> list(int page, int size, SortRequest sort, String search) {
+        PageResult<Agent> result = agentRepository.findAll(page, size, sort, search);
         Set<UUID> present = presence.presentAgentIds(result.content().stream().map(Agent::id).toList());
         List<AgentView> views = result.content().stream()
             .map(a -> new AgentView(a.id(), a.serverName(), a.ipAddress(),

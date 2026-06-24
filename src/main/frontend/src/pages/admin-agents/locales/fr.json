@@ -1,1 +1,77 @@
-{ "title": "Serveurs" }
+{
+  "title": "Serveurs",
+  "subtitle": "Machines où vos routines peuvent s'exécuter. Chaque serveur est connecté à SynapSys de façon sécurisée.",
+  "action": { "add_server": "Ajouter un serveur" },
+  "stats": {
+    "active": "Connectés",
+    "active_hint": "Prêts à exécuter",
+    "inactive": "Inactifs",
+    "inactive_hint": "Enrôlés mais non connectés",
+    "pending": "En attente",
+    "pending_hint": "L'agent doit être lancé sur le serveur",
+    "revoked": "Révoqués",
+    "revoked_hint": "Plus aucune exécution possible",
+    "load_error": "Statistiques momentanément indisponibles."
+  },
+  "status": {
+    "ACTIVE": "Actif",
+    "INACTIVE": "Inactif",
+    "PENDING": "En attente",
+    "REVOKED": "Révoqué"
+  },
+  "search": {
+    "placeholder": "Rechercher un serveur ou une adresse…",
+    "clear": "Effacer la recherche"
+  },
+  "table": {
+    "col_server": "Serveur",
+    "col_address": "Adresse",
+    "col_status": "Statut",
+    "col_fingerprint": "Empreinte",
+    "col_enrolled": "Ajouté",
+    "col_last_activity": "Dernière activité",
+    "sort_asc": "Trier par ordre croissant",
+    "sort_desc": "Trier par ordre décroissant",
+    "fingerprint_pending": "En attente de l'agent",
+    "none": "—",
+    "revoke": "Révoquer",
+    "delete": "Supprimer",
+    "empty": "Aucun serveur enrôlé."
+  },
+  "load_error": "Impossible de charger les serveurs. Veuillez réessayer.",
+  "pagination": {
+    "total_one": "{{count}} serveur",
+    "total_other": "{{count}} serveurs",
+    "page": "Page {{current}} sur {{total}}",
+    "prev": "Page précédente",
+    "next": "Page suivante"
+  },
+  "revoke": {
+    "title": "Révoquer {{server}} ?",
+    "body": "La connexion de l'agent sera immédiatement coupée et le serveur ne pourra plus exécuter de routine. Cette action est irréversible.",
+    "cancel": "Annuler",
+    "submit": "Révoquer",
+    "error": {
+      "conflict": "Ce serveur n'est plus révocable (déjà révoqué). La liste a été actualisée.",
+      "forbidden": "Vous n'avez pas les droits nécessaires pour révoquer ce serveur.",
+      "not_found": "Serveur introuvable.",
+      "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard.",
+      "network": "Réseau indisponible.",
+      "server": "Une erreur est survenue. Veuillez réessayer."
+    }
+  },
+  "delete": {
+    "title": "Supprimer {{server}} ?",
+    "body": "Le serveur révoqué sera définitivement retiré de la liste. Cette action est irréversible.",
+    "cancel": "Annuler",
+    "submit": "Supprimer définitivement",
+    "error": {
+      "conflict": "Ce serveur ne peut pas être supprimé (il doit d'abord être révoqué). La liste a été actualisée.",
+      "forbidden": "Vous n'avez pas les droits nécessaires pour supprimer ce serveur.",
+      "not_found": "Serveur introuvable.",
+      "rate_limit": "Trop de tentatives. Veuillez réessayer plus tard.",
+      "network": "Réseau indisponible.",
+      "server": "Une erreur est survenue. Veuillez réessayer."
+    }
+  }
+}

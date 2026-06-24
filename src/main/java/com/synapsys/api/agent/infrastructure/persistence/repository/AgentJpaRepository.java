@@ -2,6 +2,8 @@ package com.synapsys.api.agent.infrastructure.persistence.repository;
 
 import com.synapsys.api.agent.domain.model.AgentLifecycleStatus;
 import com.synapsys.api.agent.infrastructure.persistence.entity.AgentEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -48,6 +50,16 @@ public interface AgentJpaRepository extends JpaRepository<AgentEntity, UUID> {
     // so the planner can use the index; status REVOKED <=> revoked_at set (see markRevoked).
     @Query("SELECT a FROM AgentEntity a WHERE a.status = ENROLLED")
     List<AgentEntity> findAllNonRevoked();
+
+    // Pattern pré-échappé par l'adapter ('!' échappe '!', '%' et '_'). ipAddress est null
+    // tant que l'agent n'est pas connecté (PENDING) : il ne matchera alors aucun terme.
+    @Query("""
+        SELECT a FROM AgentEntity a
+        WHERE (LOWER(a.serverName) LIKE :pattern ESCAPE '!'
+            OR LOWER(a.ipAddress) LIKE :pattern ESCAPE '!')
+        """)
+    Page<AgentEntity> searchAll(@Param("pattern") String pattern,
+                                Pageable pageable);
 
     @Query("SELECT COUNT(a) FROM AgentEntity a WHERE a.status = REVOKED")
     long countRevoked();

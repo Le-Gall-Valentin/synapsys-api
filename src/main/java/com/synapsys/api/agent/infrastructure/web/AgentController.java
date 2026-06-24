@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,9 +75,12 @@ public class AgentController {
             @RequestParam(defaultValue = "enrolledAt")
             @Pattern(regexp = "enrolledAt|serverName|lastActivityAt", message = "must be one of: enrolledAt, serverName, lastActivityAt") String sortBy,
             @RequestParam(defaultValue = "desc")
-            @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection) {
+            @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection,
+            @RequestParam(required = false)
+            @Size(max = 254, message = "must be at most 254 characters")
+            @Parameter(description = "Filtre optionnel : agents dont le nom de serveur ou l'adresse IP contient cette chaîne (insensible à la casse)") String search) {
         SortRequest sort = new SortRequest(sortBy, "asc".equalsIgnoreCase(sortDirection));
-        PageResult<AgentView> result = listUseCase.list(page, size, sort);
+        PageResult<AgentView> result = listUseCase.list(page, size, sort, search);
         PageResponse<AgentResponse> response = new PageResponse<>(
             result.content().stream()
                 .map(v -> new AgentResponse(v.id(), v.serverName(), v.ipAddress(), v.status(),

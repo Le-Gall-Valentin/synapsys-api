@@ -20,7 +20,7 @@ function relativeTimeFormat(locale: string): Intl.RelativeTimeFormat {
   return rtf
 }
 
-/** Relative "time ago" for the created-at column, localized via Intl.RelativeTimeFormat. */
+/** Localized "time ago" (or "in ...") for relative timestamps, via Intl.RelativeTimeFormat. */
 export function formatRelativeTime(iso: string, lang: string, now: Date = new Date()): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return '—'

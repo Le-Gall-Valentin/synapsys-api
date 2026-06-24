@@ -5,5 +5,5 @@ import com.synapsys.api.shared.model.PageResult;
 import com.synapsys.api.shared.model.SortRequest;
 
 public interface ListAgentsUseCase {
-    PageResult<AgentView> list(int page, int size, SortRequest sort);
+    PageResult<AgentView> list(int page, int size, SortRequest sort, String search);
 }
