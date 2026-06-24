@@ -1,1 +1,76 @@
-{ "title": "Servers" }
+{
+  "title": "Servers",
+  "subtitle": "Machines where your routines can run. Each server is securely connected to SynapSys.",
+  "action": { "add_server": "Add a server" },
+  "stats": {
+    "active": "Connected",
+    "active_hint": "Ready to run",
+    "inactive": "Inactive",
+    "inactive_hint": "Enrolled but not connected",
+    "pending": "Pending",
+    "pending_hint": "The agent must be launched on the server",
+    "revoked": "Revoked",
+    "revoked_hint": "No execution possible anymore"
+  },
+  "status": {
+    "ACTIVE": "Active",
+    "INACTIVE": "Inactive",
+    "PENDING": "Pending",
+    "REVOKED": "Revoked"
+  },
+  "search": {
+    "placeholder": "Search a server or address…",
+    "clear": "Clear search"
+  },
+  "table": {
+    "col_server": "Server",
+    "col_address": "Address",
+    "col_status": "Status",
+    "col_fingerprint": "Fingerprint",
+    "col_enrolled": "Added",
+    "col_last_activity": "Last activity",
+    "sort_asc": "Sort ascending",
+    "sort_desc": "Sort descending",
+    "fingerprint_pending": "Waiting for the agent",
+    "none": "—",
+    "revoke": "Revoke",
+    "delete": "Delete",
+    "empty": "No enrolled servers."
+  },
+  "load_error": "Unable to load servers. Please try again.",
+  "pagination": {
+    "total_one": "{{count}} server",
+    "total_other": "{{count}} servers",
+    "page": "Page {{current}} of {{total}}",
+    "prev": "Previous page",
+    "next": "Next page"
+  },
+  "revoke": {
+    "title": "Revoke {{server}}?",
+    "body": "The agent connection will be cut immediately and the server will no longer be able to run routines. This action is irreversible.",
+    "cancel": "Cancel",
+    "submit": "Revoke",
+    "error": {
+      "conflict": "This server is no longer revocable (already revoked). The list has been refreshed.",
+      "forbidden": "You do not have permission to revoke this server.",
+      "not_found": "Server not found.",
+      "rate_limit": "Too many attempts. Please try again later.",
+      "network": "Network unavailable.",
+      "server": "Something went wrong. Please try again."
+    }
+  },
+  "delete": {
+    "title": "Delete {{server}}?",
+    "body": "The revoked server will be permanently removed from the list. This action is irreversible.",
+    "cancel": "Cancel",
+    "submit": "Delete permanently",
+    "error": {
+      "conflict": "This server cannot be deleted (it must be revoked first). The list has been refreshed.",
+      "forbidden": "You do not have permission to delete this server.",
+      "not_found": "Server not found.",
+      "rate_limit": "Too many attempts. Please try again later.",
+      "network": "Network unavailable.",
+      "server": "Something went wrong. Please try again."
+    }
+  }
+}
