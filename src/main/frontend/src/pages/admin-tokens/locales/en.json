@@ -1,1 +1,74 @@
-{ "title": "Enrollment tokens" }
+{
+  "title": "Enrollment tokens",
+  "subtitle": "Single-use, named tokens to enroll a new agent (Ed25519 key authentication).",
+  "action": { "create": "Generate token" },
+  "procedure": {
+    "title": "Enrollment procedure (3 steps)",
+    "body": "1. Generate a named token (15 min TTL recommended). 2. Drop the token on the target server and start the agent: it generates an Ed25519 key pair and enrolls with the token (single-use). 3. The agent first appears as PENDING, then connects over WebSocket and signs a challenge; once the signature is verified, it becomes ACTIVE.",
+    "disclaimer": "Responsibility: enrolling an agent installs an entry point on the target server. You remain solely responsible for the agents you enroll, their access, and upholding the principle of least privilege. Verify the target machine's identity and restrict its rights to the strict minimum."
+  },
+  "status": {
+    "ACTIVE": "Active",
+    "CONSUMED": "Consumed",
+    "EXPIRED": "Expired",
+    "REVOKED": "Revoked"
+  },
+  "table": {
+    "col_server": "Server name",
+    "col_status": "Status",
+    "col_expires": "Expires",
+    "col_created_by": "Created by",
+    "col_created": "Created",
+    "expired": "expired",
+    "revoke": "Revoke",
+    "empty": "No enrollment tokens."
+  },
+  "load_error": "Could not load enrollment tokens. Please try again.",
+  "pagination": {
+    "total_one": "{{count}} token",
+    "total_other": "{{count}} tokens",
+    "page": "Page {{current}} of {{total}}",
+    "prev": "Previous page",
+    "next": "Next page"
+  },
+  "create": {
+    "title": "Generate an enrollment token",
+    "server_name": "Target server name",
+    "server_name_placeholder": "prod-api-03",
+    "ttl": "Validity period",
+    "ttl_option": {
+      "5": "5 minutes",
+      "15": "15 minutes (recommended)",
+      "60": "1 hour",
+      "1440": "24 hours"
+    },
+    "copy_now": "Token generated. Copy it now — it will not be shown again after this window.",
+    "token_label": "Clear-text token:",
+    "command_label": "Command to run on the target server (replace <host> with your API host):",
+    "copy": "Copy",
+    "cancel": "Cancel",
+    "submit": "Generate",
+    "close": "Close",
+    "error": {
+      "forbidden": "You do not have permission to generate a token.",
+      "not_found": "Resource not found.",
+      "rate_limit": "Too many attempts. Please try again later.",
+      "network": "Network unavailable.",
+      "server": "Something went wrong. Please try again."
+    }
+  },
+  "revoke": {
+    "title": "Revoke the token for {{server}}?",
+    "body": "The token will no longer be usable to enroll an agent. This action is irreversible.",
+    "cancel": "Cancel",
+    "submit": "Revoke",
+    "error": {
+      "not_revocable": "This token is no longer revocable (already consumed, expired or revoked). The list has been refreshed.",
+      "forbidden": "You do not have permission to revoke this token.",
+      "not_found": "Token not found.",
+      "rate_limit": "Too many attempts. Please try again later.",
+      "network": "Network unavailable.",
+      "server": "Something went wrong. Please try again."
+    }
+  }
+}
