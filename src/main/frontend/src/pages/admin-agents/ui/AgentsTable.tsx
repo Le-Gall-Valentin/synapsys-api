@@ -51,7 +51,7 @@ export function AgentsTable({ agents, isLoading, sortBy, sortDirection, onSort, 
     const active = sortBy === field
     // The label announces the order the NEXT click produces: an active asc column
     // flips to desc; an active desc column flips to asc; an inactive column starts
-    // at desc (see handleSort, which defaults a newly selected field to desc).
+    // at desc (see toggleSort, which defaults a newly selected field to desc).
     const nextIsAsc = active && sortDirection === 'desc'
     const ariaLabel = nextIsAsc ? t('table.sort_asc') : t('table.sort_desc')
     return (
