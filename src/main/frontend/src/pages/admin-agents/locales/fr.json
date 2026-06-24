@@ -10,7 +10,8 @@
     "pending": "En attente",
     "pending_hint": "L'agent doit être lancé sur le serveur",
     "revoked": "Révoqués",
-    "revoked_hint": "Plus aucune exécution possible"
+    "revoked_hint": "Plus aucune exécution possible",
+    "load_error": "Statistiques momentanément indisponibles."
   },
   "status": {
     "ACTIVE": "Actif",

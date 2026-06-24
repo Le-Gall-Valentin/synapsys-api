@@ -1,16 +1,12 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Alert, Pagination, SearchInput, CTA_BUTTON_STYLE } from '@/shared/ui'
-import { useDebouncedValue, pageAfterRemoval } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { agentsApi } from '../api/agentsApi'
-import type { IAgentsApi, Agent, AgentSortField, SortDirection } from '../model/IAgentsApi'
+import type { IAgentsApi } from '../model/IAgentsApi'
 import { AdminAgentsApiProvider } from '../model/agentsApiContext'
-import { useAgents, AGENTS_PAGE_SIZE } from '../model/useAgents'
-import { useAgentStatistics } from '../model/useAgentStatistics'
-import { useRevokeAgent, useDeleteAgent } from '../model/useAgentMutations'
+import { useAgentsPage } from '../model/useAgentsPage'
 import { AgentStatsCards } from './AgentStatsCards'
 import { AgentsTable } from './AgentsTable'
 import { AgentsCardList } from './AgentsCardList'
@@ -32,54 +28,9 @@ export function AdminAgentsPage({ api = agentsApi }: AdminAgentsPageProps = {}) 
 
 function AdminAgentsPageContent() {
   const { t } = useTranslation('adminAgents')
+  const vm = useAgentsPage()
 
-  const [page, setPage] = useState(0)
-  const [sortBy, setSortBy] = useState<AgentSortField>('enrolledAt')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [searchInput, setSearchInput] = useState('')
-  const search = useDebouncedValue(searchInput, 300)
-
-  const { data, isPending, isError: loadError, isPlaceholderData } = useAgents(page, sortBy, sortDirection, search)
-  const { data: stats, isPending: statsPending } = useAgentStatistics()
-
-  const [revokeTarget, setRevokeTarget] = useState<Agent | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null)
-
-  const revokeAgent = useRevokeAgent()
-  const deleteAgent = useDeleteAgent()
-
-  const agents = data?.content ?? []
-  const totalElements = data?.totalElements ?? 0
-  const pageSize = data?.size ?? AGENTS_PAGE_SIZE
-  const totalPages = totalElements > 0 ? Math.ceil(totalElements / pageSize) : 1
-  const showPagination = !isPending && totalPages > 1
-  const pendingActionId = revokeAgent.isPending ? revokeAgent.variables
-    : deleteAgent.isPending ? deleteAgent.variables : null
-
-  function handleSearchChange(value: string) {
-    setSearchInput(value)
-    setPage(0)
-  }
-
-  function handleSort(field: AgentSortField) {
-    if (field === sortBy) {
-      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortBy(field)
-      setSortDirection('desc')
-    }
-    setPage(0)
-  }
-
-  function handleRemovalSuccess(target: 'revoke' | 'delete') {
-    // Une révocation ne retire pas la ligne (l'agent reste listé en REVOKED) ; une
-    // suppression la retire et peut vider la page courante.
-    if (target === 'delete') {
-      setPage(pageAfterRemoval(page, data?.content.length ?? 0, isPlaceholderData))
-    }
-    setRevokeTarget(null)
-    setDeleteTarget(null)
-  }
+  const showPagination = !vm.isPending && vm.totalPages > 1
 
   return (
     <div className="py-5 px-6 mx-auto">
@@ -98,13 +49,13 @@ function AdminAgentsPageContent() {
         </Link>
       </div>
 
-      <AgentStatsCards stats={stats} isLoading={statsPending} />
+      <AgentStatsCards stats={vm.stats} isLoading={vm.statsPending} isError={vm.statsError} />
 
-      {loadError && <Alert variant="error" className="mb-4">{t('load_error')}</Alert>}
+      {vm.loadError && <Alert variant="error" className="mb-4">{t('load_error')}</Alert>}
 
       <SearchInput
-        value={searchInput}
-        onChange={handleSearchChange}
+        value={vm.searchInput}
+        onChange={vm.changeSearch}
         placeholder={t('search.placeholder')}
         clearLabel={t('search.clear')}
         className="mb-3 max-w-md"
@@ -112,58 +63,58 @@ function AdminAgentsPageContent() {
 
       <div className="hidden md:block">
         <AgentsTable
-          agents={agents}
-          isLoading={isPending}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          pendingActionId={pendingActionId}
-          onRevoke={setRevokeTarget}
-          onDelete={setDeleteTarget}
+          agents={vm.agents}
+          isLoading={vm.isPending}
+          sortBy={vm.sortBy}
+          sortDirection={vm.sortDirection}
+          onSort={vm.toggleSort}
+          pendingActionId={vm.pendingActionId}
+          onRevoke={vm.setRevokeTarget}
+          onDelete={vm.setDeleteTarget}
         />
       </div>
       <div className="md:hidden">
         <AgentsCardList
-          agents={agents}
-          isLoading={isPending}
-          pendingActionId={pendingActionId}
-          onRevoke={setRevokeTarget}
-          onDelete={setDeleteTarget}
+          agents={vm.agents}
+          isLoading={vm.isPending}
+          pendingActionId={vm.pendingActionId}
+          onRevoke={vm.setRevokeTarget}
+          onDelete={vm.setDeleteTarget}
         />
       </div>
 
       {showPagination && (
         <div className="mt-3">
           <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            pageLabel={t('pagination.page', { current: page + 1, total: totalPages })}
+            page={vm.page}
+            totalPages={vm.totalPages}
+            onPageChange={vm.setPage}
+            pageLabel={t('pagination.page', { current: vm.page + 1, total: vm.totalPages })}
             prevLabel={t('pagination.prev')}
             nextLabel={t('pagination.next')}
-            summary={t('pagination.total', { count: totalElements })}
-            isTransitioning={isPlaceholderData}
+            summary={t('pagination.total', { count: vm.totalElements })}
+            isTransitioning={vm.isPlaceholderData}
           />
         </div>
       )}
 
-      {revokeTarget && (
+      {vm.revokeTarget && (
         <ConfirmAgentActionModal
-          agent={revokeTarget}
+          agent={vm.revokeTarget}
           action="revoke"
-          onClose={() => setRevokeTarget(null)}
-          onConfirm={revokeAgent.mutateAsync}
-          onSuccess={() => handleRemovalSuccess('revoke')}
+          onClose={() => vm.setRevokeTarget(null)}
+          onConfirm={vm.revokeAgent.mutateAsync}
+          onSuccess={vm.onRevokeSuccess}
         />
       )}
 
-      {deleteTarget && (
+      {vm.deleteTarget && (
         <ConfirmAgentActionModal
-          agent={deleteTarget}
+          agent={vm.deleteTarget}
           action="delete"
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={deleteAgent.mutateAsync}
-          onSuccess={() => handleRemovalSuccess('delete')}
+          onClose={() => vm.setDeleteTarget(null)}
+          onConfirm={vm.deleteAgent.mutateAsync}
+          onSuccess={vm.onDeleteSuccess}
         />
       )}
     </div>
