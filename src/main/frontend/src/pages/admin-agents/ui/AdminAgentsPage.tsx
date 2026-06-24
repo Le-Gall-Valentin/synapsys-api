@@ -14,8 +14,7 @@ import { useRevokeAgent, useDeleteAgent } from '../model/useAgentMutations'
 import { AgentStatsCards } from './AgentStatsCards'
 import { AgentsTable } from './AgentsTable'
 import { AgentsCardList } from './AgentsCardList'
-import { RevokeAgentModal } from './RevokeAgentModal'
-import { DeleteAgentModal } from './DeleteAgentModal'
+import { ConfirmAgentActionModal } from './ConfirmAgentActionModal'
 
 interface AdminAgentsPageProps {
   /** Composition seam : implémentation réelle par défaut ; les tests injectent un faux. */
@@ -149,19 +148,21 @@ function AdminAgentsPageContent() {
       )}
 
       {revokeTarget && (
-        <RevokeAgentModal
+        <ConfirmAgentActionModal
           agent={revokeTarget}
+          action="revoke"
           onClose={() => setRevokeTarget(null)}
-          onRevoke={revokeAgent.mutateAsync}
+          onConfirm={revokeAgent.mutateAsync}
           onSuccess={() => handleRemovalSuccess('revoke')}
         />
       )}
 
       {deleteTarget && (
-        <DeleteAgentModal
+        <ConfirmAgentActionModal
           agent={deleteTarget}
+          action="delete"
           onClose={() => setDeleteTarget(null)}
-          onDelete={deleteAgent.mutateAsync}
+          onConfirm={deleteAgent.mutateAsync}
           onSuccess={() => handleRemovalSuccess('delete')}
         />
       )}
