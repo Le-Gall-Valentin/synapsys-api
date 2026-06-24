@@ -27,7 +27,7 @@ describe('AgentsTable', () => {
     expect(screen.getAllByText('table.delete')).toHaveLength(1) // REVOKED only
   })
 
-  it('renders a pending-agent placeholder for a null fingerprint and a dash for null last activity', () => {
+  it('renders the pending placeholder for a null fingerprint and table.none for null ip and last activity', () => {
     setup([PENDING])
     expect(screen.getByText('table.fingerprint_pending')).toBeDefined()
     expect(screen.getAllByText('table.none')).toHaveLength(2)
@@ -37,6 +37,16 @@ describe('AgentsTable', () => {
     const { onSort } = setup([ACTIVE])
     fireEvent.click(screen.getByText('table.col_server'))
     expect(onSort).toHaveBeenCalledWith('serverName')
+  })
+
+  it('labels each sortable header with the order its next click produces', () => {
+    // sortBy=enrolledAt, sortDirection=desc -> enrolledAt flips to asc; the inactive
+    // columns start at desc (handleSort defaults a new field to desc).
+    setup([ACTIVE])
+    const labelOf = (col: string) => screen.getByText(col).closest('button')?.getAttribute('aria-label')
+    expect(labelOf('table.col_enrolled')).toBe('table.sort_asc')
+    expect(labelOf('table.col_server')).toBe('table.sort_desc')
+    expect(labelOf('table.col_last_activity')).toBe('table.sort_desc')
   })
 
   it('calls onRevoke with the agent when its revoke button is clicked', () => {

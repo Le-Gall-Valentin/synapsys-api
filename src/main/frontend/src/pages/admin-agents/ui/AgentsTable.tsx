@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp, Loader2, Server } from 'lucide-react'
+import { ChevronDown, ChevronUp, Server } from 'lucide-react'
 import { formatRelativeTime } from '@/shared/lib'
 import type { Agent, AgentSortField, SortDirection } from '../model/IAgentsApi'
 import { formatAgentDate } from '../lib/formatAgentDate'
 import { AgentStatusPill } from './AgentStatusPill'
+import { AgentRowActions } from './AgentRowActions'
 
 export interface AgentRowCallbacks {
   onRevoke: (agent: Agent) => void
@@ -48,7 +49,11 @@ export function AgentsTable({ agents, isLoading, sortBy, sortDirection, onSort, 
 
   const sortableHeader = (field: AgentSortField, labelKey: string) => {
     const active = sortBy === field
-    const ariaLabel = active && sortDirection === 'asc' ? t('table.sort_desc') : t('table.sort_asc')
+    // The label announces the order the NEXT click produces: an active asc column
+    // flips to desc; an active desc column flips to asc; an inactive column starts
+    // at desc (see handleSort, which defaults a newly selected field to desc).
+    const nextIsAsc = active && sortDirection === 'desc'
+    const ariaLabel = nextIsAsc ? t('table.sort_asc') : t('table.sort_desc')
     return (
       <th className={HEAD_CLASS}>
         <button type="button" onClick={() => onSort(field)} aria-label={ariaLabel}
@@ -80,9 +85,6 @@ export function AgentsTable({ agents, isLoading, sortBy, sortDirection, onSort, 
               <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-fg-2">{t('table.empty')}</td></tr>
             )}
             {agents.map(agent => {
-              const canRevoke = agent.status === 'ACTIVE' || agent.status === 'INACTIVE'
-              const canDelete = agent.status === 'REVOKED'
-              const isPending = agent.id === pendingActionId
               return (
                 <tr key={agent.id}>
                   <td className="px-4 py-3">
@@ -103,22 +105,7 @@ export function AgentsTable({ agents, isLoading, sortBy, sortDirection, onSort, 
                     {agent.lastActivityAt ? formatRelativeTime(agent.lastActivityAt, i18n.language) : t('table.none')}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
-                      {canRevoke && (
-                        <button type="button" onClick={() => onRevoke(agent)} disabled={isPending}
-                          className="flex items-center gap-1.5 rounded-md border border-status-red/30 bg-status-red-dim px-2.5 py-1.5 text-xs font-medium text-status-red transition-colors hover:bg-status-red/20 disabled:opacity-50">
-                          {isPending && <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />}
-                          {t('table.revoke')}
-                        </button>
-                      )}
-                      {canDelete && (
-                        <button type="button" onClick={() => onDelete(agent)} disabled={isPending}
-                          className="flex items-center gap-1.5 rounded-md border border-border-2 bg-bg-2 px-2.5 py-1.5 text-xs font-medium text-fg-1 transition-colors hover:bg-bg-3 hover:text-fg-0 disabled:opacity-50">
-                          {isPending && <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />}
-                          {t('table.delete')}
-                        </button>
-                      )}
-                    </div>
+                    <AgentRowActions agent={agent} pendingActionId={pendingActionId} onRevoke={onRevoke} onDelete={onDelete} />
                   </td>
                 </tr>
               )

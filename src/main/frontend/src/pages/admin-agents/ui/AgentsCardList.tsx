@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { Loader2 } from 'lucide-react'
 import { formatRelativeTime } from '@/shared/lib'
 import type { Agent } from '../model/IAgentsApi'
 import type { AgentRowCallbacks } from './AgentsTable'
 import { formatAgentDate } from '../lib/formatAgentDate'
 import { AgentStatusPill } from './AgentStatusPill'
+import { AgentRowActions } from './AgentRowActions'
 
 interface AgentsCardListProps extends AgentRowCallbacks {
   agents: Agent[]
@@ -32,9 +32,6 @@ export function AgentsCardList({ agents, isLoading, pendingActionId, onRevoke, o
   return (
     <div className="space-y-2">
       {agents.map(agent => {
-        const canRevoke = agent.status === 'ACTIVE' || agent.status === 'INACTIVE'
-        const canDelete = agent.status === 'REVOKED'
-        const isPending = agent.id === pendingActionId
         return (
           <div key={agent.id} className="rounded-lg border border-border bg-bg-1 p-4">
             <div className="flex items-start justify-between gap-2">
@@ -51,24 +48,7 @@ export function AgentsCardList({ agents, isLoading, pendingActionId, onRevoke, o
                 {agent.lastActivityAt ? formatRelativeTime(agent.lastActivityAt, i18n.language) : t('table.none')}
               </dd>
             </dl>
-            {(canRevoke || canDelete) && (
-              <div className="mt-3 flex justify-end gap-2">
-                {canRevoke && (
-                  <button type="button" onClick={() => onRevoke(agent)} disabled={isPending}
-                    className="flex items-center gap-1.5 rounded-md border border-status-red/30 bg-status-red-dim px-2.5 py-1.5 text-xs font-medium text-status-red transition-colors hover:bg-status-red/20 disabled:opacity-50">
-                    {isPending && <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />}
-                    {t('table.revoke')}
-                  </button>
-                )}
-                {canDelete && (
-                  <button type="button" onClick={() => onDelete(agent)} disabled={isPending}
-                    className="flex items-center gap-1.5 rounded-md border border-border-2 bg-bg-2 px-2.5 py-1.5 text-xs font-medium text-fg-1 transition-colors hover:bg-bg-3 hover:text-fg-0 disabled:opacity-50">
-                    {isPending && <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />}
-                    {t('table.delete')}
-                  </button>
-                )}
-              </div>
-            )}
+            <AgentRowActions agent={agent} pendingActionId={pendingActionId} onRevoke={onRevoke} onDelete={onDelete} className="mt-3" />
           </div>
         )
       })}
