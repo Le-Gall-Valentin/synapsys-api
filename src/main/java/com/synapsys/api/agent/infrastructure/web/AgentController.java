@@ -76,8 +76,9 @@ public class AgentController {
             @Pattern(regexp = "enrolledAt|serverName|lastActivityAt", message = "must be one of: enrolledAt, serverName, lastActivityAt") String sortBy,
             @RequestParam(defaultValue = "desc")
             @Pattern(regexp = "asc|desc", message = "must be 'asc' or 'desc'") String sortDirection,
-            @Parameter(description = "Filtre optionnel : agents dont le nom de serveur ou l'adresse IP contient cette chaîne (insensible à la casse)")
-            @RequestParam(required = false) @Size(max = 254, message = "must be at most 254 characters") String search) {
+            @RequestParam(required = false)
+            @Size(max = 254, message = "must be at most 254 characters")
+            @Parameter(description = "Filtre optionnel : agents dont le nom de serveur ou l'adresse IP contient cette chaîne (insensible à la casse)") String search) {
         SortRequest sort = new SortRequest(sortBy, "asc".equalsIgnoreCase(sortDirection));
         PageResult<AgentView> result = listUseCase.list(page, size, sort, search);
         PageResponse<AgentResponse> response = new PageResponse<>(

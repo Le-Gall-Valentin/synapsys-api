@@ -187,6 +187,7 @@ class AgentControllerIT {
     void list_searchTooLong_returns400() throws Exception {
         Cookie access = loginAs("superadmin", "adminpass");
         mockMvc.perform(get("/api/agents").param("search", "a".repeat(255)).cookie(access))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
     }
 }
