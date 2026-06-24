@@ -9,6 +9,13 @@ const TTL_OPTIONS = [5, 15, 60, 1440] as const
 const DEFAULT_TTL = 15
 const SERVER_NAME_MAX = 100
 
+// Verified server-side: the enrollment endpoint (POST /api/agents/enroll) and the
+// agent WebSocket path (default /ws/agents). The deployment host is unknown from
+// the browser, so it stays a placeholder for the operator to fill in.
+const API_HOST_PLACEHOLDER = '<host>'
+const ENROLL_ENDPOINT = `https://${API_HOST_PLACEHOLDER}/api/agents/enroll`
+const WS_ENDPOINT = `wss://${API_HOST_PLACEHOLDER}/ws/agents`
+
 interface GenerateTokenModalProps {
   onClose: () => void
   onCreate: (serverName: string, ttlMinutes: number) => Promise<CreatedToken>
@@ -49,10 +56,6 @@ export function GenerateTokenModal({ onClose, onCreate, onSuccess }: GenerateTok
     if (created) onSuccess()
     onClose()
   }
-
-  const command = created
-    ? `synapsys-agent \\\n    --api-url wss://api.synapsys.local \\\n    --enrollment-token ${created.token} \\\n    --data-dir /var/lib/synapsys`
-    : ''
 
   return (
     <Dialog open onClose={handleClose} title={t('create.title')} maxWidth="max-w-lg">
@@ -106,8 +109,17 @@ export function GenerateTokenModal({ onClose, onCreate, onSuccess }: GenerateTok
           <div className="mb-3 rounded-lg border border-border bg-bg-2 p-3 font-mono text-xs text-accent break-all">
             {created.token}
           </div>
-          <p className="text-xs text-fg-2 mb-1">{t('create.command_label')}</p>
-          <pre className="mb-4 overflow-x-auto rounded-lg border border-border bg-bg-2 p-3 font-mono text-[11px] text-fg-1 whitespace-pre">{command}</pre>
+          <p className="text-xs text-fg-2 mb-1">{t('create.endpoints_label')}</p>
+          <div className="mb-4 space-y-2 rounded-lg border border-border bg-bg-2 p-3 font-mono text-[11px] text-fg-1">
+            <div>
+              <div className="text-fg-3">{t('create.enroll_endpoint')}</div>
+              <div className="break-all">POST {ENROLL_ENDPOINT}</div>
+            </div>
+            <div>
+              <div className="text-fg-3">{t('create.ws_endpoint')}</div>
+              <div className="break-all">{WS_ENDPOINT}</div>
+            </div>
+          </div>
           <div className="flex justify-end gap-2">
             <Button type="button" onClick={() => { void navigator.clipboard?.writeText(created.token) }}>
               <Copy className="size-4" />
