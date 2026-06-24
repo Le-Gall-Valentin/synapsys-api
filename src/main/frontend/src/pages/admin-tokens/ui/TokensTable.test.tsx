@@ -128,7 +128,7 @@ describe('TokensTable — revoke button (CRITICAL: gated on ACTIVE status)', () 
   })
 
   it('renders exactly one revoke button in a mixed list (1 ACTIVE + 1 CONSUMED)', () => {
-    const { getAllByText, queryAllByText } = setup([ACTIVE_TOKEN, CONSUMED_TOKEN])
+    const { getAllByText } = setup([ACTIVE_TOKEN, CONSUMED_TOKEN])
     const revokeBtns = getAllByText('table.revoke')
     expect(revokeBtns.length).toBe(1)
     // Verify it's the ACTIVE token row

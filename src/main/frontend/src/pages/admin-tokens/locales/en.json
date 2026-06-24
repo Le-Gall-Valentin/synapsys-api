@@ -4,7 +4,8 @@
   "action": { "create": "Generate token" },
   "procedure": {
     "title": "Enrollment procedure (3 steps)",
-    "body": "1. Generate a named token (15 min TTL recommended). 2. Drop the token on the target server and start the agent: it generates an Ed25519 key pair and enrolls with the token (single-use). 3. The agent first appears as PENDING, then connects over WebSocket and signs a challenge; once the signature is verified, it becomes ACTIVE."
+    "body": "1. Generate a named token (15 min TTL recommended). 2. Drop the token on the target server and start the agent: it generates an Ed25519 key pair and enrolls with the token (single-use). 3. The agent first appears as PENDING, then connects over WebSocket and signs a challenge; once the signature is verified, it becomes ACTIVE.",
+    "disclaimer": "Responsibility: enrolling an agent installs an entry point on the target server. You remain solely responsible for the agents you enroll, their access, and upholding the principle of least privilege. Verify the target machine's identity and restrict its rights to the strict minimum."
   },
   "status": {
     "ACTIVE": "Active",

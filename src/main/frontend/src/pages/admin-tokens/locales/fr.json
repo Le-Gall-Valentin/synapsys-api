@@ -4,7 +4,8 @@
   "action": { "create": "Générer un token" },
   "procedure": {
     "title": "Procédure d'enrôlement (3 étapes)",
-    "body": "1. Générez un token nominatif (TTL 15 min recommandé). 2. Déposez le token sur le serveur cible et lancez l'agent : il génère une paire de clés Ed25519 et s'enrôle avec le token (à usage unique). 3. L'agent apparaît d'abord EN ATTENTE, puis se connecte en WebSocket et signe un défi ; une fois la signature vérifiée, il passe ACTIF."
+    "body": "1. Générez un token nominatif (TTL 15 min recommandé). 2. Déposez le token sur le serveur cible et lancez l'agent : il génère une paire de clés Ed25519 et s'enrôle avec le token (à usage unique). 3. L'agent apparaît d'abord EN ATTENTE, puis se connecte en WebSocket et signe un défi ; une fois la signature vérifiée, il passe ACTIF.",
+    "disclaimer": "Responsabilité : enrôler un agent installe un point d'entrée sur le serveur cible. Vous restez seul responsable des agents que vous enrôlez, de leurs accès et du respect du principe de moindre privilège. Vérifiez l'identité de la machine et limitez ses droits au strict nécessaire."
   },
   "status": {
     "ACTIVE": "Actif",
