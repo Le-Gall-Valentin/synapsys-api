@@ -32,7 +32,6 @@ export function TokensCardList({ tokens, isLoading, pendingRevokeId, onRevoke }:
   return (
     <div className="flex flex-col gap-2">
       {tokens.map(token => {
-        const expiry = formatExpiry(token.expiresAt, token.status, i18n.language)
         return (
           <div key={token.id} className="rounded-md border border-border bg-bg-1 p-4">
             <div className="flex items-start justify-between gap-2">
@@ -41,7 +40,7 @@ export function TokensCardList({ tokens, isLoading, pendingRevokeId, onRevoke }:
             </div>
             <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-fg-2">
               <dt className="text-fg-3">{t('table.col_expires')}</dt>
-              <dd className="font-mono text-right">{expiry === '__expired__' ? t('table.expired') : expiry}</dd>
+              <dd className="font-mono text-right">{token.status === 'EXPIRED' ? t('table.expired') : formatExpiry(token.expiresAt, i18n.language)}</dd>
               <dt className="text-fg-3">{t('table.col_created_by')}</dt>
               <dd className="text-right">{token.createdBy.username}</dd>
               <dt className="text-fg-3">{t('table.col_created')}</dt>

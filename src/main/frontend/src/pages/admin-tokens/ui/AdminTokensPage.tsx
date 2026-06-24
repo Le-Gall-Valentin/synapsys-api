@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { Alert, Button, Pagination, CTA_BUTTON_STYLE } from '@/shared/ui'
+import { pageAfterRemoval } from '@/shared/lib'
 import { enrollmentTokensApi } from '../api/enrollmentTokensApi'
 import type { IEnrollmentTokensApi, EnrollmentToken } from '../model/IEnrollmentTokensApi'
 import { AdminTokensApiProvider } from '../model/enrollmentTokensApiContext'
@@ -47,10 +48,7 @@ function AdminTokensPageContent() {
   const pendingRevokeId = revokeToken.isPending ? revokeToken.variables : null
 
   function handleRevokeSuccess() {
-    // Step back a page when the revoked row was the last on a page beyond the first.
-    if (!isPlaceholderData && data && data.content.length === 1 && page > 0) {
-      setPage(p => p - 1)
-    }
+    setPage(pageAfterRemoval(page, data?.content.length ?? 0, isPlaceholderData))
     setRevokeTarget(null)
   }
 

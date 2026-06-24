@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { Alert, Button, Pagination, SearchInput, CTA_BUTTON_STYLE } from '@/shared/ui'
-import { useDebouncedValue } from '@/shared/lib'
+import { useDebouncedValue, pageAfterRemoval } from '@/shared/lib'
 import { useAuth } from '@/features/auth'
 import type { AdminUser } from '@/entities/user'
 import { adminUsersApi } from '../api/adminUsersApi'
@@ -73,12 +73,7 @@ function AdminUsersPageContent() {
   }
 
   function handleDeleteSuccess() {
-    // Step back a page when the deleted row was the last one on a page beyond
-    // the first. Guard on committed (non-placeholder) data so a mid-transition
-    // previous page never drives the decision.
-    if (!isPlaceholderData && data && data.content.length === 1 && page > 0) {
-      setPage(p => p - 1)
-    }
+    setPage(pageAfterRemoval(page, data?.content.length ?? 0, isPlaceholderData))
     setDeleteTarget(null)
   }
 

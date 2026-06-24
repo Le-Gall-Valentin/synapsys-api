@@ -22,6 +22,10 @@ export function useRevokeToken() {
   const invalidate = useInvalidateTokens()
   return useMutation<void, Error, string>({
     mutationFn: (id: string) => api.revokeToken(id),
+    // Refresh on both paths: success removes the token; a 409 means our view was
+    // stale (token already consumed/expired/revoked elsewhere), so refetching
+    // reflects the real status — which is what the not_revocable copy promises.
     onSuccess: invalidate,
+    onError: invalidate,
   })
 }

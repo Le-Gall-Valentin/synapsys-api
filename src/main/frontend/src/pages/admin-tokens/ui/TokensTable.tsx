@@ -55,7 +55,6 @@ export function TokensTable({ tokens, isLoading, pendingRevokeId, onRevoke }: To
               </tr>
             )}
             {tokens.map(token => {
-              const expiry = formatExpiry(token.expiresAt, token.status, i18n.language)
               return (
                 <tr key={token.id}>
                   <td className="px-4 py-3 font-medium text-fg-0">{token.serverName}</td>
@@ -63,7 +62,7 @@ export function TokensTable({ tokens, isLoading, pendingRevokeId, onRevoke }: To
                     <TokenStatusPill status={token.status} label={t(`status.${token.status}`)} />
                   </td>
                   <td className="px-4 py-3 font-mono text-[11px] text-fg-2">
-                    {expiry === '__expired__' ? t('table.expired') : expiry}
+                    {token.status === 'EXPIRED' ? t('table.expired') : formatExpiry(token.expiresAt, i18n.language)}
                   </td>
                   <td className="px-4 py-3 text-fg-2">{token.createdBy.username}</td>
                   <td className="px-4 py-3 font-mono text-[11px] text-fg-2">
